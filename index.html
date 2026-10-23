@@ -119,6 +119,24 @@ textarea.edit{height:220px;font-family:var(--mono);font-size:.8rem;line-height:1
 details.alt{margin-top:12px}details.alt summary{cursor:pointer;color:var(--muted);font-size:.9rem}
 .hint code{font-family:var(--mono);font-size:.78rem}
 button.danger{color:#c0392b;border-color:#c0392b}
+#shooter{position:fixed;inset:0;z-index:60;background:#000;overflow:hidden}
+#shootCam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#shootFrame{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);border:2px solid #fff;border-radius:6px;box-shadow:0 0 0 100vmax rgba(0,0,0,.55);pointer-events:none}
+#shootFrame span{position:absolute;inset:-2px;border:2px solid transparent;border-radius:6px;background:
+ linear-gradient(#5fd3c9,#5fd3c9) top left/22px 4px no-repeat,linear-gradient(#5fd3c9,#5fd3c9) top left/4px 22px no-repeat,
+ linear-gradient(#5fd3c9,#5fd3c9) top right/22px 4px no-repeat,linear-gradient(#5fd3c9,#5fd3c9) top right/4px 22px no-repeat,
+ linear-gradient(#5fd3c9,#5fd3c9) bottom left/22px 4px no-repeat,linear-gradient(#5fd3c9,#5fd3c9) bottom left/4px 22px no-repeat,
+ linear-gradient(#5fd3c9,#5fd3c9) bottom right/22px 4px no-repeat,linear-gradient(#5fd3c9,#5fd3c9) bottom right/4px 22px no-repeat}
+.shootTip{position:absolute;left:16px;right:16px;top:max(16px,env(safe-area-inset-top));margin:0;color:#fff;text-align:center;font-size:.95rem;text-shadow:0 1px 3px #000}
+.shootBar{position:absolute;left:0;right:0;bottom:0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:space-between;gap:12px}
+.shootBar button:not(#shootGo){background:rgba(0,0,0,.45);color:#fff;border:1px solid rgba(255,255,255,.5);min-width:92px}
+#shootGo{width:72px;height:72px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,.25);padding:0;flex:none}
+#shootGo:active{background:#fff}
+button.shotbtn{display:block;width:100%;padding:0;font:inherit}
+.keybox .row button,.catrow button{flex:none;width:auto;padding-left:16px;padding-right:16px}
+.keybox .row input,.catrow input{flex:1 1 auto;width:auto;min-width:0}.keybox .row,.catrow{flex-wrap:nowrap}
+.shot img{object-fit:contain;background:#111}
+#shootFmt{position:absolute;left:50%;transform:translateX(-50%);top:calc(max(16px,env(safe-area-inset-top)) + 34px);background:rgba(0,0,0,.45);color:#fff;border:1px solid rgba(255,255,255,.5);border-radius:999px;padding:6px 16px;font-size:.9rem}
 </style>
 </head>
 <body>
@@ -170,6 +188,14 @@ button.danger{color:#c0392b;border-color:#c0392b}
 </details>
 </div>
 
+<div id="shooter" hidden role="dialog" aria-modal="true" aria-label="Appareil photo">
+  <video id="shootCam" playsinline muted></video>
+  <div class="shade" id="shootFrame"><span></span></div>
+  <p class="shootTip" id="shootTip"></p>
+  <button type="button" id="shootFmt"></button>
+  <div class="shootBar"><button type="button" id="shootGal">Galerie</button><button type="button" id="shootGo" aria-label="Prendre la photo"></button><button type="button" id="shootX">Annuler</button></div>
+  <input type="file" accept="image/*" id="shootFile" hidden>
+</div>
 <div class="overlay" id="overlay" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Fiche"><button type="button" class="x" id="sheetX" aria-label="Fermer">✕</button><div id="detail"></div></div></div>
 <script>const DEMO={"works":{"scr-s3":{"c":"Scriabine","t":"Sonate pour piano n° 3","cat":"op. 23","cy":"Sonates pour piano","n":3,"of":10},"scr-s5":{"c":"Scriabine","t":"Sonate pour piano n° 5","cat":"op. 53","cy":"Sonates pour piano","n":5,"of":10},"scr-p11":{"c":"Scriabine","t":"24 Préludes","cat":"op. 11","cy":null,"n":0,"of":0},"scr-flamme":{"c":"Scriabine","t":"Vers la flamme","cat":"op. 72","cy":null,"n":0,"of":0},"rach-et39":{"c":"Rachmaninov","t":"Études-Tableaux","cat":"op. 39","cy":null,"n":0,"of":0},"rach-p32":{"c":"Rachmaninov","t":"Préludes","cat":"op. 32","cy":null,"n":0,"of":0},"cho-b1":{"c":"Chopin","t":"Ballade n° 1","cat":"op. 23","cy":"Ballades","n":1,"of":4},"cho-b4":{"c":"Chopin","t":"Ballade n° 4","cat":"op. 52","cy":"Ballades","n":4,"of":4},"chos-q8":{"c":"Chostakovitch","t":"Quatuor à cordes n° 8","cat":"op. 110","cy":"Quatuors à cordes","n":8,"of":15},"chos-q15":{"c":"Chostakovitch","t":"Quatuor à cordes n° 15","cat":"op. 144","cy":"Quatuors à cordes","n":15,"of":15},"bee-q14":{"c":"Beethoven","t":"Quatuor à cordes n° 14","cat":"op. 131","cy":"Quatuors à cordes","n":14,"of":16},"bee-s32":{"c":"Beethoven","t":"Sonate pour piano n° 32","cat":"op. 111","cy":"Sonates pour piano","n":32,"of":32},"ss-s3":{"c":"Saint-Saëns","t":"Symphonie n° 3 « avec orgue »","cat":"op. 78","cy":"Symphonies","n":3,"of":3},"vie-carillon":{"c":"Vierne","t":"Carillon de Westminster","cat":"op. 54 n° 6","cy":null,"n":0,"of":0},"vie-clair":{"c":"Vierne","t":"Clair de lune","cat":"op. 53 n° 5","cy":null,"n":0,"of":0},"bach-565":{"c":"Bach","t":"Toccata et fugue en ré mineur","cat":"BWV 565","cy":null,"n":0,"of":0},"mont-vesp":{"c":"Monteverdi","t":"Vespro della Beata Vergine","cat":"SV 206","cy":null,"n":0,"of":0},"schu-d960":{"c":"Schubert","t":"Sonate pour piano n° 21","cat":"D. 960","cy":"Sonates pour piano","n":21,"of":21}},"albums":[{"st":"own","a":"Elena Varga","perf":"Elena Varga, piano","t":"Scriabine — Sonates et Poèmes","g":"Classique","l":"Lunare Records","y":2019,"rec":"Studio, Berlin, 2018","c1":"#2B3A67","c2":"#E8C547","tr":[{"w":"scr-s3","n":"I. Drammatico"},{"w":"scr-s3","n":"II. Allegretto"},{"w":"scr-s3","n":"III. Andante"},{"w":"scr-s3","n":"IV. Presto con fuoco"},{"w":"scr-s5","n":"Sonate n° 5 (un mouvement)"},{"w":"scr-flamme","n":"Vers la flamme"}],"ean":"2001837492011"},{"st":"own","a":"Quatuor Arcadie","perf":"Quatuor Arcadie","t":"Chostakovitch — Quatuors 8 & 15","g":"Classique","l":"Lunare Records","y":2016,"rec":"Studio, Paris, 2015","c1":"#5B1E2D","c2":"#D9C5B2","tr":[{"w":"chos-q8","n":"I. Largo"},{"w":"chos-q8","n":"II. Allegro molto"},{"w":"chos-q8","n":"III. Allegretto"},{"w":"chos-q8","n":"IV. Largo"},{"w":"chos-q8","n":"V. Largo"},{"w":"chos-q15","n":"I. Élégie"},{"w":"chos-q15","n":"II. Sérénade"},{"w":"chos-q15","n":"III. Intermezzo"},{"w":"chos-q15","n":"IV. Nocturne"},{"w":"chos-q15","n":"V. Marche funèbre"},{"w":"chos-q15","n":"VI. Épilogue"}],"ean":"2001845492126"},{"st":"own","a":"Matteo Rinaldi","perf":"Matteo Rinaldi, orgue","t":"Organo di Sant'Elpidio","g":"Orgue","l":"Fonte Viva","y":2021,"rec":"Collégiale de Sant'Elpidio a Mare, 2020","c1":"#3F4A3C","c2":"#C9A227","tr":[{"w":"bach-565","n":"Toccata"},{"w":"bach-565","n":"Fugue"},{"w":"vie-carillon","n":"Carillon de Westminster"},{"w":"vie-clair","n":"Clair de lune"}],"ean":"2001853492231"},{"st":"own","a":"Coro San Giorgio","perf":"Coro e Ensemble San Giorgio, dir. Paolo Neri","t":"Monteverdi — Vespro della Beata Vergine","g":"Sacré","l":"Fonte Viva","y":2014,"rec":"Live, Basilique de Loreto, 2013","c1":"#1E3D4C","c2":"#E5D3A1","tr":[{"w":"mont-vesp","n":"Domine ad adiuvandum"},{"w":"mont-vesp","n":"Dixit Dominus"},{"w":"mont-vesp","n":"Nigra sum"},{"w":"mont-vesp","n":"Laudate pueri"},{"w":"mont-vesp","n":"Magnificat"}],"ean":"2001861492346"},{"st":"own","a":"Trio Notturno","t":"Blue Hour at the Lido","g":"Jazz","l":"Harbour Jazz","y":2018,"c1":"#0F2C3F","c2":"#5FB4C9","tr":["Lido Waltz","Moonlit Steps","Blue Hour","Gelato for Two","Last Ferry"],"ean":"2001869492454"},{"st":"own","a":"Clara Dumont","t":"Rue des Orgues","g":"Chanson","l":"Disques Belleville","y":2012,"c1":"#8C3B2B","c2":"#F2E8DC","tr":["Rue des Orgues","Le Pianiste du Square","Paris à 6 heures","La Valse oubliée","Dimanche"],"ean":"2001877492569"},{"st":"own","a":"Static Harbour","t":"Night Ferry","g":"Trip-hop","l":"Bristol Fog","y":2003,"c1":"#22252B","c2":"#B0B7C3","tr":["Departure","Salt Air","Night Ferry","Fog Lights","Arrival"],"ean":"2001885492674"},{"st":"own","a":"Lucia Ferretti","t":"Canzoni del Conero","g":"Chanson italienne","l":"Adriatica","y":2009,"c1":"#1F5F7A","c2":"#F4D35E","tr":["Portonovo","Sirolo al tramonto","Il Passetto","Mare d'inverno","Ritorno"],"ean":"2001893492789"},{"st":"own","a":"Orchestre des Rives","perf":"Orchestre des Rives, dir. Hélène Morel ; Matteo Rinaldi, orgue","t":"Saint-Saëns — Symphonie avec orgue","g":"Classique","l":"Lunare Records","y":2020,"rec":"Live, Basilique d'Argenteuil, 2019","c1":"#2E2A24","c2":"#D4AF37","tr":[{"w":"ss-s3","n":"I. Adagio — Allegro moderato"},{"w":"ss-s3","n":"I. Poco adagio"},{"w":"ss-s3","n":"II. Allegro moderato — Presto"},{"w":"ss-s3","n":"II. Maestoso — Allegro"}],"ean":"2001901492893"},{"st":"own","a":"Mikhail Orlov","perf":"Mikhail Orlov, piano","t":"The Moscow Recitals","g":"Classique","l":"Archivio Melos","y":2017,"box":true,"c1":"#3A1F1A","c2":"#D9A441","discs":[{"t":"Récital du 12 mars 1952","rec":"Live, Grande salle du Conservatoire de Moscou, 1952","tr":[{"w":"scr-s3","n":"I. Drammatico"},{"w":"scr-s3","n":"II. Allegretto"},{"w":"scr-s3","n":"III. Andante"},{"w":"scr-s3","n":"IV. Presto con fuoco"},{"w":"scr-p11","n":"Préludes n° 1-12"}]},{"t":"Récital du 8 juin 1958","rec":"Live, Petite salle du Conservatoire, 1958","tr":[{"w":"scr-s3","n":"I. Drammatico"},{"w":"scr-s3","n":"II. Allegretto"},{"w":"scr-s3","n":"III. Andante"},{"w":"scr-s3","n":"IV. Presto con fuoco"},{"w":"scr-s5","n":"Sonate n° 5"},{"w":"scr-flamme","n":"Vers la flamme"}]},{"t":"Chopin, 1949","rec":"Live, Grande salle du Conservatoire, 1949","tr":[{"w":"cho-b1","n":"Ballade n° 1"},{"w":"cho-b4","n":"Ballade n° 4"}]},{"t":"Rachmaninov, 1954","rec":"Studio Melodiya, Moscou, 1954","tr":[{"w":"rach-p32","n":"Préludes op. 32 n° 5, 10, 12"},{"w":"rach-et39","n":"Études-Tableaux op. 39 n° 4, 5, 6"}]},{"t":"Beethoven et Schubert, 1960","rec":"Live, Petite salle du Conservatoire, 1960","tr":[{"w":"bee-s32","n":"I. Maestoso — Allegro con brio"},{"w":"bee-s32","n":"II. Arietta"},{"w":"schu-d960","n":"I. Molto moderato"},{"w":"schu-d960","n":"II. Andante sostenuto"},{"w":"schu-d960","n":"III. Scherzo"},{"w":"schu-d960","n":"IV. Allegro ma non troppo"}]}],"ean":"2001909493007"},{"st":"wish","a":"Elena Varga","perf":"Elena Varga, piano","t":"Rachmaninov — Études-Tableaux","g":"Classique","l":"Lunare Records","y":2023,"rec":"Studio, Berlin, 2022","c1":"#3B2F5C","c2":"#E9B44C","tr":[{"w":"rach-et39","n":"Op. 39 n° 1"},{"w":"rach-et39","n":"Op. 39 n° 5"},{"w":"rach-et39","n":"Op. 39 n° 9"}],"ean":"2001917493112"},{"st":"wish","a":"Trio Notturno","t":"Live at the Arsenale","g":"Jazz","l":"Harbour Jazz","y":2022,"c1":"#123B2F","c2":"#9AD1B5","tr":["Arsenale Intro","Tide Tables","Calle Lunga","Blue Hour (live)"],"ean":"2001925493227"},{"st":"wish","a":"Matteo Rinaldi","perf":"Matteo Rinaldi, orgue","t":"Vierne — Pièces de fantaisie","g":"Orgue","l":"Fonte Viva","y":2024,"rec":"Cathédrale de Fermo, 2023","c1":"#4B2E2E","c2":"#E3B23C","tr":[{"w":"vie-clair","n":"Clair de lune"},{"w":"vie-carillon","n":"Carillon de Westminster"}],"ean":"2001933493332"},{"st":"cat","a":"Static Harbour","t":"Lighthouse Dub","g":"Trip-hop","l":"Bristol Fog","y":2006,"c1":"#1C2833","c2":"#7FB3D5","tr":["Beacon","Lighthouse Dub","Low Tide","Keeper"],"ean":"2001941493447"},{"st":"cat","a":"Quatuor Arcadie","perf":"Quatuor Arcadie","t":"Beethoven — Quatuor op. 131","g":"Classique","l":"Lunare Records","y":2019,"rec":"Studio, Paris, 2018","c1":"#3E2723","c2":"#D7CCC8","tr":[{"w":"bee-q14","n":"I. Adagio ma non troppo"},{"w":"bee-q14","n":"II. Allegro molto vivace"},{"w":"bee-q14","n":"IV. Andante"},{"w":"bee-q14","n":"VII. Allegro"}],"ean":"2001949493555"},{"st":"cat","a":"Clara Dumont","t":"Les Toits de Montmartre","g":"Chanson","l":"Disques Belleville","y":2015,"c1":"#6D2E46","c2":"#F7E1D7","tr":["Les Toits","Café Lepic","L'Accordéoniste","Sacré-Cœur à minuit"],"ean":"2001957493660"}]};
 const KEY="collezione-cd-v1";
@@ -207,8 +233,8 @@ const fmtD=s=>s?Math.floor(s/60)+":"+String(Math.round(s%60)).padStart(2,"0"):""
 let sheetOpen=false;
 function openSheet(){const o=$("overlay");if(!sheetOpen){history.pushState({sheet:1},"");sheetOpen=true;}o.hidden=false;document.body.classList.add("locked");$("sheet").scrollTop=0;}
 function closeSheet(fromPop){if(!sheetOpen)return;sheetOpen=false;$("overlay").hidden=true;document.body.classList.remove("locked");if(!fromPop)history.back();}
-window.addEventListener("popstate",()=>{if(sheetOpen)closeSheet(true);});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet();});
+window.addEventListener("popstate",()=>{if(!$("shooter").hidden){finishShoot(null);if(sheetOpen)history.pushState({sheet:1},"");return;}if(sheetOpen)closeSheet(true);});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("shooter").hidden)finishShoot(null);else closeSheet();}});
 const wLabel=w=>{const o=WORKS()[w];return o?o.t+(o.cat?", "+o.cat:""):"";};
 const isWish=id=>S.wish.some(x=>x.id===id);
 const byId=id=>S.col.find(x=>x.id===id)||S.wish.find(x=>x.id===id);
@@ -416,7 +442,7 @@ function openDetail(id){const x=byId(id);if(!x)return;const p=$("detail"),cu=cov
    <div class="meta"><h2>${esc(x.t)}</h2><p class="by">${esc(x.a)}</p>
    ${x.perf?`<p class="by">${esc(x.perf)}</p>`:""}<p class="facts">${x.box?`<span>Coffret ${discsOf(x).length} CD</span>`:""}${x.l?`<span>${esc(x.l)}</span>`:""}${x.y?`<span>${esc(x.y)}</span>`:""}${x.g?`<span>${esc(x.g)}</span>`:""}</p>
    <p><span class="chip ${own?"own":"wish"}">${own?"Possédé":"Envie"}</span> ${c?`<span class="code">${fmtEan(c)}</span>`:""}</p>
-   <div class="row"><label class="filebtn">${COV[id]?"Changer la pochette":"Photographier la pochette"}<input id="coverIn" type="file" accept="image/*" capture="environment"></label><button type="button" id="detClose">Fermer</button></div>
+   <div class="row"><button type="button" id="coverBtn">${COV[id]?"Changer la pochette":"Photographier la pochette"}</button><button type="button" id="detClose">Fermer</button></div>
    <div class="row"><button type="button" class="small" id="detEdit">Modifier les pistes</button><button type="button" class="small" id="detRead">Relire en photo (IA)</button><button type="button" class="small" id="detDel">Supprimer</button></div>
    <p class="hint" id="covMsg"></p>${x.mbid?`<p class="hint"><a href="https://musicbrainz.org/release/${x.mbid}" target="_blank" rel="noopener">Voir sur MusicBrainz</a> · <button type="button" class="small" id="mbRefresh">Actualiser</button></p>`:""}${x.dgid?`<p class="hint"><a href="https://www.discogs.com/release/${x.dgid}" target="_blank" rel="noopener">Voir sur Discogs</a>${x.cat?" · "+esc(x.cat):""}</p>`:""}</div></div>${tracks}`;
   openSheet();
@@ -428,13 +454,49 @@ function openDetail(id){const x=byId(id);if(!x)return;const p=$("detail"),cu=cov
     try{const f=await mbRelease(x.mbid);Object.assign(S.works,f.newWorks);["a","t","l","y","perf","tr","discs","box","img"].forEach(k=>{delete x[k];if(f[k]!==undefined)x[k]=f[k];});save();render();openDetail(id);}
     catch(err){$("covMsg").textContent=err.message;}};
   p.querySelectorAll("[data-work]").forEach(n=>n.onclick=()=>openWork(n.dataset.work));
-  $("coverIn").onchange=async e=>{const f=e.target.files[0];if(!f)return;$("covMsg").textContent="Enregistrement de la pochette…";
-    try{const data=await shrink(f);await covPut(id,data);COV[id]=data;openDetail(id);render();}catch(err){$("covMsg").textContent="Impossible d'enregistrer la photo.";}};
+  $("coverBtn").onclick=async()=>{const r=await shoot("recto");if(!r)return;$("covMsg").textContent="Enregistrement de la pochette…";
+    try{await covPut(id,r.small);COV[id]=r.small;openDetail(id);render();}catch(err){$("covMsg").textContent="Impossible d'enregistrer la photo.";}};
   if($("trSave"))$("trSave").onclick=()=>{const l=$("trIn").value.split(/\n/).map(s=>s.replace(/^\s*\d+[.)\-\s]+/,"").trim()).filter(Boolean);if(!l.length)return;x.tr=l;save();openDetail(id);};}
 async function shrink(file,max=500){const bmp=await createImageBitmap(file);const k=Math.min(1,max/Math.max(bmp.width,bmp.height));
   const cv=document.createElement("canvas");cv.width=Math.round(bmp.width*k);cv.height=Math.round(bmp.height*k);cv.getContext("2d").drawImage(bmp,0,0,cv.width,cv.height);
   return cv.toDataURL("image/jpeg",0.82);}
 
+
+
+// ---------- Viseur photo (recto carré, verso au format de la jaquette arrière) ----------
+// Boîtier CD standard ≈ 142 × 125 mm (même format devant et derrière) ; carré pour digipak / pochette carton
+const FORMATS={box:{ratio:142/125,label:"Boîtier"},sq:{ratio:1,label:"Carré"}};
+const TIPS={recto:"Cadre le devant du CD",verso:"Cadre le dos du CD"};
+const getFmt=()=>{try{return localStorage.getItem("shoot-format")==="sq"?"sq":"box";}catch(e){return "box";}};
+let shootStream=null,shootDone=null;
+function sizeFrame(kind){const f=$("shootFrame"),fm=getFmt(),r=FORMATS[fm].ratio,W=innerWidth,H=innerHeight;
+  $("shootFmt").textContent="Format : "+FORMATS[fm].label;
+  let w=Math.min(W*0.9,H*0.62*r),h=w/r;f.style.width=w+"px";f.style.height=h+"px";}
+function finishShoot(val){const d=shootDone;shootDone=null;if(shootStream){shootStream.getTracks().forEach(t=>t.stop());shootStream=null;}
+  $("shooter").hidden=true;removeEventListener("resize",shootResize);if(d)d(val);}
+let shootKind="recto";const shootResize=()=>sizeFrame(shootKind);
+// Renvoie {full, small} (dataURL JPEG recadrés) ou null si annulé
+function shoot(kind){return new Promise(async res=>{
+  shootKind=kind;shootDone=res;$("shootTip").textContent=TIPS[kind];
+  if(!navigator.mediaDevices?.getUserMedia){shootDone=null;res(await pickFile());return;}
+  $("shooter").hidden=false;sizeFrame(kind);addEventListener("resize",shootResize);
+  try{shootStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment",width:{ideal:3840},height:{ideal:2160}},audio:false});
+    const v=$("shootCam");v.srcObject=shootStream;await v.play();
+  }catch(e){$("shootTip").textContent="Caméra indisponible. Choisis une photo dans la galerie.";}});}
+function pickFile(){return new Promise(res=>{const i=$("shootFile");i.value="";i.onchange=async()=>{const f=i.files[0];if(!f){res(null);return;}
+  try{res({full:await shrink(f,1400),small:await shrink(f,500)});}catch(e){res(null);}};i.click();});}
+function grab(){const v=$("shootCam"),vw=v.videoWidth,vh=v.videoHeight;if(!vw)return null;
+  const cr=v.getBoundingClientRect(),fr=$("shootFrame").getBoundingClientRect();
+  const k=Math.max(cr.width/vw,cr.height/vh),ox=(cr.width-vw*k)/2,oy=(cr.height-vh*k)/2;
+  let sx=(fr.left-cr.left-ox)/k,sy=(fr.top-cr.top-oy)/k,sw=fr.width/k,sh=fr.height/k;
+  sx=Math.max(0,sx);sy=Math.max(0,sy);sw=Math.min(sw,vw-sx);sh=Math.min(sh,vh-sy);
+  const out=max=>{const s=Math.min(1,max/Math.max(sw,sh)),c=document.createElement("canvas");c.width=Math.round(sw*s);c.height=Math.round(sh*s);
+    c.getContext("2d").drawImage(v,sx,sy,sw,sh,0,0,c.width,c.height);return c.toDataURL("image/jpeg",0.85);};
+  return {full:out(1400),small:out(500)};}
+$("shootGo").onclick=()=>{const g=grab();if(!g)return;navigator.vibrate?.(40);finishShoot(g);};
+$("shootX").onclick=()=>finishShoot(null);
+$("shootFmt").onclick=()=>{try{localStorage.setItem("shoot-format",getFmt()==="sq"?"box":"sq");}catch(e){}sizeFrame(shootKind);};
+$("shootGal").onclick=async()=>{const r=await pickFile();if(r)finishShoot(r);};
 
 // ---------- Lecture photo de la pochette ----------
 const READ_PROMPT=`Tu reçois la photo du recto et/ou du verso d'un CD. Recopie uniquement ce qui est lisible, sans rien inventer ni compléter de mémoire.
@@ -453,25 +515,35 @@ $("apiKey").addEventListener("change",e=>setKey(e.target.value));
 $("photoRead").onclick=()=>{stopCam();const v=$("ean").value.replace(/\D/g,"");cur=v.length>=8?v:"";openReader();};
 function openReader(target){readTarget=typeof target==="string"?target:null;shots={recto:null,verso:null};coverShot=null;const p=$("detail"),key=getKey(),tx=readTarget&&byId(readTarget);
   p.innerHTML=`<p class="cat">${tx?"Relecture : "+esc(tx.t):"Lecture de la pochette"}</p><h2 class="wh">Photographie le recto et le verso</h2>
-  <div class="shots">${["recto","verso"].map(s=>`<label class="shot" id="sh-${s}"><b>${s==="recto"?"Recto":"Verso"}</b><span>${s==="recto"?"titre, artiste, label":"liste des pistes"}</span><input type="file" accept="image/*" capture="environment" data-shot="${s}"></label>`).join("")}</div>
+  <div class="shots">${["recto","verso"].map(s=>`<button type="button" class="shot shotbtn" id="sh-${s}" data-shot="${s}"><b>${s==="recto"?"Recto":"Verso"}</b><span>${s==="recto"?"titre, artiste, label":"liste des pistes"}</span></button>`).join("")}</div>
   <div class="keybox"><label for="keyIn">Clé d'API Anthropic</label>
    <div class="row"><input id="keyIn" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…" value="${esc(key)}"><button type="button" id="keyShow" class="small">Voir</button></div>
-   <p class="hint">Gardée uniquement sur ce téléphone. À créer sur console.anthropic.com (crédit prépayé, distinct de l'abonnement Claude).</p></div>
+   <p class="hint">Gardée uniquement sur ce téléphone. À créer sur platform.claude.com (crédit prépayé, distinct de l'abonnement Claude Pro).</p></div>
   <button class="primary" id="readGo" type="button">Lire les photos</button>
   <details class="alt"><summary>Sans clé : passer par l'app Claude</summary>
    <p class="hint">Envoie les deux photos dans l'app Claude avec ce message, puis colle sa réponse ici.</p>
-   <div class="row"><button type="button" id="copyPrompt">Copier le message pour Claude</button></div>
+   <div class="row"><button type="button" class="primary" id="sharePics">Envoyer à Claude (photos + message)</button></div>
+   <div class="row"><button type="button" id="copyPrompt">Copier seulement le message</button></div>
    <textarea id="pasteIn" class="edit" aria-label="Réponse de Claude" placeholder="Colle ici la réponse de Claude…"></textarea>
    <button id="pasteGo" type="button">Utiliser cette réponse</button></details>
   <p class="hint" id="readMsg"></p><div id="readOut"></div>`;
   openSheet();
   $("keyIn").addEventListener("change",e=>setKey(e.target.value));
   $("keyShow").onclick=()=>{const i=$("keyIn");i.type=i.type==="password"?"text":"password";$("keyShow").textContent=i.type==="password"?"Voir":"Masquer";};
-  p.querySelectorAll("[data-shot]").forEach(inp=>inp.onchange=async e=>{const f=e.target.files[0];if(!f)return;const s=inp.dataset.shot;
-    shots[s]=await shrink(f,1400);if(s==="recto")coverShot=await shrink(f,500);const box=$("sh-"+s);box.querySelector("img")?.remove();const im=document.createElement("img");im.src=shots[s];im.alt="";box.prepend(im);});
+  p.querySelectorAll("[data-shot]").forEach(btn=>btn.onclick=async()=>{const s=btn.dataset.shot,r=await shoot(s);if(!r)return;
+    shots[s]=r.full;if(s==="recto")coverShot=r.small;btn.querySelector("img")?.remove();const im=document.createElement("img");im.src=r.full;im.alt="";btn.prepend(im);});
   $("readGo").onclick=()=>{setKey($("keyIn").value);readWithApi();};
   $("copyPrompt").onclick=()=>{const done=()=>$("readMsg").textContent="Message copié. Colle-le dans Claude avec les deux photos.";
     const p2=navigator.clipboard?.writeText(READ_PROMPT);if(p2)p2.then(done,()=>{$("pasteIn").value=READ_PROMPT;$("pasteIn").select();$("readMsg").textContent="Copie le message sélectionné à la main, puis efface-le.";});};
+  $("sharePics").onclick=async()=>{const m=$("readMsg"),imgs=["recto","verso"].filter(s=>shots[s]);
+    if(!imgs.length){m.textContent="Prends d'abord les photos.";return;}
+    try{await navigator.clipboard?.writeText(READ_PROMPT);}catch(e){}
+    const files=await Promise.all(imgs.map(async s=>{const b=await (await fetch(shots[s])).blob();return new File([b],s+".jpg",{type:"image/jpeg"});}));
+    if(navigator.canShare&&navigator.canShare({files})){
+      try{await navigator.share({files,text:READ_PROMPT});m.textContent="Dans Claude, colle le message s'il n'apparaît pas (il est copié), puis rapporte sa réponse ici.";}
+      catch(e){if(e.name!=="AbortError")m.textContent="Partage impossible.";}}
+    else{files.forEach(f=>{const a=document.createElement("a");a.href=URL.createObjectURL(f);a.download="pochette-"+f.name;a.click();});
+      m.textContent="Photos enregistrées dans tes téléchargements et message copié : envoie-les dans l'app Claude.";}};
   $("pasteGo").onclick=()=>{try{showRead(parseRead($("pasteIn").value));}catch(err){$("readMsg").textContent=err.message;}};}
 async function readWithApi(){const m=$("readMsg");const imgs=["recto","verso"].filter(s=>shots[s]);
   if(!getKey()){m.textContent="Colle d'abord ta clé d'API, ou utilise l'option sans clé.";$("keyIn").focus();return;}
