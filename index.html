@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Collezione CD</title>
+<meta name="theme-color" content="#0E6E6A">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one narrow column like a shop counter — scan bar on top, search, then the bins (Collection / Envies) */
+:root{
+  --bg:#EEF0EC; --surface:#FFFFFF; --ink:#1A1D21; --muted:#5E655F; --line:#D5D9D3;
+  --accent:#0E6E6A; --accent-ink:#FFFFFF; --own:#1F7A3E; --own-bg:#E2F1E6; --wish:#9A5B00; --wish-bg:#F8ECD6; --err:#B3261E;
+  --display:"Bricolage Grotesque",system-ui,sans-serif; --body:"Source Sans 3",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141716; --surface:#1D2120; --ink:#E9ECE8; --muted:#9AA29C; --line:#2F3533;
+  --accent:#3DB3AC; --accent-ink:#06201F; --own:#6FCF8E; --own-bg:#1C3326; --wish:#E6B25E; --wish-bg:#3A2E18; --err:#FF8A80; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141716; --surface:#1D2120; --ink:#E9ECE8; --muted:#9AA29C; --line:#2F3533;
+  --accent:#3DB3AC; --accent-ink:#06201F; --own:#6FCF8E; --own-bg:#1C3326; --wish:#E6B25E; --wish-bg:#3A2E18; --err:#FF8A80; color-scheme:dark}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header h1{font-family:var(--display);font-weight:800;font-size:2rem;letter-spacing:-.02em;margin:0;line-height:1}
+header p{margin:6px 0 0;color:var(--muted);font-size:.92rem;font-variant-numeric:tabular-nums}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 14px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.scan{width:100%;background:var(--accent);color:var(--accent-ink);border:0;padding:18px;font-family:var(--display);font-weight:700;font-size:1.4rem;letter-spacing:.12em;display:flex;align-items:center;justify-content:center;gap:12px}
+.bars{display:inline-flex;gap:2px;height:22px;align-items:stretch}.bars i{background:currentColor;display:block}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+label{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+input[type=text],input[type=search]{width:100%;font:inherit;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.ean{font-family:var(--mono);font-size:1.3rem;letter-spacing:.12em}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1 1 140px}
+.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600}
+.hint{font-size:.85rem;color:var(--muted);margin:0}.err{color:var(--err)}
+.verdict{border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.verdict.own{background:var(--own-bg);color:var(--own)}.verdict.wish{background:var(--wish-bg);color:var(--wish)}
+.verdict strong{font-family:var(--display);font-size:1.25rem}.verdict span{color:var(--ink)}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line)}
+.tabs button{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:10px 8px;color:var(--muted);font-weight:600}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.item{display:flex;gap:12px;align-items:center;padding:12px 2px;border-bottom:1px solid var(--line)}
+.disc{flex:0 0 38px;height:38px;border-radius:50%;background:radial-gradient(circle,var(--surface) 0 4px,var(--line) 5px 7px,var(--muted) 8px 100%);opacity:.75}
+.meta{flex:1;min-width:0}.meta b{display:block;font-weight:600;overflow-wrap:anywhere}.meta small{color:var(--muted);overflow-wrap:anywhere;display:block}
+.code{font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+.chip{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:99px;white-space:nowrap}
+.chip.own{background:var(--own-bg);color:var(--own)}.chip.wish{background:var(--wish-bg);color:var(--wish)}
+.small{padding:6px 10px;font-size:.85rem}
+.empty{color:var(--muted);padding:16px 0}
+.cat{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+details{font-size:.9rem;color:var(--muted)}textarea{width:100%;height:120px;font-family:var(--mono);font-size:.75rem;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px}
+@media (prefers-reduced-motion:no-preference){.panel{animation:in .18s ease-out}@keyframes in{from{transform:translateY(-4px)}to{transform:none}}}
+.cover{flex:0 0 44px;height:44px;border-radius:4px;object-fit:cover;background:var(--line)}
+.item.tap{cursor:pointer}.item.tap:hover .meta b{text-decoration:underline}
+.detail{display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:480px){.detail{grid-template-columns:1fr}}
+.sleeve{width:100%;max-width:100%;aspect-ratio:1;border-radius:6px;background:var(--bg);border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.85rem;text-align:center;overflow:hidden}
+.sleeve img{width:100%;height:100%;object-fit:cover}
+.detail h2{font-family:var(--display);font-weight:700;font-size:1.35rem;line-height:1.15;margin:0;text-wrap:balance;overflow-wrap:anywhere}
+.detail .by{color:var(--muted);margin:4px 0 0}
+ol.tracks{margin:0;padding-left:1.6em;display:flex;flex-direction:column;gap:3px;font-size:.92rem;font-variant-numeric:tabular-nums}
+ol.tracks li::marker{color:var(--muted);font-family:var(--mono);font-size:.8rem}
+.discH{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:10px 0 4px}
+.filebtn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:var(--surface);cursor:pointer}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.sync{font-size:.8rem;color:var(--muted)}
+pre.cmd{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;font-family:var(--mono);font-size:.72rem;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.demo{display:inline-block;margin:8px 0 0;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--wish);background:var(--wish-bg);padding:3px 8px;border-radius:99px}
+.codes{display:flex;flex-wrap:wrap;gap:6px}.codes button{font-family:var(--mono);font-size:.75rem;padding:5px 8px}
+.facts{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.85rem;color:var(--muted);margin:6px 0 0}
+.found{display:flex;gap:12px;align-items:center}.found img{flex:0 0 72px;width:72px;height:72px;border-radius:4px}
+.compo{padding:14px 0 6px;border-bottom:1px solid var(--line)}.compo h3{font-family:var(--display);font-weight:700;font-size:1.2rem;margin:0}
+.compo .facts span{background:var(--own-bg);color:var(--own);padding:2px 8px;border-radius:6px}
+ul.works{list-style:none;margin:6px 0 0;padding:0}ul.works .item{border-bottom:0;padding:8px 2px}
+.count{font-family:var(--mono);font-size:.85rem;min-width:2em;text-align:center;border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+button.work{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;background:var(--bg);border-color:var(--line);margin:10px 0 4px;font-weight:600;font-size:.9rem}
+button.work span{font-family:var(--mono);font-weight:400;font-size:.75rem;color:var(--accent);white-space:nowrap}
+h2.wh{font-family:var(--display);font-weight:700;font-size:1.35rem;margin:0;text-wrap:balance}
+video#cam{width:100%;max-width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;background:#000}
+.camwrap{position:relative}.camwrap::after{content:"";position:absolute;left:10%;right:10%;top:50%;height:2px;background:var(--err);opacity:.8}
+.mb{font-size:.75rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>Collezione CD</h1><p class="demo" id="demoTag">Démo · disques fictifs</p><p id="stats"></p><p class="sync" id="sync"></p></header>
+
+<button class="scan" id="scanBtn" type="button"><span class="bars" aria-hidden="true"><i style="width:3px"></i><i style="width:1px"></i><i style="width:2px"></i><i style="width:1px"></i><i style="width:3px"></i><i style="width:1px"></i></span>SCAN</button>
+
+<section class="panel" id="scanPanel" hidden>
+  <div class="camwrap" id="camWrap" hidden><video id="cam" playsinline muted></video></div>
+  <p class="hint" id="camMsg"></p>
+  <label for="ean">Code-barres (ou tape-le)</label>
+  <input id="ean" class="ean" type="text" inputmode="numeric" autocomplete="off" placeholder="0 28947 79123 4" maxlength="20">
+  <div class="row"><button class="primary" id="eanGo" type="button">Vérifier</button><button id="eanClose" type="button">Fermer</button></div>
+  <p class="hint" id="eanMsg">EAN-13 (Europe, 13 chiffres) ou UPC-A (US, 12 chiffres).</p>
+  <div id="demoCodes"></div>
+  <div id="eanResult"></div>
+</section>
+
+<div>
+  <label for="q">J'ai déjà ce disque ?</label>
+  <input id="q" type="search" placeholder="Artiste, album, compositeur…" autocomplete="off">
+</div>
+
+<section class="panel" id="detail" hidden></section>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" id="tabCol" aria-selected="true" type="button">Collection</button>
+  <button role="tab" id="tabWish" aria-selected="false" type="button">Envies</button>
+  <button role="tab" id="tabComp" aria-selected="false" type="button">Compositeurs</button>
+</nav>
+<ul class="list" id="list"></ul>
+<p class="empty" id="more" hidden></p>
+
+<details><summary>Sauvegarde et réglages</summary>
+<p>Ta collection est enregistrée sur ce téléphone. Télécharge une sauvegarde de temps en temps (les photos de pochettes n'y sont pas incluses).</p>
+<div class="row"><button id="dlB" type="button">Télécharger la sauvegarde</button><label class="filebtn">Restaurer un fichier<input id="upB" type="file" accept="application/json,.json"></label></div>
+<div class="row"><button id="wipe" type="button">Effacer la démo et repartir de zéro</button></div>
+<div id="wipeConfirm" hidden class="row"><button id="wipeYes" class="primary" type="button">Oui, tout effacer</button><button id="wipeNo" type="button">Annuler</button></div>
+<p class="hint" id="bMsg"></p>
+<p class="mb">Données de disques : MusicBrainz et Cover Art Archive.</p>
+</details>
+</div>
+<script>const DEMO={"works":{"scr-s3":{"c":"Scriabine","t":"Sonate pour piano n° 3","cat":"op. 23","cy":"Sonates pour piano","n":3,"of":10},"scr-s5":{"c":"Scriabine","t":"Sonate pour piano n° 5","cat":"op. 53","cy":"Sonates pour piano","n":5,"of":10},"scr-p11":{"c":"Scriabine","t":"24 Préludes","cat":"op. 11","cy":null,"n":0,"of":0},"scr-flamme":{"c":"Scriabine","t":"Vers la flamme","cat":"op. 72","cy":null,"n":0,"of":0},"rach-et39":{"c":"Rachmaninov","t":"Études-Tableaux","cat":"op. 39","cy":null,"n":0,"of":0},"rach-p32":{"c":"Rachmaninov","t":"Préludes","cat":"op. 32","cy":null,"n":0,"of":0},"cho-b1":{"c":"Chopin","t":"Ballade n° 1","cat":"op. 23","cy":"Ballades","n":1,"of":4},"cho-b4":{"c":"Chopin","t":"Ballade n° 4","cat":"op. 52","cy":"Ballades","n":4,"of":4},"chos-q8":{"c":"Chostakovitch","t":"Quatuor à cordes n° 8","cat":"op. 110","cy":"Quatuors à cordes","n":8,"of":15},"chos-q15":{"c":"Chostakovitch","t":"Quatuor à cordes n° 15","cat":"op. 144","cy":"Quatuors à cordes","n":15,"of":15},"bee-q14":{"c":"Beethoven","t":"Quatuor à cordes n° 14","cat":"op. 131","cy":"Quatuors à cordes","n":14,"of":16},"bee-s32":{"c":"Beethoven","t":"Sonate pour piano n° 32","cat":"op. 111","cy":"Sonates pour piano","n":32,"of":32},"ss-s3":{"c":"Saint-Saëns","t":"Symphonie n° 3 « avec orgue »","cat":"op. 78","cy":"Symphonies","n":3,"of":3},"vie-carillon":{"c":"Vierne","t":"Carillon de Westminster","cat":"op. 54 n° 6","cy":null,"n":0,"of":0},"vie-clair":{"c":"Vierne","t":"Clair de lune","cat":"op. 53 n° 5","cy":null,"n":0,"of":0},"bach-565":{"c":"Bach","t":"Toccata et fugue en ré mineur","cat":"BWV 565","cy":null,"n":0,"of":0},"mont-vesp":{"c":"Monteverdi","t":"Vespro della Beata Vergine","cat":"SV 206","cy":null,"n":0,"of":0},"schu-d960":{"c":"Schubert","t":"Sonate pour piano n° 21","cat":"D. 960","cy":"Sonates pour piano","n":21,"of":21}},"albums":[{"st":"own","a":"Elena Varga","perf":"Elena Varga, piano","t":"Scriabine — Sonates et Poèmes","g":"Classique","l":"Lunare Records","y":2019,"rec":"Studio, Berlin, 2018","c1":"#2B3A67","c2":"#E8C547","tr":[{"w":"scr-s3","n":"I. Drammatico"},{"w":"scr-s3","n":"II. Allegretto"},{"w":"scr-s3","n":"III. Andante"},{"w":"scr-s3","n":"IV. Presto con fuoco"},{"w":"scr-s5","n":"Sonate n° 5 (un mouvement)"},{"w":"scr-flamme","n":"Vers la flamme"}],"ean":"2001837492011"},{"st":"own","a":"Quatuor Arcadie","perf":"Quatuor Arcadie","t":"Chostakovitch — Quatuors 8 & 15","g":"Classique","l":"Lunare Records","y":2016,"rec":"Studio, Paris, 2015","c1":"#5B1E2D","c2":"#D9C5B2","tr":[{"w":"chos-q8","n":"I. Largo"},{"w":"chos-q8","n":"II. Allegro molto"},{"w":"chos-q8","n":"III. Allegretto"},{"w":"chos-q8","n":"IV. Largo"},{"w":"chos-q8","n":"V. Largo"},{"w":"chos-q15","n":"I. Élégie"},{"w":"chos-q15","n":"II. Sérénade"},{"w":"chos-q15","n":"III. Intermezzo"},{"w":"chos-q15","n":"IV. Nocturne"},{"w":"chos-q15","n":"V. Marche funèbre"},{"w":"chos-q15","n":"VI. Épilogue"}],"ean":"2001845492126"},{"st":"own","a":"Matteo Rinaldi","perf":"Matteo Rinaldi, orgue","t":"Organo di Sant'Elpidio","g":"Orgue","l":"Fonte Viva","y":2021,"rec":"Collégiale de Sant'Elpidio a Mare, 2020","c1":"#3F4A3C","c2":"#C9A227","tr":[{"w":"bach-565","n":"Toccata"},{"w":"bach-565","n":"Fugue"},{"w":"vie-carillon","n":"Carillon de Westminster"},{"w":"vie-clair","n":"Clair de lune"}],"ean":"2001853492231"},{"st":"own","a":"Coro San Giorgio","perf":"Coro e Ensemble San Giorgio, dir. Paolo Neri","t":"Monteverdi — Vespro della Beata Vergine","g":"Sacré","l":"Fonte Viva","y":2014,"rec":"Live, Basilique de Loreto, 2013","c1":"#1E3D4C","c2":"#E5D3A1","tr":[{"w":"mont-vesp","n":"Domine ad adiuvandum"},{"w":"mont-vesp","n":"Dixit Dominus"},{"w":"mont-vesp","n":"Nigra sum"},{"w":"mont-vesp","n":"Laudate pueri"},{"w":"mont-vesp","n":"Magnificat"}],"ean":"2001861492346"},{"st":"own","a":"Trio Notturno","t":"Blue Hour at the Lido","g":"Jazz","l":"Harbour Jazz","y":2018,"c1":"#0F2C3F","c2":"#5FB4C9","tr":["Lido Waltz","Moonlit Steps","Blue Hour","Gelato for Two","Last Ferry"],"ean":"2001869492454"},{"st":"own","a":"Clara Dumont","t":"Rue des Orgues","g":"Chanson","l":"Disques Belleville","y":2012,"c1":"#8C3B2B","c2":"#F2E8DC","tr":["Rue des Orgues","Le Pianiste du Square","Paris à 6 heures","La Valse oubliée","Dimanche"],"ean":"2001877492569"},{"st":"own","a":"Static Harbour","t":"Night Ferry","g":"Trip-hop","l":"Bristol Fog","y":2003,"c1":"#22252B","c2":"#B0B7C3","tr":["Departure","Salt Air","Night Ferry","Fog Lights","Arrival"],"ean":"2001885492674"},{"st":"own","a":"Lucia Ferretti","t":"Canzoni del Conero","g":"Chanson italienne","l":"Adriatica","y":2009,"c1":"#1F5F7A","c2":"#F4D35E","tr":["Portonovo","Sirolo al tramonto","Il Passetto","Mare d'inverno","Ritorno"],"ean":"2001893492789"},{"st":"own","a":"Orchestre des Rives","perf":"Orchestre des Rives, dir. Hélène Morel ; Matteo Rinaldi, orgue","t":"Saint-Saëns — Symphonie avec orgue","g":"Classique","l":"Lunare Records","y":2020,"rec":"Live, Basilique d'Argenteuil, 2019","c1":"#2E2A24","c2":"#D4AF37","tr":[{"w":"ss-s3","n":"I. Adagio — Allegro moderato"},{"w":"ss-s3","n":"I. Poco adagio"},{"w":"ss-s3","n":"II. Allegro moderato — Presto"},{"w":"ss-s3","n":"II. Maestoso — Allegro"}],"ean":"2001901492893"},{"st":"own","a":"Mikhail Orlov","perf":"Mikhail Orlov, piano","t":"The Moscow Recitals","g":"Classique","l":"Archivio Melos","y":2017,"box":true,"c1":"#3A1F1A","c2":"#D9A441","discs":[{"t":"Récital du 12 mars 1952","rec":"Live, Grande salle du Conservatoire de Moscou, 1952","tr":[{"w":"scr-s3","n":"I. Drammatico"},{"w":"scr-s3","n":"II. Allegretto"},{"w":"scr-s3","n":"III. Andante"},{"w":"scr-s3","n":"IV. Presto con fuoco"},{"w":"scr-p11","n":"Préludes n° 1-12"}]},{"t":"Récital du 8 juin 1958","rec":"Live, Petite salle du Conservatoire, 1958","tr":[{"w":"scr-s3","n":"I. Drammatico"},{"w":"scr-s3","n":"II. Allegretto"},{"w":"scr-s3","n":"III. Andante"},{"w":"scr-s3","n":"IV. Presto con fuoco"},{"w":"scr-s5","n":"Sonate n° 5"},{"w":"scr-flamme","n":"Vers la flamme"}]},{"t":"Chopin, 1949","rec":"Live, Grande salle du Conservatoire, 1949","tr":[{"w":"cho-b1","n":"Ballade n° 1"},{"w":"cho-b4","n":"Ballade n° 4"}]},{"t":"Rachmaninov, 1954","rec":"Studio Melodiya, Moscou, 1954","tr":[{"w":"rach-p32","n":"Préludes op. 32 n° 5, 10, 12"},{"w":"rach-et39","n":"Études-Tableaux op. 39 n° 4, 5, 6"}]},{"t":"Beethoven et Schubert, 1960","rec":"Live, Petite salle du Conservatoire, 1960","tr":[{"w":"bee-s32","n":"I. Maestoso — Allegro con brio"},{"w":"bee-s32","n":"II. Arietta"},{"w":"schu-d960","n":"I. Molto moderato"},{"w":"schu-d960","n":"II. Andante sostenuto"},{"w":"schu-d960","n":"III. Scherzo"},{"w":"schu-d960","n":"IV. Allegro ma non troppo"}]}],"ean":"2001909493007"},{"st":"wish","a":"Elena Varga","perf":"Elena Varga, piano","t":"Rachmaninov — Études-Tableaux","g":"Classique","l":"Lunare Records","y":2023,"rec":"Studio, Berlin, 2022","c1":"#3B2F5C","c2":"#E9B44C","tr":[{"w":"rach-et39","n":"Op. 39 n° 1"},{"w":"rach-et39","n":"Op. 39 n° 5"},{"w":"rach-et39","n":"Op. 39 n° 9"}],"ean":"2001917493112"},{"st":"wish","a":"Trio Notturno","t":"Live at the Arsenale","g":"Jazz","l":"Harbour Jazz","y":2022,"c1":"#123B2F","c2":"#9AD1B5","tr":["Arsenale Intro","Tide Tables","Calle Lunga","Blue Hour (live)"],"ean":"2001925493227"},{"st":"wish","a":"Matteo Rinaldi","perf":"Matteo Rinaldi, orgue","t":"Vierne — Pièces de fantaisie","g":"Orgue","l":"Fonte Viva","y":2024,"rec":"Cathédrale de Fermo, 2023","c1":"#4B2E2E","c2":"#E3B23C","tr":[{"w":"vie-clair","n":"Clair de lune"},{"w":"vie-carillon","n":"Carillon de Westminster"}],"ean":"2001933493332"},{"st":"cat","a":"Static Harbour","t":"Lighthouse Dub","g":"Trip-hop","l":"Bristol Fog","y":2006,"c1":"#1C2833","c2":"#7FB3D5","tr":["Beacon","Lighthouse Dub","Low Tide","Keeper"],"ean":"2001941493447"},{"st":"cat","a":"Quatuor Arcadie","perf":"Quatuor Arcadie","t":"Beethoven — Quatuor op. 131","g":"Classique","l":"Lunare Records","y":2019,"rec":"Studio, Paris, 2018","c1":"#3E2723","c2":"#D7CCC8","tr":[{"w":"bee-q14","n":"I. Adagio ma non troppo"},{"w":"bee-q14","n":"II. Allegro molto vivace"},{"w":"bee-q14","n":"IV. Andante"},{"w":"bee-q14","n":"VII. Allegro"}],"ean":"2001949493555"},{"st":"cat","a":"Clara Dumont","t":"Les Toits de Montmartre","g":"Chanson","l":"Disques Belleville","y":2015,"c1":"#6D2E46","c2":"#F7E1D7","tr":["Les Toits","Café Lepic","L'Accordéoniste","Sacré-Cœur à minuit"],"ean":"2001957493660"}]};
+const KEY="collezione-cd-v1";
+const $=id=>document.getElementById(id);
+const norm=s=>(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function fmtEan(c){return c.length===13?c[0]+" "+c.slice(1,7)+" "+c.slice(7):c.length===12?c[0]+" "+c.slice(1,6)+" "+c.slice(6,11)+" "+c[11]:c;}
+function validEan(c){if(!/^\d{8,13}$/.test(c))return false;if(c.length===8){const d=c.split("").map(Number);let s=0;for(let i=0;i<7;i++)s+=d[i]*(i%2?1:3);return (10-s%10)%10===d[7];}
+  const d=c.padStart(13,"0").split("").map(Number);let s=0;for(let i=0;i<12;i++)s+=d[i]*(i%2?3:1);return (10-s%10)%10===d[12];}
+
+// ---------- Données ----------
+const CAT=DEMO.albums.map((x,i)=>Object.assign({id:"d"+i},x));
+const pick=x=>{const o=JSON.parse(JSON.stringify(x));delete o.st;delete o.ean;return o;};
+function demoState(){const s={col:[],wish:[],codes:{},works:{},demo:true};CAT.forEach(x=>{if(x.st==="own"){s.col.push(pick(x));s.codes[x.ean]=x.id;}if(x.st==="wish"){s.wish.push(pick(x));s.codes[x.ean]=x.id;}});return s;}
+const emptyState=()=>({col:[],wish:[],codes:{},works:{},demo:false});
+let S=demoState();
+function adopt(o){if(o&&Array.isArray(o.col)&&Array.isArray(o.wish))S=Object.assign(emptyState(),o);}
+try{const r=localStorage.getItem(KEY);if(r)adopt(JSON.parse(r));}catch(e){}
+const WORKS=()=>Object.assign({},S.demo?DEMO.works:{},S.works);
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));$("sync").textContent="";}catch(e){$("sync").textContent="Mémoire du téléphone pleine : télécharge une sauvegarde.";}renderStats();}
+
+// Photos de pochettes : IndexedDB (plus de place que localStorage)
+const COV={};
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open("collezione-cd",1);r.onupgradeneeded=()=>r.result.createObjectStore("covers");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function covPut(id,data){const d=await idb();return new Promise((res,rej)=>{const t=d.transaction("covers","readwrite");t.objectStore("covers").put(data,id);t.oncomplete=res;t.onerror=()=>rej(t.error);});}
+async function covAll(){try{const d=await idb();return await new Promise(res=>{const out={},t=d.transaction("covers"),st=t.objectStore("covers"),rq=st.openCursor();rq.onsuccess=()=>{const c=rq.result;if(c){out[c.key]=c.value;c.continue();}else res(out);};rq.onerror=()=>res(out);});}catch(e){return {};}}
+async function covClear(){try{const d=await idb();d.transaction("covers","readwrite").objectStore("covers").clear();}catch(e){}for(const k in COV)delete COV[k];}
+
+// ---------- Aides ----------
+const discsOf=x=>x.discs||[{tr:x.tr||[]}];
+const tracksOf=x=>discsOf(x).flatMap(d=>d.tr);
+const tName=t=>typeof t==="string"?t:t.n;
+const wLabel=w=>{const o=WORKS()[w];return o?o.t+(o.cat?", "+o.cat:""):"";};
+const isWish=id=>S.wish.some(x=>x.id===id);
+const byId=id=>S.col.find(x=>x.id===id)||S.wish.find(x=>x.id===id);
+const codeOf=id=>Object.keys(S.codes).find(k=>S.codes[k]===id);
+function sleeve(x){const seed=[...x.t].reduce((s,c)=>s+c.charCodeAt(0),0),r=40+seed%60,cx=60+seed%80,cy=50+(seed>>3)%90;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="${x.c1}"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="${x.c2}" opacity=".9"/><circle cx="${cx}" cy="${cy}" r="${r*.18}" fill="${x.c1}"/><rect x="0" y="150" width="200" height="50" fill="${x.c1}" opacity=".85"/><text x="12" y="172" font-family="Georgia,serif" font-size="13" fill="${x.c2}">${esc(x.a)}</text><text x="12" y="189" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#fff" opacity=".8">${esc(x.t.slice(0,34))}</text></svg>`;
+  return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);}
+const coverUrl=x=>COV[x.id]||x.img||(x.c1?sleeve(x):"");
+function versions(){const v={};[[S.col,true],[S.wish,false]].forEach(([arr,own])=>arr.forEach(x=>discsOf(x).forEach((d,di)=>{
+  const seen=new Set();d.tr.forEach(t=>{if(typeof t!=="string"&&t.w&&!seen.has(t.w)){seen.add(t.w);(v[t.w]=v[t.w]||[]).push({x,di,d,own});}});})));return v;}
+function renderStats(){const cds=S.col.reduce((n,x)=>n+discsOf(x).length,0);
+  $("stats").textContent=S.col.length+" titres ("+cds+" CD) · "+S.wish.length+" envies · "+Object.keys(versions()).length+" œuvres classiques";
+  $("demoTag").hidden=!S.demo;}
+
+// ---------- Listes ----------
+let tab="col";
+const matches=(x,q)=>{const W=WORKS();return !q||norm([x.a,x.t,x.g,x.l,x.perf,x.y,...discsOf(x).map(d=>(d.t||"")+" "+(d.rec||"")),...tracksOf(x).map(t=>typeof t==="string"?t:t.n+" "+(W[t.w]?W[t.w].c+" "+wLabel(t.w):""))].join(" ")).includes(q);};
+function render(){
+  const q=norm($("q").value.trim()),ul=$("list");
+  ["Col","Wish","Comp"].forEach(k=>$("tab"+k).setAttribute("aria-selected",!q&&tab===k.toLowerCase()));
+  if(!q&&tab==="comp"){renderComposers();return;}
+  const rows=q?S.col.filter(x=>matches(x,q)).map(x=>[x,"own"]).concat(S.wish.filter(x=>matches(x,q)).map(x=>[x,"wish"])):(tab==="col"?S.col.map(x=>[x,"own"]):S.wish.map(x=>[x,"wish"]));
+  ul.innerHTML=rows.length?rows.map(([x,k])=>{const c=codeOf(x.id),cu=coverUrl(x);
+    return `<li class="item tap" data-open="${x.id}">${cu?`<img class="cover" src="${cu}" alt="" loading="lazy">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${x.box?" · Coffret "+discsOf(x).length+" CD":" · "+tracksOf(x).length+" pistes"}</small>${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
+    (k==="own"?`<span class="chip own">Possédé</span>`:`<button class="small" data-buy="${x.id}" type="button">Acheté</button><button class="small" data-del="${x.id}" type="button" aria-label="Retirer des envies">✕</button>`)+`</li>`}).join("")
+    :`<li class="empty">${q?"Rien trouvé : tu ne l'as pas.":(tab==="col"?"Collection vide. Touche SCAN pour ajouter ton premier disque.":"Aucune envie pour l'instant.")}</li>`;}
+function renderComposers(){const v=versions(),W=WORKS(),byC={};
+  Object.keys(v).forEach(w=>{const o=W[w];if(!o)return;const c=o.c||"Compositeur inconnu";(byC[c]=byC[c]||[]).push(w);});
+  const comps=Object.keys(byC).sort((a,b)=>a.localeCompare(b,"fr"));
+  $("list").innerHTML=comps.map(c=>{
+    const cyc={};byC[c].forEach(w=>{const o=W[w];if(o.cy&&v[w].some(e=>e.own))(cyc[o.cy]=cyc[o.cy]||{of:o.of,n:[]}).n.push(o.n);});
+    const cycTxt=Object.entries(cyc).map(([k,o])=>`<span>${esc(k)} : ${o.n.length} sur ${o.of} (n° ${o.n.sort((a,b)=>a-b).join(", ")})</span>`).join("");
+    return `<li class="compo"><h3>${esc(c)}</h3>${cycTxt?`<p class="facts">${cycTxt}</p>`:""}<ul class="works">`+
+      byC[c].sort((a,b)=>W[a].t.localeCompare(W[b].t,"fr",{numeric:true})).map(w=>{const vs=v[w],own=vs.filter(e=>e.own).length;
+        return `<li class="item tap" data-work="${esc(w)}"><div class="meta"><b>${esc(wLabel(w))}</b><small>${own} version${own>1?"s":""} possédée${own>1?"s":""}${vs.length>own?" · "+(vs.length-own)+" en envie":""}</small></div><span class="count">${vs.length}</span></li>`;}).join("")+`</ul></li>`;}).join("")||`<li class="empty">Aucune œuvre classique repérée pour l'instant.</li>`;}
+function buy(id){const i=S.wish.findIndex(x=>x.id===id);if(i<0)return;S.col.push(S.wish.splice(i,1)[0]);save();render();}
+$("list").addEventListener("click",e=>{const b=e.target.closest("button");
+  if(!b){const wk=e.target.closest("[data-work]");if(wk){openWork(wk.dataset.work);return;}const o=e.target.closest("[data-open]");if(o)openDetail(o.dataset.open);return;}
+  if(b.dataset.buy)buy(b.dataset.buy);
+  if(b.dataset.del){const id=b.dataset.del;S.wish=S.wish.filter(x=>x.id!==id);for(const k in S.codes)if(S.codes[k]===id)delete S.codes[k];save();render();}});
+$("q").addEventListener("input",render);
+$("tabCol").onclick=()=>{tab="col";render()};$("tabWish").onclick=()=>{tab="wish";render()};$("tabComp").onclick=()=>{tab="comp";render()};
+
+// ---------- Caméra ----------
+let stream=null,detector=null,scanning=false;
+async function startCam(){const msg=$("camMsg");
+  if(!("BarcodeDetector" in window)){msg.textContent="La lecture par caméra n'est pas disponible sur ce navigateur. Tape le code ci-dessous.";return;}
+  try{detector=detector||new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e"]});
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false});
+    const v=$("cam");v.srcObject=stream;await v.play();$("camWrap").hidden=false;msg.textContent="Vise le code-barres, bien à plat.";scanning=true;loop();
+  }catch(e){msg.textContent="Caméra indisponible ("+(e.name==="NotAllowedError"?"autorisation refusée":"erreur")+"). Tape le code ci-dessous.";}}
+function stopCam(){scanning=false;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}$("camWrap").hidden=true;}
+async function loop(){if(!scanning)return;try{const r=await detector.detect($("cam"));if(r.length){const c=r[0].rawValue.replace(/\D/g,"");if(validEan(c)){navigator.vibrate?.(60);$("ean").value=c;stopCam();$("camMsg").textContent="Code lu.";check();return;}}}catch(e){}setTimeout(loop,180);}
+
+// ---------- SCAN ----------
+function demoButtons(){$("demoCodes").innerHTML=S.demo?`<p class="hint">Codes de démo, touche-en un pour simuler le scan :</p><div class="codes">`+CAT.map(x=>`<button type="button" data-code="${x.ean}" title="${esc(x.t)}">${fmtEan(x.ean)}</button>`).join("")+`</div>`:"";}
+$("demoCodes").onclick=e=>{const b=e.target.closest("[data-code]");if(b){stopCam();$("ean").value=b.dataset.code;check();}};
+$("scanBtn").onclick=()=>{$("scanPanel").hidden=false;$("eanResult").innerHTML="";$("ean").value="";demoButtons();startCam();};
+$("eanClose").onclick=()=>{stopCam();$("scanPanel").hidden=true;};
+$("ean").addEventListener("keydown",e=>{if(e.key==="Enter")check();});
+$("eanGo").onclick=()=>{stopCam();check();};
+let cur="";
+async function check(){
+  const c=$("ean").value.replace(/\D/g,""),out=$("eanResult"),msg=$("eanMsg");
+  if(c.length!==8&&(c.length<12||c.length>13)){msg.className="hint err";msg.textContent="Il faut 8, 12 ou 13 chiffres ("+c.length+" saisis).";out.innerHTML="";return;}
+  msg.className="hint";msg.textContent=validEan(c)?"Code valide : "+fmtEan(c):"Attention : la clé de contrôle ne correspond pas, vérifie une faute de frappe.";
+  cur=c;const id=S.codes[c],x=id&&byId(id);
+  if(x){const own=!isWish(x.id);
+    out.innerHTML=`<div class="verdict ${own?"own":"wish"}"><strong>${own?"Tu l'as déjà":"Il est dans tes envies"}</strong><span>${esc(x.t)} · ${esc(x.a)}</span></div><div class="row"><button type="button" id="seeIt">Voir la fiche</button>${own?"":`<button class="primary" id="buyNow" type="button">Je l'achète</button>`}</div>`;
+    $("seeIt").onclick=()=>openDetail(x.id);if(!own)$("buyNow").onclick=()=>{buy(x.id);check();};return;}
+  let f=S.demo?CAT.find(x=>x.ean===c):null,src="catalogue de démo";
+  if(!f){out.innerHTML=`<p class="hint">Recherche sur MusicBrainz…</p>`;
+    try{f=await mbLookup(c);src="MusicBrainz";}catch(e){out.innerHTML=`<div class="verdict wish"><strong>Recherche impossible</strong><span>${esc(e.message)}</span></div>`;manual(out,true);return;}
+    if(cur!==c)return;}
+  if(f){const box=discsOf(f).length>1;
+    out.innerHTML=`<div class="verdict wish"><strong>Pas dans ta collection</strong><span>Trouvé (${src}) :</span></div>
+    <div class="found"><img src="${coverUrl(f)}" alt="" onerror="this.style.visibility='hidden'"><div class="meta"><b>${esc(f.t)}</b><small>${esc(f.a)}${f.l?" · "+esc(f.l):""}${f.y?" · "+f.y:""} · ${box?discsOf(f).length+" CD · ":""}${tracksOf(f).length} pistes</small></div></div>
+    <div class="row"><button class="primary" id="addCol" type="button">Je l'achète</button><button id="addWish" type="button">Ajouter aux envies</button></div>`;
+    const add=w=>{const n=pick(f);if(f.newWorks)Object.assign(S.works,f.newWorks);delete n.newWorks;(w?S.wish:S.col).push(n);S.codes[c]=n.id;save();render();check();};
+    $("addCol").onclick=()=>add(false);$("addWish").onclick=()=>add(true);return;}
+  out.innerHTML=`<div class="verdict wish"><strong>Code inconnu</strong><span>Introuvable sur MusicBrainz. Saisis-le à la main.</span></div>`;manual(out,true);}
+function manual(out,append){out.insertAdjacentHTML("beforeend",`<label for="fa">Artiste / compositeur</label><input id="fa" type="text" autocomplete="off">
+  <label for="ft">Album / œuvre et interprète</label><input id="ft" type="text" autocomplete="off">
+  <div class="row"><button class="primary" id="addCol" type="button">Ajouter à la collection</button><button id="addWish" type="button">Ajouter aux envies</button></div>`);
+  const msg=$("eanMsg"),c=cur;
+  const add=w=>{const a=$("fa").value.trim(),t=$("ft").value.trim();if(!a||!t){msg.className="hint err";msg.textContent="Remplis l'artiste et l'album.";return;}
+    const n={id:"m"+Date.now(),a,t,tr:[]};(w?S.wish:S.col).push(n);S.codes[c]=n.id;save();render();check();};
+  $("addCol").onclick=()=>add(false);$("addWish").onclick=()=>add(true);}
+
+// ---------- MusicBrainz ----------
+const MB="https://musicbrainz.org/ws/2/";
+let lastMb=0;
+async function mbGet(path){const wait=Math.max(0,1100-(Date.now()-lastMb));if(wait)await new Promise(r=>setTimeout(r,wait));lastMb=Date.now();
+  const r=await fetch(MB+path+(path.includes("?")?"&":"?")+"fmt=json",{headers:{Accept:"application/json"}});
+  if(r.status===503)throw new Error("MusicBrainz est surchargé, réessaie dans quelques secondes.");
+  if(!r.ok)throw new Error("MusicBrainz a répondu "+r.status+".");return r.json();}
+const credit=ac=>(ac||[]).map(a=>(a.name||a.artist&&a.artist.name||"")+(a.joinphrase||"")).join("").trim();
+async function mbLookup(code){
+  if(!navigator.onLine)throw new Error("Pas de connexion Internet. Saisis le disque à la main, tu compléteras plus tard.");
+  const s=await mbGet("release/?query=barcode:"+code+"&limit=5");
+  const rel=(s.releases||[]).find(r=>r.barcode===code)||(s.releases||[])[0];if(!rel)return null;
+  const d=await mbGet("release/"+rel.id+"?inc=artist-credits+labels+recordings+media+recording-level-rels+work-rels+work-level-rels+artist-rels");
+  const newWorks={},perfs=new Set();
+  const discs=(d.media||[]).map(m=>({t:m.title||"",tr:(m.tracks||[]).map(tk=>{const rec=tk.recording||{};
+    const pr=(rec.relations||[]).find(x=>x.type==="performance"&&x.work);
+    (rec.relations||[]).forEach(x=>{if(["instrument","vocal","conductor","performing orchestra","performer"].includes(x.type)&&x.artist)perfs.add(x.artist.name);});
+    if(pr){const w=pr.work,comp=(w.relations||[]).find(x=>x.type==="composer"&&x.artist);
+      newWorks["mb:"+w.id]={c:comp?comp.artist.name:"",t:w.title,cat:""};return {w:"mb:"+w.id,n:tk.title};}
+    return tk.title;})}));
+  const lab=(d["label-info"]||[]).find(l=>l.label);
+  const a={id:"mb"+d.id,a:credit(d["artist-credit"])||"Artiste inconnu",t:d.title,l:lab?lab.label.name:"",y:(d.date||"").slice(0,4),
+    img:"https://coverartarchive.org/release/"+d.id+"/front-250",mbid:d.id,newWorks};
+  if(perfs.size)a.perf=[...perfs].slice(0,4).join(", ");
+  if(discs.length>1){a.discs=discs;a.box=true;}else{a.tr=discs[0]?discs[0].tr:[];if(discs[0]&&discs[0].t)a.discs=discs;}
+  return a;}
+
+// ---------- Fiches ----------
+function openWork(w){const o=WORKS()[w],vs=versions()[w]||[],p=$("detail");if(!o)return;
+  p.innerHTML=`<p class="cat">${esc(o.c)}</p><h2 class="wh">${esc(wLabel(w))}</h2><p class="hint">${vs.length} version${vs.length>1?"s":""} dans ta collection et tes envies</p>
+   <ul class="list">${vs.map(e=>`<li class="item tap" data-open="${e.x.id}"><img class="cover" src="${coverUrl(e.x)}" alt=""><div class="meta"><b>${esc(e.x.perf||e.x.a)}</b><small>${esc(e.d.rec||e.x.rec||e.x.y||"")}${e.d.t?" · "+esc(e.d.t):""}</small><small>${esc(e.x.t)}${e.x.box?" · CD "+(e.di+1):""}</small></div><span class="chip ${e.own?"own":"wish"}">${e.own?"Possédé":"Envie"}</span></li>`).join("")}</ul>
+   <div class="row"><button type="button" id="detClose">Fermer</button></div>`;
+  p.hidden=false;p.scrollIntoView?.({behavior:"smooth",block:"start"});$("detClose").onclick=()=>{p.hidden=true;};
+  p.querySelectorAll("[data-open]").forEach(n=>n.onclick=()=>openDetail(n.dataset.open));}
+function openDetail(id){const x=byId(id);if(!x)return;const p=$("detail"),cu=coverUrl(x),own=!isWish(id),c=codeOf(id),W=WORKS(),V=versions();
+  const multi=discsOf(x).length>1;
+  const tracks=tracksOf(x).length?discsOf(x).map((d,di)=>{let h=(multi||d.rec||d.t)?`<p class="discH">${multi?"CD "+(di+1)+(d.t?" · "+esc(d.t):""):(d.t?esc(d.t):"")}${d.rec&&!multi?esc(d.rec):""}</p>${multi&&d.rec?`<p class="hint">${esc(d.rec)}</p>`:""}`:"";
+      let cw=null,open=false;d.tr.forEach(t=>{const w=typeof t==="string"?null:t.w;
+        if(w!==cw||!open){if(open)h+="</ol>";if(w&&W[w])h+=`<button type="button" class="work" data-work="${esc(w)}">${W[w].c?esc(W[w].c)+" — ":""}${esc(wLabel(w))}<span>${(V[w]||[]).length} version${(V[w]||[]).length>1?"s":""}</span></button>`;h+="<ol class='tracks'>";open=true;cw=w;}
+        h+=`<li>${esc(tName(t))}</li>`;});return h+(open?"</ol>":"");}).join("")
+    :`<p class="hint">Pas encore de liste de pistes. Colle-la ici, une piste par ligne :</p><textarea id="trIn" aria-label="Pistes"></textarea><button type="button" id="trSave">Enregistrer les pistes</button>`;
+  p.innerHTML=`<div class="detail"><div class="sleeve">${cu?`<img src="${cu}" alt="Pochette de ${esc(x.t)}" onerror="this.remove()">`:"Pas de pochette"}</div>
+   <div class="meta"><h2>${esc(x.t)}</h2><p class="by">${esc(x.a)}</p>
+   ${x.perf?`<p class="by">${esc(x.perf)}</p>`:""}<p class="facts">${x.box?`<span>Coffret ${discsOf(x).length} CD</span>`:""}${x.l?`<span>${esc(x.l)}</span>`:""}${x.y?`<span>${esc(x.y)}</span>`:""}${x.g?`<span>${esc(x.g)}</span>`:""}</p>
+   <p><span class="chip ${own?"own":"wish"}">${own?"Possédé":"Envie"}</span> ${c?`<span class="code">${fmtEan(c)}</span>`:""}</p>
+   <div class="row"><label class="filebtn">${COV[id]?"Changer la pochette":"Photographier la pochette"}<input id="coverIn" type="file" accept="image/*" capture="environment"></label><button type="button" id="detClose">Fermer</button></div>
+   <p class="hint" id="covMsg">${x.mbid?`<a href="https://musicbrainz.org/release/${x.mbid}" target="_blank" rel="noopener">Voir sur MusicBrainz</a>`:""}</p></div></div>${tracks}`;
+  p.hidden=false;p.scrollIntoView?.({behavior:"smooth",block:"start"});
+  $("detClose").onclick=()=>{p.hidden=true;};
+  p.querySelectorAll("[data-work]").forEach(n=>n.onclick=()=>openWork(n.dataset.work));
+  $("coverIn").onchange=async e=>{const f=e.target.files[0];if(!f)return;$("covMsg").textContent="Enregistrement de la pochette…";
+    try{const data=await shrink(f);await covPut(id,data);COV[id]=data;openDetail(id);render();}catch(err){$("covMsg").textContent="Impossible d'enregistrer la photo.";}};
+  if($("trSave"))$("trSave").onclick=()=>{const l=$("trIn").value.split(/\n/).map(s=>s.replace(/^\s*\d+[.)\-\s]+/,"").trim()).filter(Boolean);if(!l.length)return;x.tr=l;save();openDetail(id);};}
+async function shrink(file,max=500){const bmp=await createImageBitmap(file);const k=Math.min(1,max/Math.max(bmp.width,bmp.height));
+  const cv=document.createElement("canvas");cv.width=Math.round(bmp.width*k);cv.height=Math.round(bmp.height*k);cv.getContext("2d").drawImage(bmp,0,0,cv.width,cv.height);
+  return cv.toDataURL("image/jpeg",0.82);}
+
+// ---------- Sauvegarde ----------
+$("dlB").onclick=()=>{const blob=new Blob([JSON.stringify(S,null,1)],{type:"application/json"});const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download="collezione-cd-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();$("bMsg").textContent="Sauvegarde téléchargée.";};
+$("upB").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(!Array.isArray(o.col))throw 0;adopt(o);save();render();$("bMsg").textContent="Sauvegarde restaurée.";}catch(err){$("bMsg").textContent="Ce fichier n'est pas une sauvegarde de Collezione CD.";}};
+$("wipe").onclick=()=>{$("wipeConfirm").hidden=false;};$("wipeNo").onclick=()=>{$("wipeConfirm").hidden=true;};
+$("wipeYes").onclick=async()=>{S=emptyState();await covClear();save();render();$("wipeConfirm").hidden=true;$("detail").hidden=true;$("bMsg").textContent="Collection vidée. À toi de jouer.";};
+
+// ---------- Démarrage ----------
+renderStats();render();
+covAll().then(o=>{Object.assign(COV,o);render();});
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
