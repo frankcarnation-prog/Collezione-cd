@@ -115,6 +115,10 @@ textarea.edit{height:220px;font-family:var(--mono);font-size:.8rem;line-height:1
 .catrow{margin-top:8px}.catrow input{flex:1;min-width:0}
 .pick{width:100%;text-align:left;display:flex;gap:10px;align-items:center;margin-top:6px}
 .pick img{width:44px;height:44px;object-fit:cover;border-radius:4px;flex:none}
+.keybox{margin:12px 0 4px}.keybox .row input{flex:1;min-width:0}
+details.alt{margin-top:12px}details.alt summary{cursor:pointer;color:var(--muted);font-size:.9rem}
+.hint code{font-family:var(--mono);font-size:.78rem}
+button.danger{color:#c0392b;border-color:#c0392b}
 </style>
 </head>
 <body>
@@ -151,7 +155,7 @@ textarea.edit{height:220px;font-family:var(--mono);font-size:.8rem;line-height:1
 <ul class="list" id="list"></ul>
 <p class="empty" id="more" hidden></p>
 
-<details><summary>Sauvegarde et réglages</summary>
+<details><summary>Réglages : clés IA et Discogs, sauvegarde</summary>
 <p>Ta collection est enregistrée sur ce téléphone. Télécharge une sauvegarde de temps en temps (les photos de pochettes n'y sont pas incluses).</p>
 <div class="row"><button id="dlB" type="button">Télécharger la sauvegarde</button><label class="filebtn">Restaurer un fichier<input id="upB" type="file" accept="application/json,.json"></label></div>
 <label for="dgKey">Jeton Discogs (facultatif, deuxième source + n° de catalogue)</label>
@@ -231,9 +235,13 @@ function render(){
     return `<li class="item tap" data-open="${x.id}">${cu?`<img class="cover" src="${cu}" alt="" loading="lazy">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${x.box?" · Coffret "+discsOf(x).length+" CD":" · "+tracksOf(x).length+" pistes"}</small>${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
     (k==="own"?`<span class="chip own">Possédé</span>`:`<button class="small" data-buy="${x.id}" type="button">Acheté</button><button class="small" data-del="${x.id}" type="button" aria-label="Retirer des envies">✕</button>`)+`</li>`}).join("")
     :`<li class="empty">${q?"Rien trouvé : tu ne l'as pas.":(tab==="col"?"Collection vide. Touche SCAN pour ajouter ton premier disque.":"Aucune envie pour l'instant.")}</li>`;}
+// Regroupe "Chopin" et "Frédéric Chopin" sous le même compositeur (clé = nom de famille)
+const compKey=c=>{const p=norm(c).replace(/\(.*?\)/g,"").trim().split(/[\s,]+/).filter(Boolean);return p.length?p[p.length-1].replace(/[^a-z-]/g,""):norm(c);};
 function renderComposers(){const v=versions(),W=WORKS(),byC={};
-  Object.keys(v).forEach(w=>{const o=W[w];if(!o)return;const c=o.c||"Compositeur inconnu";(byC[c]=byC[c]||[]).push(w);});
-  const comps=Object.keys(byC).sort((a,b)=>a.localeCompare(b,"fr"));
+  const disp={};
+  Object.keys(v).forEach(w=>{const o=W[w];if(!o||!o.c)return;const k=compKey(o.c);if(!disp[k]||o.c.length>disp[k].length)disp[k]=o.c;(byC[k]=byC[k]||[]).push(w);});
+  Object.keys(byC).forEach(k=>{if(disp[k]!==k){byC[disp[k]]=(byC[disp[k]]||[]).concat(byC[k]);delete byC[k];}});
+  const comps=Object.keys(byC).sort((a,b)=>compKey(a).localeCompare(compKey(b),"fr"));
   $("list").innerHTML=comps.map(c=>{
     const cyc={};byC[c].forEach(w=>{const o=W[w];if(o.cy&&v[w].some(e=>e.own))(cyc[o.cy]=cyc[o.cy]||{of:o.of,n:[]}).n.push(o.n);});
     const cycTxt=Object.entries(cyc).map(([k,o])=>`<span>${esc(k)} : ${o.n.length} sur ${o.of} (n° ${o.n.sort((a,b)=>a-b).join(", ")})</span>`).join("");
@@ -409,9 +417,13 @@ function openDetail(id){const x=byId(id);if(!x)return;const p=$("detail"),cu=cov
    ${x.perf?`<p class="by">${esc(x.perf)}</p>`:""}<p class="facts">${x.box?`<span>Coffret ${discsOf(x).length} CD</span>`:""}${x.l?`<span>${esc(x.l)}</span>`:""}${x.y?`<span>${esc(x.y)}</span>`:""}${x.g?`<span>${esc(x.g)}</span>`:""}</p>
    <p><span class="chip ${own?"own":"wish"}">${own?"Possédé":"Envie"}</span> ${c?`<span class="code">${fmtEan(c)}</span>`:""}</p>
    <div class="row"><label class="filebtn">${COV[id]?"Changer la pochette":"Photographier la pochette"}<input id="coverIn" type="file" accept="image/*" capture="environment"></label><button type="button" id="detClose">Fermer</button></div>
+   <div class="row"><button type="button" class="small" id="detEdit">Modifier les pistes</button><button type="button" class="small" id="detRead">Relire en photo (IA)</button><button type="button" class="small" id="detDel">Supprimer</button></div>
    <p class="hint" id="covMsg"></p>${x.mbid?`<p class="hint"><a href="https://musicbrainz.org/release/${x.mbid}" target="_blank" rel="noopener">Voir sur MusicBrainz</a> · <button type="button" class="small" id="mbRefresh">Actualiser</button></p>`:""}${x.dgid?`<p class="hint"><a href="https://www.discogs.com/release/${x.dgid}" target="_blank" rel="noopener">Voir sur Discogs</a>${x.cat?" · "+esc(x.cat):""}</p>`:""}</div></div>${tracks}`;
   openSheet();
   $("detClose").onclick=()=>closeSheet();
+  $("detEdit").onclick=()=>editTracks(id);$("detRead").onclick=()=>openReader(id);
+  $("detDel").onclick=()=>{const b=$("detDel");if(b.dataset.sure){S.col=S.col.filter(y=>y.id!==id);S.wish=S.wish.filter(y=>y.id!==id);for(const k in S.codes)if(S.codes[k]===id)delete S.codes[k];save();render();closeSheet();return;}
+    b.dataset.sure="1";b.textContent="Confirmer la suppression";b.classList.add("danger");};
   if($("mbRefresh"))$("mbRefresh").onclick=async()=>{$("covMsg").textContent="Mise à jour depuis MusicBrainz…";
     try{const f=await mbRelease(x.mbid);Object.assign(S.works,f.newWorks);["a","t","l","y","perf","tr","discs","box","img"].forEach(k=>{delete x[k];if(f[k]!==undefined)x[k]=f[k];});save();render();openDetail(id);}
     catch(err){$("covMsg").textContent=err.message;}};
@@ -427,66 +439,105 @@ async function shrink(file,max=500){const bmp=await createImageBitmap(file);cons
 // ---------- Lecture photo de la pochette ----------
 const READ_PROMPT=`Tu reçois la photo du recto et/ou du verso d'un CD. Recopie uniquement ce qui est lisible, sans rien inventer ni compléter de mémoire.
 Réponds avec ce JSON seul, sans texte autour :
-{"titre":"","artiste":"","label":"","pistes":[{"n":1,"titre":"","duree":"m:ss"}]}
-- titre, artiste, label : lus sur le recto (laisse "" si absent).
-- pistes : lues sur le verso, dans l'ordre. "titre" = le titre complet tel qu'imprimé (compositeur, œuvre et mouvement si présents). "duree" = "" si absente.
-- S'il y a plusieurs CD, ajoute "cd":2 (etc.) aux pistes concernées.`;
-let shots={recto:null,verso:null},coverShot=null;
+{"titre":"","artiste":"","label":"","compositeur":"","pistes":[{"cd":1,"n":1,"compositeur":"","oeuvre":"","titre":"","duree":"m:ss"}]}
+- titre, artiste, label : lus sur le recto ("" si absent). "compositeur" : le compositeur principal du disque s'il y en a un, sinon "".
+- pistes : toutes, dans l'ordre. "cd" = numéro du disque (1 s'il n'y en a qu'un).
+- Musique classique : "compositeur" = nom du compositeur de la piste ; "oeuvre" = l'œuvre ou le recueil auquel elle appartient, tel qu'imprimé (ex. "Sonate pour piano n° 2 en si bémol mineur, op. 35", "Nocturnes", "Mazurkas") ; "titre" = le mouvement ou la pièce dans l'œuvre (ex. "I. Grave – Doppio movimento", "N° 2 en mi bémol majeur, op. 9 n° 2"). Une œuvre en un seul morceau : "oeuvre" = son titre, "titre" = "".
+- Autres musiques : "compositeur" et "oeuvre" = "", "titre" = le titre de la piste.
+- "duree" = "" si absente.`;
+let shots={recto:null,verso:null},coverShot=null,readTarget=null;
 function getKey(){try{return localStorage.getItem("anthropic-key")||"";}catch(e){return "";}}
+function setKey(v){try{localStorage.setItem("anthropic-key",v.trim());}catch(e){}if($("apiKey"))$("apiKey").value=v.trim();}
 $("apiKey").value=getKey();
-$("apiKey").addEventListener("change",e=>{try{localStorage.setItem("anthropic-key",e.target.value.trim());}catch(err){}});
+$("apiKey").addEventListener("change",e=>setKey(e.target.value));
 $("photoRead").onclick=()=>{stopCam();const v=$("ean").value.replace(/\D/g,"");cur=v.length>=8?v:"";openReader();};
-function openReader(){shots={recto:null,verso:null};coverShot=null;const p=$("detail"),key=getKey();
-  p.innerHTML=`<p class="cat">Lecture de la pochette</p><h2 class="wh">Photographie le recto et le verso</h2>
+function openReader(target){readTarget=typeof target==="string"?target:null;shots={recto:null,verso:null};coverShot=null;const p=$("detail"),key=getKey(),tx=readTarget&&byId(readTarget);
+  p.innerHTML=`<p class="cat">${tx?"Relecture : "+esc(tx.t):"Lecture de la pochette"}</p><h2 class="wh">Photographie le recto et le verso</h2>
   <div class="shots">${["recto","verso"].map(s=>`<label class="shot" id="sh-${s}"><b>${s==="recto"?"Recto":"Verso"}</b><span>${s==="recto"?"titre, artiste, label":"liste des pistes"}</span><input type="file" accept="image/*" capture="environment" data-shot="${s}"></label>`).join("")}</div>
-  ${key?`<button class="primary" id="readGo" type="button">Lire les photos</button>`:
-  `<p class="hint">Sans clé d'API : envoie les deux photos dans l'app Claude avec ce message, puis colle sa réponse ici.</p>
+  <div class="keybox"><label for="keyIn">Clé d'API Anthropic</label>
+   <div class="row"><input id="keyIn" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…" value="${esc(key)}"><button type="button" id="keyShow" class="small">Voir</button></div>
+   <p class="hint">Gardée uniquement sur ce téléphone. À créer sur console.anthropic.com (crédit prépayé, distinct de l'abonnement Claude).</p></div>
+  <button class="primary" id="readGo" type="button">Lire les photos</button>
+  <details class="alt"><summary>Sans clé : passer par l'app Claude</summary>
+   <p class="hint">Envoie les deux photos dans l'app Claude avec ce message, puis colle sa réponse ici.</p>
    <div class="row"><button type="button" id="copyPrompt">Copier le message pour Claude</button></div>
    <textarea id="pasteIn" class="edit" aria-label="Réponse de Claude" placeholder="Colle ici la réponse de Claude…"></textarea>
-   <button class="primary" id="pasteGo" type="button">Utiliser cette réponse</button>`}
+   <button id="pasteGo" type="button">Utiliser cette réponse</button></details>
   <p class="hint" id="readMsg"></p><div id="readOut"></div>`;
   openSheet();
+  $("keyIn").addEventListener("change",e=>setKey(e.target.value));
+  $("keyShow").onclick=()=>{const i=$("keyIn");i.type=i.type==="password"?"text":"password";$("keyShow").textContent=i.type==="password"?"Voir":"Masquer";};
   p.querySelectorAll("[data-shot]").forEach(inp=>inp.onchange=async e=>{const f=e.target.files[0];if(!f)return;const s=inp.dataset.shot;
     shots[s]=await shrink(f,1400);if(s==="recto")coverShot=await shrink(f,500);const box=$("sh-"+s);box.querySelector("img")?.remove();const im=document.createElement("img");im.src=shots[s];im.alt="";box.prepend(im);});
-  if($("readGo"))$("readGo").onclick=readWithApi;
-  if($("copyPrompt"))$("copyPrompt").onclick=()=>{const done=()=>$("readMsg").textContent="Message copié. Colle-le dans Claude avec les deux photos.";
+  $("readGo").onclick=()=>{setKey($("keyIn").value);readWithApi();};
+  $("copyPrompt").onclick=()=>{const done=()=>$("readMsg").textContent="Message copié. Colle-le dans Claude avec les deux photos.";
     const p2=navigator.clipboard?.writeText(READ_PROMPT);if(p2)p2.then(done,()=>{$("pasteIn").value=READ_PROMPT;$("pasteIn").select();$("readMsg").textContent="Copie le message sélectionné à la main, puis efface-le.";});};
-  if($("pasteGo"))$("pasteGo").onclick=()=>{try{showRead(parseRead($("pasteIn").value));}catch(err){$("readMsg").textContent=err.message;}};}
+  $("pasteGo").onclick=()=>{try{showRead(parseRead($("pasteIn").value));}catch(err){$("readMsg").textContent=err.message;}};}
 async function readWithApi(){const m=$("readMsg");const imgs=["recto","verso"].filter(s=>shots[s]);
+  if(!getKey()){m.textContent="Colle d'abord ta clé d'API, ou utilise l'option sans clé.";$("keyIn").focus();return;}
   if(!imgs.length){m.textContent="Prends au moins une photo.";return;}
   if(!navigator.onLine){m.textContent="Pas de connexion Internet.";return;}
-  m.textContent="Lecture en cours…";$("readGo").disabled=true;
+  m.textContent="Lecture en cours… (10 à 30 secondes)";$("readGo").disabled=true;
   const content=[];imgs.forEach(s=>{content.push({type:"text",text:s==="recto"?"Recto :":"Verso :"});content.push({type:"image",source:{type:"base64",media_type:"image/jpeg",data:shots[s].split(",")[1]}});});
   content.push({type:"text",text:READ_PROMPT});
   try{const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":getKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:"claude-haiku-5-5",max_tokens:4000,messages:[{role:"user",content}]})});
+      body:JSON.stringify({model:"claude-haiku-5-5",max_tokens:8000,messages:[{role:"user",content}]})});
     const j=await r.json();
-    if(!r.ok)throw new Error(r.status===401?"Clé d'API refusée : vérifie-la dans les réglages.":"Erreur de lecture ("+(j.error&&j.error.message||r.status)+").");
+    if(!r.ok)throw new Error(r.status===401?"Clé d'API refusée : vérifie-la.":r.status===400&&/credit/i.test(j.error&&j.error.message||"")?"Plus de crédit sur ton compte API.":"Erreur de lecture ("+(j.error&&j.error.message||r.status)+").");
     const txt=(j.content||[]).filter(c=>c.type==="text").map(c=>c.text).join("\n");
     showRead(parseRead(txt));m.textContent="Vérifie et corrige si besoin avant d'enregistrer.";
   }catch(err){m.textContent=err.message||"La lecture a échoué.";}
   finally{if($("readGo"))$("readGo").disabled=false;}}
 function parseRead(txt){const a=txt.indexOf("{"),b=txt.lastIndexOf("}");if(a<0||b<a)throw new Error("Je ne trouve pas de réponse au bon format.");
   let o;try{o=JSON.parse(txt.slice(a,b+1));}catch(e){throw new Error("La réponse n'est pas lisible. Recopie-la entière.");}
-  return {titre:o.titre||"",artiste:o.artiste||"",label:o.label||"",pistes:Array.isArray(o.pistes)?o.pistes:[]};}
-const toSec=s=>{const m=String(s||"").match(/(\d+)[:'′.](\d{1,2})/);return m?(+m[1])*60+(+m[2]):0;};
-function showRead(r){const lines=r.pistes.map((t,i)=>`${t.cd&&t.cd>1?"CD"+t.cd+" ":""}${t.n||i+1} | ${t.titre||""} | ${t.duree||""}`).join("\n");
-  $("readOut").innerHTML=`<label for="rT">Titre du CD</label><input id="rT" type="text" value="${esc(r.titre)}">
-   <label for="rA">Artiste</label><input id="rA" type="text" value="${esc(r.artiste)}">
-   <label for="rL">Maison de disque</label><input id="rL" type="text" value="${esc(r.label)}">
-   <label for="rP">Pistes (n° | titre | durée)</label><textarea id="rP" class="edit">${esc(lines)}</textarea>
-   ${cur?`<p class="hint">Code-barres associé : ${fmtEan(cur)}</p>`:""}
-   <div class="row"><button class="primary" id="rCol" type="button">Ajouter à la collection</button><button id="rWish" type="button">Ajouter aux envies</button></div>`;
+  return {titre:o.titre||"",artiste:o.artiste||"",label:o.label||"",compositeur:o.compositeur||"",pistes:Array.isArray(o.pistes)?o.pistes:[]};}
+const toSec=s=>{const m=String(s||"").match(/(?:(\d+):)?(\d+)[:'′.](\d{2})/);return m?(+(m[1]||0))*3600+(+m[2])*60+(+m[3]):0;};
+const DUR=/^(?:\d+:)?\d+[:'′.]\d{2}"?$/;
+// Format d'édition, une piste par ligne : [CD2] n | [compositeur |] [œuvre |] titre | durée
+function linesFrom(pistes,mainC){let lastCd=1;return pistes.map((t,i)=>{const cd=+t.cd||1,parts=[t.n||i+1];
+  const c=(t.compositeur||"").trim(),o=(t.oeuvre||"").trim();
+  if(o){if(c&&norm(c)!==norm(mainC))parts.push(c);parts.push(o);}
+  parts.push(t.titre||"");parts.push(t.duree||"");const pre=cd>1||lastCd>1?"CD"+cd+" ":"";lastCd=cd;return pre+parts.join(" | ");}).join("\n");}
+function linesFromAlbum(x){const W=WORKS(),multi=discsOf(x).length>1;return discsOf(x).map((d,di)=>d.tr.map((t,i)=>{const o=typeof t==="string"?null:W[t.w];
+  return {cd:multi?di+1:1,n:i+1,compositeur:o?o.c:"",oeuvre:o?o.t:"",titre:o?(norm(tName(t))===norm(o.t)?"":tName(t).replace(new RegExp("^"+o.t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+":\\s*","i"),"")):tName(t),duree:t.d?fmtD(t.d):""};})).flat();}
+function parseLines(txt,mainC){const byCd={},works={};
+  txt.split("\n").map(s=>s.trim()).filter(Boolean).forEach(l=>{let cd=1;const m=l.match(/^CD\s*(\d+)\s+/i);if(m){cd=+m[1];l=l.slice(m[0].length);}
+    let p=l.split("|").map(s=>s.trim());
+    if(p.length===1){p=[p[0].replace(/^\d+[.)\s-]+/,"")];}
+    else{if(/^\d*$/.test(p[0]))p.shift();if(p.length>1&&(DUR.test(p[p.length-1])||p[p.length-1]===""))var d=toSec(p.pop());}
+    let c="",o="",t="";
+    if(p.length>=3){c=p[0];o=p[1];t=p.slice(2).join(" | ");}else if(p.length===2){c=mainC;o=p[0];t=p[1];}else t=p[0]||"";
+    const it={n:t||o,d:d||0};
+    if(o){const key="ai:"+norm(c+"|"+o).replace(/[^a-z0-9|]+/g,"-");works[key]={c:c||"",t:o,cat:""};it.w=key;}
+    (byCd[cd]=byCd[cd]||[]).push(it);d=0;});
+  const ks=Object.keys(byCd).sort((a,b)=>a-b);return {discs:ks.map(k=>({tr:byCd[k]})),works};}
+function applyTracks(n,parsed){delete n.tr;delete n.discs;delete n.box;Object.assign(S.works,parsed.works);
+  if(parsed.discs.length>1){n.discs=parsed.discs;n.box=true;}else n.tr=parsed.discs.length?parsed.discs[0].tr:[];}
+function trackEditor(host,txt,mainC,hint){host.innerHTML=`<label for="rC">Compositeur principal (facultatif)</label><input id="rC" type="text" value="${esc(mainC)}">
+  <label for="rP">Pistes</label><p class="hint">${hint||""}Une ligne par piste : <code>n | œuvre | mouvement | durée</code>. Ajoute le compositeur devant l'œuvre s'il diffère du principal. <code>CD2</code> en début de ligne pour le 2e disque.</p>
+  <textarea id="rP" class="edit">${esc(txt)}</textarea>`;}
+function showRead(r){const tx=readTarget&&byId(readTarget),out=$("readOut");
+  out.innerHTML=`<label for="rT">Titre du CD</label><input id="rT" type="text" value="${esc(r.titre||(tx&&tx.t)||"")}">
+   <label for="rA">Artiste</label><input id="rA" type="text" value="${esc(r.artiste||(tx&&tx.a)||"")}">
+   <label for="rL">Maison de disque</label><input id="rL" type="text" value="${esc(r.label||(tx&&tx.l)||"")}"><div id="rEd"></div>
+   ${cur&&!tx?`<p class="hint">Code-barres associé : ${fmtEan(cur)}</p>`:""}
+   <div class="row">${tx?`<button class="primary" id="rRep" type="button">Remplacer la fiche</button>`:`<button class="primary" id="rCol" type="button">Ajouter à la collection</button><button id="rWish" type="button">Ajouter aux envies</button>`}</div>`;
+  trackEditor($("rEd"),linesFrom(r.pistes,r.compositeur),r.compositeur);
   const save2=w=>{const t=$("rT").value.trim(),a=$("rA").value.trim();if(!t){$("readMsg").textContent="Il faut au moins le titre du CD.";return;}
-    const byCd={};$("rP").value.split("\n").map(s=>s.trim()).filter(Boolean).forEach(l=>{let cd=1;const m=l.match(/^CD\s*(\d+)\s+/i);if(m){cd=+m[1];l=l.slice(m[0].length);}
-      const parts=l.split("|").map(s=>s.trim());const name=parts.length>1?parts[1]:parts[0].replace(/^\d+[.)\s-]+/,"");(byCd[cd]=byCd[cd]||[]).push({n:name,d:toSec(parts[2])});});
-    const ks=Object.keys(byCd).sort((x,y)=>x-y),n={id:"p"+Date.now(),a:a||"Artiste inconnu",t,l:$("rL").value.trim()};
-    if(ks.length>1){n.discs=ks.map(k=>({tr:byCd[k]}));n.box=true;}else n.tr=ks.length?byCd[ks[0]]:[];
-    (w?S.wish:S.col).push(n);if(cur&&!S.codes[cur])S.codes[cur]=n.id;
+    const parsed=parseLines($("rP").value,$("rC").value.trim());
+    const n=tx||{id:"p"+Date.now()};n.t=t;n.a=a||$("rC").value.trim()||"Artiste inconnu";n.l=$("rL").value.trim();applyTracks(n,parsed);
+    if(!tx){(w?S.wish:S.col).push(n);if(cur&&!S.codes[cur])S.codes[cur]=n.id;}
     if(coverShot){const cs=coverShot;covPut(n.id,cs).then(()=>{COV[n.id]=cs;render();}).catch(()=>{});}
     save();render();openDetail(n.id);};
-  $("rCol").onclick=()=>save2(false);$("rWish").onclick=()=>save2(true);}
-
+  if(tx)$("rRep").onclick=()=>save2();else{$("rCol").onclick=()=>save2(false);$("rWish").onclick=()=>save2(true);}}
+function editTracks(id){const x=byId(id),p=$("detail");if(!x)return;const W=WORKS();
+  const cs={};tracksOf(x).forEach(t=>{const o=typeof t!=="string"&&W[t.w];if(o&&o.c)cs[o.c]=(cs[o.c]||0)+1;});
+  const mainC=Object.keys(cs).sort((a,b)=>cs[b]-cs[a])[0]||"";
+  p.innerHTML=`<p class="cat">Modifier les pistes</p><h2 class="wh">${esc(x.t)}</h2><div id="rEd"></div>
+   <div class="row"><button class="primary" id="edSave" type="button">Enregistrer</button><button type="button" id="edCancel">Annuler</button></div><p class="hint" id="edMsg"></p>`;
+  trackEditor($("rEd"),linesFrom(linesFromAlbum(x),mainC),mainC);
+  $("edCancel").onclick=()=>openDetail(id);
+  $("edSave").onclick=()=>{applyTracks(x,parseLines($("rP").value,$("rC").value.trim()));save();render();openDetail(id);};}
 // ---------- Sauvegarde ----------
 $("dlB").onclick=()=>{const blob=new Blob([JSON.stringify(S,null,1)],{type:"application/json"});const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);a.download="collezione-cd-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();$("bMsg").textContent="Sauvegarde téléchargée.";};
