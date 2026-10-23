@@ -89,6 +89,32 @@ h2.wh{font-family:var(--display);font-weight:700;font-size:1.35rem;margin:0;text
 video#cam{width:100%;max-width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;background:#000}
 .camwrap{position:relative}.camwrap::after{content:"";position:absolute;left:10%;right:10%;top:50%;height:2px;background:var(--err);opacity:.8}
 .mb{font-size:.75rem;color:var(--muted)}
+.overlay{position:fixed;inset:0;z-index:50;background:rgba(10,12,12,.55);display:flex;align-items:flex-end;justify-content:center;
+  padding-top:max(24px,env(safe-area-inset-top,0px))}
+.sheet{position:relative;background:var(--surface);color:var(--ink);width:100%;max-width:640px;max-height:100%;overflow-y:auto;overscroll-behavior:contain;
+  border-radius:16px 16px 0 0;padding:20px max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .2s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}}
+.sheet .x{position:absolute;top:10px;right:max(10px,env(safe-area-inset-right,0px));width:36px;height:36px;padding:0;border-radius:50%;z-index:1}
+body.locked{overflow:hidden}
+.trk{display:flex;flex-direction:column}
+.tr{display:grid;grid-template-columns:2.2em minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:4px 0;font-size:.9rem;border-bottom:1px solid var(--line)}
+.tr .n{font-family:var(--mono);font-size:.75rem;color:var(--muted);text-align:right}
+.tr .d{font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+.tr .t{overflow-wrap:anywhere}
+.tr.sub .t{padding-left:.6em}
+button.wk{display:flex;justify-content:space-between;align-items:baseline;gap:8px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px 0 4px;font-weight:600;font-size:.85rem;color:var(--ink)}
+button.wk span{font-family:var(--mono);font-weight:400;font-size:.72rem;color:var(--accent);white-space:nowrap}
+.discH{margin:14px 0 2px}
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.shot{aspect-ratio:1;border:1px dashed var(--line);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);font-size:.85rem;position:relative;overflow:hidden;background:var(--bg);text-align:center}
+.shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.shot input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.shot b{position:relative;z-index:1;background:var(--surface);padding:2px 8px;border-radius:6px;color:var(--ink)}
+textarea.edit{height:220px;font-family:var(--mono);font-size:.8rem;line-height:1.5}
+#photoRead{width:100%}
+.catrow{margin-top:8px}.catrow input{flex:1;min-width:0}
+.pick{width:100%;text-align:left;display:flex;gap:10px;align-items:center;margin-top:6px}
+.pick img{width:44px;height:44px;object-fit:cover;border-radius:4px;flex:none}
 </style>
 </head>
 <body>
@@ -103,6 +129,8 @@ video#cam{width:100%;max-width:100%;aspect-ratio:4/3;object-fit:cover;border-rad
   <label for="ean">Code-barres (ou tape-le)</label>
   <input id="ean" class="ean" type="text" inputmode="numeric" autocomplete="off" placeholder="0 28947 79123 4" maxlength="20">
   <div class="row"><button class="primary" id="eanGo" type="button">Vérifier</button><button id="eanClose" type="button">Fermer</button></div>
+  <button type="button" id="photoRead">Pas de code-barres ? Lire la pochette en photo</button>
+  <div class="row catrow"><input id="catno" type="text" autocomplete="off" spellcheck="false" placeholder="N° de catalogue (ex. 410 034-2)" aria-label="Numéro de catalogue"><button type="button" id="catGo">Discogs</button></div>
   <p class="hint" id="eanMsg">EAN-13 (Europe, 13 chiffres) ou UPC-A (US, 12 chiffres).</p>
   <div id="demoCodes"></div>
   <div id="eanResult"></div>
@@ -113,7 +141,7 @@ video#cam{width:100%;max-width:100%;aspect-ratio:4/3;object-fit:cover;border-rad
   <input id="q" type="search" placeholder="Artiste, album, compositeur…" autocomplete="off">
 </div>
 
-<section class="panel" id="detail" hidden></section>
+
 
 <nav class="tabs" role="tablist">
   <button role="tab" id="tabCol" aria-selected="true" type="button">Collection</button>
@@ -126,12 +154,19 @@ video#cam{width:100%;max-width:100%;aspect-ratio:4/3;object-fit:cover;border-rad
 <details><summary>Sauvegarde et réglages</summary>
 <p>Ta collection est enregistrée sur ce téléphone. Télécharge une sauvegarde de temps en temps (les photos de pochettes n'y sont pas incluses).</p>
 <div class="row"><button id="dlB" type="button">Télécharger la sauvegarde</button><label class="filebtn">Restaurer un fichier<input id="upB" type="file" accept="application/json,.json"></label></div>
+<label for="dgKey">Jeton Discogs (facultatif, deuxième source + n° de catalogue)</label>
+<input id="dgKey" type="text" autocomplete="off" spellcheck="false" placeholder="Jeton personnel Discogs">
+<label for="apiKey">Clé d'API Anthropic (facultatif, pour la lecture photo automatique)</label>
+<input id="apiKey" type="text" autocomplete="off" spellcheck="false" placeholder="sk-ant-…">
+<p class="hint">Gardée sur ce téléphone uniquement. Sans clé, la lecture photo passe par l'app Claude.</p>
 <div class="row"><button id="wipe" type="button">Effacer la démo et repartir de zéro</button></div>
 <div id="wipeConfirm" hidden class="row"><button id="wipeYes" class="primary" type="button">Oui, tout effacer</button><button id="wipeNo" type="button">Annuler</button></div>
 <p class="hint" id="bMsg"></p>
 <p class="mb">Données de disques : MusicBrainz et Cover Art Archive.</p>
 </details>
 </div>
+
+<div class="overlay" id="overlay" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Fiche"><button type="button" class="x" id="sheetX" aria-label="Fermer">✕</button><div id="detail"></div></div></div>
 <script>const DEMO={"works":{"scr-s3":{"c":"Scriabine","t":"Sonate pour piano n° 3","cat":"op. 23","cy":"Sonates pour piano","n":3,"of":10},"scr-s5":{"c":"Scriabine","t":"Sonate pour piano n° 5","cat":"op. 53","cy":"Sonates pour piano","n":5,"of":10},"scr-p11":{"c":"Scriabine","t":"24 Préludes","cat":"op. 11","cy":null,"n":0,"of":0},"scr-flamme":{"c":"Scriabine","t":"Vers la flamme","cat":"op. 72","cy":null,"n":0,"of":0},"rach-et39":{"c":"Rachmaninov","t":"Études-Tableaux","cat":"op. 39","cy":null,"n":0,"of":0},"rach-p32":{"c":"Rachmaninov","t":"Préludes","cat":"op. 32","cy":null,"n":0,"of":0},"cho-b1":{"c":"Chopin","t":"Ballade n° 1","cat":"op. 23","cy":"Ballades","n":1,"of":4},"cho-b4":{"c":"Chopin","t":"Ballade n° 4","cat":"op. 52","cy":"Ballades","n":4,"of":4},"chos-q8":{"c":"Chostakovitch","t":"Quatuor à cordes n° 8","cat":"op. 110","cy":"Quatuors à cordes","n":8,"of":15},"chos-q15":{"c":"Chostakovitch","t":"Quatuor à cordes n° 15","cat":"op. 144","cy":"Quatuors à cordes","n":15,"of":15},"bee-q14":{"c":"Beethoven","t":"Quatuor à cordes n° 14","cat":"op. 131","cy":"Quatuors à cordes","n":14,"of":16},"bee-s32":{"c":"Beethoven","t":"Sonate pour piano n° 32","cat":"op. 111","cy":"Sonates pour piano","n":32,"of":32},"ss-s3":{"c":"Saint-Saëns","t":"Symphonie n° 3 « avec orgue »","cat":"op. 78","cy":"Symphonies","n":3,"of":3},"vie-carillon":{"c":"Vierne","t":"Carillon de Westminster","cat":"op. 54 n° 6","cy":null,"n":0,"of":0},"vie-clair":{"c":"Vierne","t":"Clair de lune","cat":"op. 53 n° 5","cy":null,"n":0,"of":0},"bach-565":{"c":"Bach","t":"Toccata et fugue en ré mineur","cat":"BWV 565","cy":null,"n":0,"of":0},"mont-vesp":{"c":"Monteverdi","t":"Vespro della Beata Vergine","cat":"SV 206","cy":null,"n":0,"of":0},"schu-d960":{"c":"Schubert","t":"Sonate pour piano n° 21","cat":"D. 960","cy":"Sonates pour piano","n":21,"of":21}},"albums":[{"st":"own","a":"Elena Varga","perf":"Elena Varga, piano","t":"Scriabine — Sonates et Poèmes","g":"Classique","l":"Lunare Records","y":2019,"rec":"Studio, Berlin, 2018","c1":"#2B3A67","c2":"#E8C547","tr":[{"w":"scr-s3","n":"I. Drammatico"},{"w":"scr-s3","n":"II. Allegretto"},{"w":"scr-s3","n":"III. Andante"},{"w":"scr-s3","n":"IV. Presto con fuoco"},{"w":"scr-s5","n":"Sonate n° 5 (un mouvement)"},{"w":"scr-flamme","n":"Vers la flamme"}],"ean":"2001837492011"},{"st":"own","a":"Quatuor Arcadie","perf":"Quatuor Arcadie","t":"Chostakovitch — Quatuors 8 & 15","g":"Classique","l":"Lunare Records","y":2016,"rec":"Studio, Paris, 2015","c1":"#5B1E2D","c2":"#D9C5B2","tr":[{"w":"chos-q8","n":"I. Largo"},{"w":"chos-q8","n":"II. Allegro molto"},{"w":"chos-q8","n":"III. Allegretto"},{"w":"chos-q8","n":"IV. Largo"},{"w":"chos-q8","n":"V. Largo"},{"w":"chos-q15","n":"I. Élégie"},{"w":"chos-q15","n":"II. Sérénade"},{"w":"chos-q15","n":"III. Intermezzo"},{"w":"chos-q15","n":"IV. Nocturne"},{"w":"chos-q15","n":"V. Marche funèbre"},{"w":"chos-q15","n":"VI. Épilogue"}],"ean":"2001845492126"},{"st":"own","a":"Matteo Rinaldi","perf":"Matteo Rinaldi, orgue","t":"Organo di Sant'Elpidio","g":"Orgue","l":"Fonte Viva","y":2021,"rec":"Collégiale de Sant'Elpidio a Mare, 2020","c1":"#3F4A3C","c2":"#C9A227","tr":[{"w":"bach-565","n":"Toccata"},{"w":"bach-565","n":"Fugue"},{"w":"vie-carillon","n":"Carillon de Westminster"},{"w":"vie-clair","n":"Clair de lune"}],"ean":"2001853492231"},{"st":"own","a":"Coro San Giorgio","perf":"Coro e Ensemble San Giorgio, dir. Paolo Neri","t":"Monteverdi — Vespro della Beata Vergine","g":"Sacré","l":"Fonte Viva","y":2014,"rec":"Live, Basilique de Loreto, 2013","c1":"#1E3D4C","c2":"#E5D3A1","tr":[{"w":"mont-vesp","n":"Domine ad adiuvandum"},{"w":"mont-vesp","n":"Dixit Dominus"},{"w":"mont-vesp","n":"Nigra sum"},{"w":"mont-vesp","n":"Laudate pueri"},{"w":"mont-vesp","n":"Magnificat"}],"ean":"2001861492346"},{"st":"own","a":"Trio Notturno","t":"Blue Hour at the Lido","g":"Jazz","l":"Harbour Jazz","y":2018,"c1":"#0F2C3F","c2":"#5FB4C9","tr":["Lido Waltz","Moonlit Steps","Blue Hour","Gelato for Two","Last Ferry"],"ean":"2001869492454"},{"st":"own","a":"Clara Dumont","t":"Rue des Orgues","g":"Chanson","l":"Disques Belleville","y":2012,"c1":"#8C3B2B","c2":"#F2E8DC","tr":["Rue des Orgues","Le Pianiste du Square","Paris à 6 heures","La Valse oubliée","Dimanche"],"ean":"2001877492569"},{"st":"own","a":"Static Harbour","t":"Night Ferry","g":"Trip-hop","l":"Bristol Fog","y":2003,"c1":"#22252B","c2":"#B0B7C3","tr":["Departure","Salt Air","Night Ferry","Fog Lights","Arrival"],"ean":"2001885492674"},{"st":"own","a":"Lucia Ferretti","t":"Canzoni del Conero","g":"Chanson italienne","l":"Adriatica","y":2009,"c1":"#1F5F7A","c2":"#F4D35E","tr":["Portonovo","Sirolo al tramonto","Il Passetto","Mare d'inverno","Ritorno"],"ean":"2001893492789"},{"st":"own","a":"Orchestre des Rives","perf":"Orchestre des Rives, dir. Hélène Morel ; Matteo Rinaldi, orgue","t":"Saint-Saëns — Symphonie avec orgue","g":"Classique","l":"Lunare Records","y":2020,"rec":"Live, Basilique d'Argenteuil, 2019","c1":"#2E2A24","c2":"#D4AF37","tr":[{"w":"ss-s3","n":"I. Adagio — Allegro moderato"},{"w":"ss-s3","n":"I. Poco adagio"},{"w":"ss-s3","n":"II. Allegro moderato — Presto"},{"w":"ss-s3","n":"II. Maestoso — Allegro"}],"ean":"2001901492893"},{"st":"own","a":"Mikhail Orlov","perf":"Mikhail Orlov, piano","t":"The Moscow Recitals","g":"Classique","l":"Archivio Melos","y":2017,"box":true,"c1":"#3A1F1A","c2":"#D9A441","discs":[{"t":"Récital du 12 mars 1952","rec":"Live, Grande salle du Conservatoire de Moscou, 1952","tr":[{"w":"scr-s3","n":"I. Drammatico"},{"w":"scr-s3","n":"II. Allegretto"},{"w":"scr-s3","n":"III. Andante"},{"w":"scr-s3","n":"IV. Presto con fuoco"},{"w":"scr-p11","n":"Préludes n° 1-12"}]},{"t":"Récital du 8 juin 1958","rec":"Live, Petite salle du Conservatoire, 1958","tr":[{"w":"scr-s3","n":"I. Drammatico"},{"w":"scr-s3","n":"II. Allegretto"},{"w":"scr-s3","n":"III. Andante"},{"w":"scr-s3","n":"IV. Presto con fuoco"},{"w":"scr-s5","n":"Sonate n° 5"},{"w":"scr-flamme","n":"Vers la flamme"}]},{"t":"Chopin, 1949","rec":"Live, Grande salle du Conservatoire, 1949","tr":[{"w":"cho-b1","n":"Ballade n° 1"},{"w":"cho-b4","n":"Ballade n° 4"}]},{"t":"Rachmaninov, 1954","rec":"Studio Melodiya, Moscou, 1954","tr":[{"w":"rach-p32","n":"Préludes op. 32 n° 5, 10, 12"},{"w":"rach-et39","n":"Études-Tableaux op. 39 n° 4, 5, 6"}]},{"t":"Beethoven et Schubert, 1960","rec":"Live, Petite salle du Conservatoire, 1960","tr":[{"w":"bee-s32","n":"I. Maestoso — Allegro con brio"},{"w":"bee-s32","n":"II. Arietta"},{"w":"schu-d960","n":"I. Molto moderato"},{"w":"schu-d960","n":"II. Andante sostenuto"},{"w":"schu-d960","n":"III. Scherzo"},{"w":"schu-d960","n":"IV. Allegro ma non troppo"}]}],"ean":"2001909493007"},{"st":"wish","a":"Elena Varga","perf":"Elena Varga, piano","t":"Rachmaninov — Études-Tableaux","g":"Classique","l":"Lunare Records","y":2023,"rec":"Studio, Berlin, 2022","c1":"#3B2F5C","c2":"#E9B44C","tr":[{"w":"rach-et39","n":"Op. 39 n° 1"},{"w":"rach-et39","n":"Op. 39 n° 5"},{"w":"rach-et39","n":"Op. 39 n° 9"}],"ean":"2001917493112"},{"st":"wish","a":"Trio Notturno","t":"Live at the Arsenale","g":"Jazz","l":"Harbour Jazz","y":2022,"c1":"#123B2F","c2":"#9AD1B5","tr":["Arsenale Intro","Tide Tables","Calle Lunga","Blue Hour (live)"],"ean":"2001925493227"},{"st":"wish","a":"Matteo Rinaldi","perf":"Matteo Rinaldi, orgue","t":"Vierne — Pièces de fantaisie","g":"Orgue","l":"Fonte Viva","y":2024,"rec":"Cathédrale de Fermo, 2023","c1":"#4B2E2E","c2":"#E3B23C","tr":[{"w":"vie-clair","n":"Clair de lune"},{"w":"vie-carillon","n":"Carillon de Westminster"}],"ean":"2001933493332"},{"st":"cat","a":"Static Harbour","t":"Lighthouse Dub","g":"Trip-hop","l":"Bristol Fog","y":2006,"c1":"#1C2833","c2":"#7FB3D5","tr":["Beacon","Lighthouse Dub","Low Tide","Keeper"],"ean":"2001941493447"},{"st":"cat","a":"Quatuor Arcadie","perf":"Quatuor Arcadie","t":"Beethoven — Quatuor op. 131","g":"Classique","l":"Lunare Records","y":2019,"rec":"Studio, Paris, 2018","c1":"#3E2723","c2":"#D7CCC8","tr":[{"w":"bee-q14","n":"I. Adagio ma non troppo"},{"w":"bee-q14","n":"II. Allegro molto vivace"},{"w":"bee-q14","n":"IV. Andante"},{"w":"bee-q14","n":"VII. Allegro"}],"ean":"2001949493555"},{"st":"cat","a":"Clara Dumont","t":"Les Toits de Montmartre","g":"Chanson","l":"Disques Belleville","y":2015,"c1":"#6D2E46","c2":"#F7E1D7","tr":["Les Toits","Café Lepic","L'Accordéoniste","Sacré-Cœur à minuit"],"ean":"2001957493660"}]};
 const KEY="collezione-cd-v1";
 const $=id=>document.getElementById(id);
@@ -163,6 +198,13 @@ async function covClear(){try{const d=await idb();d.transaction("covers","readwr
 const discsOf=x=>x.discs||[{tr:x.tr||[]}];
 const tracksOf=x=>discsOf(x).flatMap(d=>d.tr);
 const tName=t=>typeof t==="string"?t:t.n;
+const fmtD=s=>s?Math.floor(s/60)+":"+String(Math.round(s%60)).padStart(2,"0"):"";
+// Fiche par-dessus la liste : la page reste derrière, à sa place
+let sheetOpen=false;
+function openSheet(){const o=$("overlay");if(!sheetOpen){history.pushState({sheet:1},"");sheetOpen=true;}o.hidden=false;document.body.classList.add("locked");$("sheet").scrollTop=0;}
+function closeSheet(fromPop){if(!sheetOpen)return;sheetOpen=false;$("overlay").hidden=true;document.body.classList.remove("locked");if(!fromPop)history.back();}
+window.addEventListener("popstate",()=>{if(sheetOpen)closeSheet(true);});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet();});
 const wLabel=w=>{const o=WORKS()[w];return o?o.t+(o.cat?", "+o.cat:""):"";};
 const isWish=id=>S.wish.some(x=>x.id===id);
 const byId=id=>S.col.find(x=>x.id===id)||S.wish.find(x=>x.id===id);
@@ -233,17 +275,26 @@ async function check(){
   if(x){const own=!isWish(x.id);
     out.innerHTML=`<div class="verdict ${own?"own":"wish"}"><strong>${own?"Tu l'as déjà":"Il est dans tes envies"}</strong><span>${esc(x.t)} · ${esc(x.a)}</span></div><div class="row"><button type="button" id="seeIt">Voir la fiche</button>${own?"":`<button class="primary" id="buyNow" type="button">Je l'achète</button>`}</div>`;
     $("seeIt").onclick=()=>openDetail(x.id);if(!own)$("buyNow").onclick=()=>{buy(x.id);check();};return;}
-  let f=S.demo?CAT.find(x=>x.ean===c):null,src="catalogue de démo";
+  let f=S.demo?CAT.find(x=>x.ean===c):null,src="catalogue de démo",err=null;
   if(!f){out.innerHTML=`<p class="hint">Recherche sur MusicBrainz…</p>`;
-    try{f=await mbLookup(c);src="MusicBrainz";}catch(e){out.innerHTML=`<div class="verdict wish"><strong>Recherche impossible</strong><span>${esc(e.message)}</span></div>`;manual(out,true);return;}
-    if(cur!==c)return;}
-  if(f){const box=discsOf(f).length>1;
-    out.innerHTML=`<div class="verdict wish"><strong>Pas dans ta collection</strong><span>Trouvé (${src}) :</span></div>
-    <div class="found"><img src="${coverUrl(f)}" alt="" onerror="this.style.visibility='hidden'"><div class="meta"><b>${esc(f.t)}</b><small>${esc(f.a)}${f.l?" · "+esc(f.l):""}${f.y?" · "+f.y:""} · ${box?discsOf(f).length+" CD · ":""}${tracksOf(f).length} pistes</small></div></div>
-    <div class="row"><button class="primary" id="addCol" type="button">Je l'achète</button><button id="addWish" type="button">Ajouter aux envies</button></div>`;
-    const add=w=>{const n=pick(f);if(f.newWorks)Object.assign(S.works,f.newWorks);delete n.newWorks;(w?S.wish:S.col).push(n);S.codes[c]=n.id;save();render();check();};
-    $("addCol").onclick=()=>add(false);$("addWish").onclick=()=>add(true);return;}
-  out.innerHTML=`<div class="verdict wish"><strong>Code inconnu</strong><span>Introuvable sur MusicBrainz. Saisis-le à la main.</span></div>`;manual(out,true);}
+    try{f=await mbLookup(c);src="MusicBrainz";}catch(e){err=e;}
+    if(cur!==c)return;
+    if(!f&&dgKey()&&navigator.onLine){out.innerHTML=`<p class="hint">Recherche sur Discogs…</p>`;
+      try{const rs=await dgSearch({barcode:c});if(rs.length){f=await dgRelease(rs[0].id);src="Discogs";err=null;}}catch(e){err=err||e;}
+      if(cur!==c)return;}}
+  if(f){showFound(out,f,src,c);return;}
+  if(err){out.innerHTML=`<div class="verdict wish"><strong>Recherche impossible</strong><span>${esc(err.message)}</span></div>`;manual(out,true);return;}
+  out.innerHTML=`<div class="verdict wish"><strong>Code inconnu</strong><span>Introuvable sur MusicBrainz${dgKey()?" et Discogs":""}. Cherche le n° de catalogue, lis la pochette en photo, ou saisis-le à la main.</span></div><button class="primary" type="button" id="readFromUnknown">Lire la pochette en photo</button>`;$("readFromUnknown").onclick=openReader;manual(out,true);}
+function showFound(out,f,src,c){const box=discsOf(f).length>1;
+  out.innerHTML=`<div class="verdict wish"><strong>Pas dans ta collection</strong><span>Trouvé (${src}) :</span></div>
+  <div class="found"><img src="${coverUrl(f)}" alt="" onerror="this.style.visibility='hidden'"><div class="meta"><b>${esc(f.t)}</b><small>${esc(f.a)}${f.l?" · "+esc(f.l):""}${f.cat?" · "+esc(f.cat):""}${f.y?" · "+f.y:""} · ${box?discsOf(f).length+" CD · ":""}${tracksOf(f).length} pistes</small></div></div>
+  <div class="row"><button class="primary" id="addCol" type="button">Je l'achète</button><button id="addWish" type="button">Ajouter aux envies</button></div>`;
+  const add=w=>{const n=pick(f);if(f.newWorks)Object.assign(S.works,f.newWorks);delete n.newWorks;
+    const dup=[...S.col,...S.wish].find(x=>(n.mbid&&x.mbid===n.mbid)||(n.dgid&&x.dgid===n.dgid));
+    if(dup){openDetail(dup.id);return;}
+    (w?S.wish:S.col).push(n);if(c)S.codes[c]=n.id;save();render();
+    if(c&&$("ean").value.replace(/\D/g,"")===c)check();else openDetail(n.id);};
+  $("addCol").onclick=()=>add(false);$("addWish").onclick=()=>add(true);}
 function manual(out,append){out.insertAdjacentHTML("beforeend",`<label for="fa">Artiste / compositeur</label><input id="fa" type="text" autocomplete="off">
   <label for="ft">Album / œuvre et interprète</label><input id="ft" type="text" autocomplete="off">
   <div class="row"><button class="primary" id="addCol" type="button">Ajouter à la collection</button><button id="addWish" type="button">Ajouter aux envies</button></div>`);
@@ -264,14 +315,20 @@ async function mbLookup(code){
   if(!navigator.onLine)throw new Error("Pas de connexion Internet. Saisis le disque à la main, tu compléteras plus tard.");
   const s=await mbGet("release/?query=barcode:"+code+"&limit=5");
   const rel=(s.releases||[]).find(r=>r.barcode===code)||(s.releases||[])[0];if(!rel)return null;
-  const d=await mbGet("release/"+rel.id+"?inc=artist-credits+labels+recordings+media+recording-level-rels+work-rels+work-level-rels+artist-rels");
+  return mbRelease(rel.id);}
+const MVT=/^(.*?):\s+((?:[IVXLC]+|\d+|No\.?\s*\d+|N°\s*\d+)[.\s:-].*)$/;
+async function mbRelease(rid){
+  const d=await mbGet("release/"+rid+"?inc=artist-credits+labels+recordings+media+recording-level-rels+work-rels+work-level-rels+artist-rels");
   const newWorks={},perfs=new Set();
   const discs=(d.media||[]).map(m=>({t:m.title||"",tr:(m.tracks||[]).map(tk=>{const rec=tk.recording||{};
     const pr=(rec.relations||[]).find(x=>x.type==="performance"&&x.work);
     (rec.relations||[]).forEach(x=>{if(["instrument","vocal","conductor","performing orchestra","performer"].includes(x.type)&&x.artist)perfs.add(x.artist.name);});
-    if(pr){const w=pr.work,comp=(w.relations||[]).find(x=>x.type==="composer"&&x.artist);
-      newWorks["mb:"+w.id]={c:comp?comp.artist.name:"",t:w.title,cat:""};return {w:"mb:"+w.id,n:tk.title};}
-    return tk.title;})}));
+    const dur=tk.length?Math.round(tk.length/1000):0;
+    if(pr){const w=pr.work,comp=(w.relations||[]).find(x=>x.type==="composer"&&x.artist),cn=comp?comp.artist.name:"";
+      const m=w.title.match(MVT);
+      if(m){const key="mbp:"+norm(cn+"|"+m[1]).replace(/[^a-z0-9|]+/g,"-");newWorks[key]={c:cn,t:m[1].trim(),cat:""};return {w:key,n:m[2].trim(),d:dur};}
+      newWorks["mb:"+w.id]={c:cn,t:w.title,cat:""};return {w:"mb:"+w.id,n:tk.title,d:dur};}
+    return {n:tk.title,d:dur};})}));
   const lab=(d["label-info"]||[]).find(l=>l.label);
   const a={id:"mb"+d.id,a:credit(d["artist-credit"])||"Artiste inconnu",t:d.title,l:lab?lab.label.name:"",y:(d.date||"").slice(0,4),
     img:"https://coverartarchive.org/release/"+d.id+"/front-250",mbid:d.id,newWorks};
@@ -279,28 +336,85 @@ async function mbLookup(code){
   if(discs.length>1){a.discs=discs;a.box=true;}else{a.tr=discs[0]?discs[0].tr:[];if(discs[0]&&discs[0].t)a.discs=discs;}
   return a;}
 
+
+// ---------- Discogs ----------
+const DG="https://api.discogs.com/";
+function dgKey(){try{return localStorage.getItem("discogs-token")||"";}catch(e){return "";}}
+$("dgKey").value=dgKey();
+$("dgKey").addEventListener("change",e=>{try{localStorage.setItem("discogs-token",e.target.value.trim());}catch(err){}});
+let lastDg=0;
+async function dgGet(path,params={}){const wait=Math.max(0,1100-(Date.now()-lastDg));if(wait)await new Promise(r=>setTimeout(r,wait));lastDg=Date.now();
+  const q=new URLSearchParams({...params,token:dgKey()});
+  const r=await fetch(DG+path+"?"+q.toString(),{headers:{Accept:"application/json"}});
+  if(r.status===401)throw new Error("Jeton Discogs refusé : vérifie-le dans les réglages.");
+  if(r.status===429)throw new Error("Trop de recherches Discogs d'affilée, attends une minute.");
+  if(!r.ok)throw new Error("Discogs a répondu "+r.status+".");return r.json();}
+async function dgSearch(p){const j=await dgGet("database/search",{...p,type:"release",per_page:"8"});
+  const seen=new Set();return (j.results||[]).filter(r=>!seen.has(r.master_id||r.id)&&seen.add(r.master_id||r.id)).slice(0,6);}
+const dgName=a=>(a.anv||a.name||"").replace(/\s\(\d+\)$/,"");
+const dgCredit=as=>(as||[]).map(a=>dgName(a)+(a.join&&a.join!==","?" "+a.join+" ":a.join===","?", ":"")).join("").replace(/\s+/g," ").trim();
+const dgDur=s=>{const m=String(s||"").match(/^(?:(\d+):)?(\d+):(\d{2})$/);return m?(+(m[1]||0))*3600+(+m[2])*60+(+m[3]):0;};
+async function dgRelease(id){const d=await dgGet("releases/"+id);
+  const newWorks={},perfs=new Set(),discs={};let work=null,disc=1;
+  (d.extraartists||[]).forEach(x=>{if(/Piano|Violin|Cello|Conductor|Orchestra|Soloist|Performer|Vocals|Soprano|Tenor|Organ|Ensemble|Quartet/i.test(x.role||""))perfs.add(dgName(x));});
+  const composerOf=t=>{const c=(t.extraartists||[]).find(x=>/Composed By|Composer/i.test(x.role||""));return c?dgName(c):"";};
+  const relComposer=((d.extraartists||[]).find(x=>/Composed By|Composer/i.test(x.role||""))||{});
+  const push=(pos,item)=>{const m=String(pos||"").match(/^(?:CD|Disc\s*)?(\d+)[-.](\d+)/i);if(m)disc=+m[1];(discs[disc]=discs[disc]||[]).push(item);};
+  const mkWork=(title,comp)=>{const c=comp||(relComposer.name?dgName(relComposer):"");const key="dg:"+norm(c+"|"+title).replace(/[^a-z0-9|]+/g,"-");newWorks[key]={c,t:title.trim(),cat:""};return key;};
+  (d.tracklist||[]).forEach(t=>{
+    if(t.type_==="heading"){const m=String(t.title||"").match(/^(?:CD|Disc|Disque)\s*(\d+)\b/i);if(m){disc=+m[1];work=null;return;}work=t.title?mkWork(t.title,composerOf(t)):null;return;}
+    if(t.type_==="index"&&t.sub_tracks){const w=mkWork(t.title,composerOf(t)||composerOf(t.sub_tracks[0]||{}));
+      t.sub_tracks.forEach(s=>push(s.position,{w,n:s.title,d:dgDur(s.duration)}));return;}
+    const it={n:t.title,d:dgDur(t.duration)};if(work)it.w=work;push(t.position,it);});
+  const ks=Object.keys(discs).sort((a,b)=>a-b),lab=(d.labels||[])[0]||{};
+  const img=((d.images||[]).find(i=>i.type==="primary")||(d.images||[])[0]||{});
+  const a={id:"dg"+d.id,a:dgCredit(d.artists)||"Artiste inconnu",t:d.title,l:lab.name?lab.name.replace(/\s\(\d+\)$/,""):"",cat:lab.catno&&lab.catno!=="none"?lab.catno:"",
+    y:d.year?String(d.year):"",img:img.uri150||img.uri||"",dgid:d.id,newWorks};
+  if(perfs.size)a.perf=[...perfs].slice(0,4).join(", ");
+  if(ks.length>1){a.discs=ks.map(k=>({tr:discs[k]}));a.box=true;}else a.tr=ks.length?discs[ks[0]]:[];
+  return a;}
+$("catGo").onclick=async()=>{stopCam();const q=$("catno").value.trim(),out=$("eanResult");cur="";
+  if(!q){out.innerHTML=`<p class="hint err">Tape le numéro de catalogue imprimé sur la tranche ou le dos du CD.</p>`;return;}
+  if(!dgKey()){out.innerHTML=`<p class="hint err">Ajoute d'abord ton jeton Discogs dans les réglages (en bas de page).</p>`;return;}
+  out.innerHTML=`<p class="hint">Recherche sur Discogs…</p>`;
+  try{let rs=await dgSearch({catno:q});if(!rs.length)rs=await dgSearch({q});
+    if(!rs.length){out.innerHTML=`<div class="verdict wish"><strong>Rien trouvé</strong><span>Essaie sans espaces ni tirets, ou lis la pochette en photo.</span></div>`;return;}
+    out.innerHTML=`<p class="hint">${rs.length} résultat${rs.length>1?"s":""}, choisis le bon :</p>`+rs.map((r,i)=>`<button type="button" class="pick" data-i="${i}">${r.thumb?`<img src="${esc(r.thumb)}" alt="">`:""}<span><b>${esc(r.title)}</b><br><small>${esc([(r.label||[])[0],r.catno,r.year,(r.format||[]).join(", ")].filter(Boolean).join(" · "))}</small></span></button>`).join("");
+    out.querySelectorAll(".pick").forEach(btn=>btn.onclick=async()=>{const r=rs[+btn.dataset.i];out.innerHTML=`<p class="hint">Chargement…</p>`;
+      try{const f=await dgRelease(r.id);const code=(r.barcode||[]).map(x=>x.replace(/\D/g,"")).find(x=>x.length===13||x.length===12)||"";
+        const id=code&&S.codes[code];if(id&&byId(id)){openDetail(id);out.innerHTML="";return;}
+        showFound(out,f,"Discogs",code);}catch(e){out.innerHTML=`<p class="hint err">${esc(e.message)}</p>`;}});
+  }catch(e){out.innerHTML=`<p class="hint err">${esc(e.message)}</p>`;}};
+$("catno").addEventListener("keydown",e=>{if(e.key==="Enter")$("catGo").click();});
+
 // ---------- Fiches ----------
 function openWork(w){const o=WORKS()[w],vs=versions()[w]||[],p=$("detail");if(!o)return;
   p.innerHTML=`<p class="cat">${esc(o.c)}</p><h2 class="wh">${esc(wLabel(w))}</h2><p class="hint">${vs.length} version${vs.length>1?"s":""} dans ta collection et tes envies</p>
    <ul class="list">${vs.map(e=>`<li class="item tap" data-open="${e.x.id}"><img class="cover" src="${coverUrl(e.x)}" alt=""><div class="meta"><b>${esc(e.x.perf||e.x.a)}</b><small>${esc(e.d.rec||e.x.rec||e.x.y||"")}${e.d.t?" · "+esc(e.d.t):""}</small><small>${esc(e.x.t)}${e.x.box?" · CD "+(e.di+1):""}</small></div><span class="chip ${e.own?"own":"wish"}">${e.own?"Possédé":"Envie"}</span></li>`).join("")}</ul>
    <div class="row"><button type="button" id="detClose">Fermer</button></div>`;
-  p.hidden=false;p.scrollIntoView?.({behavior:"smooth",block:"start"});$("detClose").onclick=()=>{p.hidden=true;};
+  openSheet();$("detClose").onclick=()=>closeSheet();
   p.querySelectorAll("[data-open]").forEach(n=>n.onclick=()=>openDetail(n.dataset.open));}
 function openDetail(id){const x=byId(id);if(!x)return;const p=$("detail"),cu=coverUrl(x),own=!isWish(id),c=codeOf(id),W=WORKS(),V=versions();
   const multi=discsOf(x).length>1;
-  const tracks=tracksOf(x).length?discsOf(x).map((d,di)=>{let h=(multi||d.rec||d.t)?`<p class="discH">${multi?"CD "+(di+1)+(d.t?" · "+esc(d.t):""):(d.t?esc(d.t):"")}${d.rec&&!multi?esc(d.rec):""}</p>${multi&&d.rec?`<p class="hint">${esc(d.rec)}</p>`:""}`:"";
-      let cw=null,open=false;d.tr.forEach(t=>{const w=typeof t==="string"?null:t.w;
-        if(w!==cw||!open){if(open)h+="</ol>";if(w&&W[w])h+=`<button type="button" class="work" data-work="${esc(w)}">${W[w].c?esc(W[w].c)+" — ":""}${esc(wLabel(w))}<span>${(V[w]||[]).length} version${(V[w]||[]).length>1?"s":""}</span></button>`;h+="<ol class='tracks'>";open=true;cw=w;}
-        h+=`<li>${esc(tName(t))}</li>`;});return h+(open?"</ol>":"");}).join("")
+  let num=0;
+  const tracks=tracksOf(x).length?discsOf(x).map((d,di)=>{num=0;let h=(multi||d.rec||d.t)?`<p class="discH">${multi?"CD "+(di+1)+(d.t?" · "+esc(d.t):""):(d.t?esc(d.t):"")}${d.rec&&!multi?esc(d.rec):""}</p>${multi&&d.rec?`<p class="hint">${esc(d.rec)}</p>`:""}`:"";
+      let cw=null;h+=`<div class="trk">`;d.tr.forEach(t=>{const w=typeof t==="string"?null:t.w,o=w&&W[w];num++;
+        if(w!==cw){if(o){const n=(V[w]||[]).length;h+=`<button type="button" class="wk" data-work="${esc(w)}">${o.c?esc(o.c)+" — ":""}${esc(wLabel(w))}<span>${n} version${n>1?"s":""}</span></button>`;}cw=w;}
+        let nm=tName(t);if(o&&nm.toLowerCase().startsWith(o.t.toLowerCase()+":"))nm=nm.slice(o.t.length+1).trim();
+        h+=`<div class="tr${o?" sub":""}"><span class="n">${num}</span><span class="t">${esc(nm)}</span><span class="d">${fmtD(t.d)}</span></div>`;});
+      return h+`</div>`;}).join("")
     :`<p class="hint">Pas encore de liste de pistes. Colle-la ici, une piste par ligne :</p><textarea id="trIn" aria-label="Pistes"></textarea><button type="button" id="trSave">Enregistrer les pistes</button>`;
   p.innerHTML=`<div class="detail"><div class="sleeve">${cu?`<img src="${cu}" alt="Pochette de ${esc(x.t)}" onerror="this.remove()">`:"Pas de pochette"}</div>
    <div class="meta"><h2>${esc(x.t)}</h2><p class="by">${esc(x.a)}</p>
    ${x.perf?`<p class="by">${esc(x.perf)}</p>`:""}<p class="facts">${x.box?`<span>Coffret ${discsOf(x).length} CD</span>`:""}${x.l?`<span>${esc(x.l)}</span>`:""}${x.y?`<span>${esc(x.y)}</span>`:""}${x.g?`<span>${esc(x.g)}</span>`:""}</p>
    <p><span class="chip ${own?"own":"wish"}">${own?"Possédé":"Envie"}</span> ${c?`<span class="code">${fmtEan(c)}</span>`:""}</p>
    <div class="row"><label class="filebtn">${COV[id]?"Changer la pochette":"Photographier la pochette"}<input id="coverIn" type="file" accept="image/*" capture="environment"></label><button type="button" id="detClose">Fermer</button></div>
-   <p class="hint" id="covMsg">${x.mbid?`<a href="https://musicbrainz.org/release/${x.mbid}" target="_blank" rel="noopener">Voir sur MusicBrainz</a>`:""}</p></div></div>${tracks}`;
-  p.hidden=false;p.scrollIntoView?.({behavior:"smooth",block:"start"});
-  $("detClose").onclick=()=>{p.hidden=true;};
+   <p class="hint" id="covMsg"></p>${x.mbid?`<p class="hint"><a href="https://musicbrainz.org/release/${x.mbid}" target="_blank" rel="noopener">Voir sur MusicBrainz</a> · <button type="button" class="small" id="mbRefresh">Actualiser</button></p>`:""}${x.dgid?`<p class="hint"><a href="https://www.discogs.com/release/${x.dgid}" target="_blank" rel="noopener">Voir sur Discogs</a>${x.cat?" · "+esc(x.cat):""}</p>`:""}</div></div>${tracks}`;
+  openSheet();
+  $("detClose").onclick=()=>closeSheet();
+  if($("mbRefresh"))$("mbRefresh").onclick=async()=>{$("covMsg").textContent="Mise à jour depuis MusicBrainz…";
+    try{const f=await mbRelease(x.mbid);Object.assign(S.works,f.newWorks);["a","t","l","y","perf","tr","discs","box","img"].forEach(k=>{delete x[k];if(f[k]!==undefined)x[k]=f[k];});save();render();openDetail(id);}
+    catch(err){$("covMsg").textContent=err.message;}};
   p.querySelectorAll("[data-work]").forEach(n=>n.onclick=()=>openWork(n.dataset.work));
   $("coverIn").onchange=async e=>{const f=e.target.files[0];if(!f)return;$("covMsg").textContent="Enregistrement de la pochette…";
     try{const data=await shrink(f);await covPut(id,data);COV[id]=data;openDetail(id);render();}catch(err){$("covMsg").textContent="Impossible d'enregistrer la photo.";}};
@@ -309,14 +423,80 @@ async function shrink(file,max=500){const bmp=await createImageBitmap(file);cons
   const cv=document.createElement("canvas");cv.width=Math.round(bmp.width*k);cv.height=Math.round(bmp.height*k);cv.getContext("2d").drawImage(bmp,0,0,cv.width,cv.height);
   return cv.toDataURL("image/jpeg",0.82);}
 
+
+// ---------- Lecture photo de la pochette ----------
+const READ_PROMPT=`Tu reçois la photo du recto et/ou du verso d'un CD. Recopie uniquement ce qui est lisible, sans rien inventer ni compléter de mémoire.
+Réponds avec ce JSON seul, sans texte autour :
+{"titre":"","artiste":"","label":"","pistes":[{"n":1,"titre":"","duree":"m:ss"}]}
+- titre, artiste, label : lus sur le recto (laisse "" si absent).
+- pistes : lues sur le verso, dans l'ordre. "titre" = le titre complet tel qu'imprimé (compositeur, œuvre et mouvement si présents). "duree" = "" si absente.
+- S'il y a plusieurs CD, ajoute "cd":2 (etc.) aux pistes concernées.`;
+let shots={recto:null,verso:null},coverShot=null;
+function getKey(){try{return localStorage.getItem("anthropic-key")||"";}catch(e){return "";}}
+$("apiKey").value=getKey();
+$("apiKey").addEventListener("change",e=>{try{localStorage.setItem("anthropic-key",e.target.value.trim());}catch(err){}});
+$("photoRead").onclick=()=>{stopCam();const v=$("ean").value.replace(/\D/g,"");cur=v.length>=8?v:"";openReader();};
+function openReader(){shots={recto:null,verso:null};coverShot=null;const p=$("detail"),key=getKey();
+  p.innerHTML=`<p class="cat">Lecture de la pochette</p><h2 class="wh">Photographie le recto et le verso</h2>
+  <div class="shots">${["recto","verso"].map(s=>`<label class="shot" id="sh-${s}"><b>${s==="recto"?"Recto":"Verso"}</b><span>${s==="recto"?"titre, artiste, label":"liste des pistes"}</span><input type="file" accept="image/*" capture="environment" data-shot="${s}"></label>`).join("")}</div>
+  ${key?`<button class="primary" id="readGo" type="button">Lire les photos</button>`:
+  `<p class="hint">Sans clé d'API : envoie les deux photos dans l'app Claude avec ce message, puis colle sa réponse ici.</p>
+   <div class="row"><button type="button" id="copyPrompt">Copier le message pour Claude</button></div>
+   <textarea id="pasteIn" class="edit" aria-label="Réponse de Claude" placeholder="Colle ici la réponse de Claude…"></textarea>
+   <button class="primary" id="pasteGo" type="button">Utiliser cette réponse</button>`}
+  <p class="hint" id="readMsg"></p><div id="readOut"></div>`;
+  openSheet();
+  p.querySelectorAll("[data-shot]").forEach(inp=>inp.onchange=async e=>{const f=e.target.files[0];if(!f)return;const s=inp.dataset.shot;
+    shots[s]=await shrink(f,1400);if(s==="recto")coverShot=await shrink(f,500);const box=$("sh-"+s);box.querySelector("img")?.remove();const im=document.createElement("img");im.src=shots[s];im.alt="";box.prepend(im);});
+  if($("readGo"))$("readGo").onclick=readWithApi;
+  if($("copyPrompt"))$("copyPrompt").onclick=()=>{const done=()=>$("readMsg").textContent="Message copié. Colle-le dans Claude avec les deux photos.";
+    const p2=navigator.clipboard?.writeText(READ_PROMPT);if(p2)p2.then(done,()=>{$("pasteIn").value=READ_PROMPT;$("pasteIn").select();$("readMsg").textContent="Copie le message sélectionné à la main, puis efface-le.";});};
+  if($("pasteGo"))$("pasteGo").onclick=()=>{try{showRead(parseRead($("pasteIn").value));}catch(err){$("readMsg").textContent=err.message;}};}
+async function readWithApi(){const m=$("readMsg");const imgs=["recto","verso"].filter(s=>shots[s]);
+  if(!imgs.length){m.textContent="Prends au moins une photo.";return;}
+  if(!navigator.onLine){m.textContent="Pas de connexion Internet.";return;}
+  m.textContent="Lecture en cours…";$("readGo").disabled=true;
+  const content=[];imgs.forEach(s=>{content.push({type:"text",text:s==="recto"?"Recto :":"Verso :"});content.push({type:"image",source:{type:"base64",media_type:"image/jpeg",data:shots[s].split(",")[1]}});});
+  content.push({type:"text",text:READ_PROMPT});
+  try{const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":getKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-haiku-5-5",max_tokens:4000,messages:[{role:"user",content}]})});
+    const j=await r.json();
+    if(!r.ok)throw new Error(r.status===401?"Clé d'API refusée : vérifie-la dans les réglages.":"Erreur de lecture ("+(j.error&&j.error.message||r.status)+").");
+    const txt=(j.content||[]).filter(c=>c.type==="text").map(c=>c.text).join("\n");
+    showRead(parseRead(txt));m.textContent="Vérifie et corrige si besoin avant d'enregistrer.";
+  }catch(err){m.textContent=err.message||"La lecture a échoué.";}
+  finally{if($("readGo"))$("readGo").disabled=false;}}
+function parseRead(txt){const a=txt.indexOf("{"),b=txt.lastIndexOf("}");if(a<0||b<a)throw new Error("Je ne trouve pas de réponse au bon format.");
+  let o;try{o=JSON.parse(txt.slice(a,b+1));}catch(e){throw new Error("La réponse n'est pas lisible. Recopie-la entière.");}
+  return {titre:o.titre||"",artiste:o.artiste||"",label:o.label||"",pistes:Array.isArray(o.pistes)?o.pistes:[]};}
+const toSec=s=>{const m=String(s||"").match(/(\d+)[:'′.](\d{1,2})/);return m?(+m[1])*60+(+m[2]):0;};
+function showRead(r){const lines=r.pistes.map((t,i)=>`${t.cd&&t.cd>1?"CD"+t.cd+" ":""}${t.n||i+1} | ${t.titre||""} | ${t.duree||""}`).join("\n");
+  $("readOut").innerHTML=`<label for="rT">Titre du CD</label><input id="rT" type="text" value="${esc(r.titre)}">
+   <label for="rA">Artiste</label><input id="rA" type="text" value="${esc(r.artiste)}">
+   <label for="rL">Maison de disque</label><input id="rL" type="text" value="${esc(r.label)}">
+   <label for="rP">Pistes (n° | titre | durée)</label><textarea id="rP" class="edit">${esc(lines)}</textarea>
+   ${cur?`<p class="hint">Code-barres associé : ${fmtEan(cur)}</p>`:""}
+   <div class="row"><button class="primary" id="rCol" type="button">Ajouter à la collection</button><button id="rWish" type="button">Ajouter aux envies</button></div>`;
+  const save2=w=>{const t=$("rT").value.trim(),a=$("rA").value.trim();if(!t){$("readMsg").textContent="Il faut au moins le titre du CD.";return;}
+    const byCd={};$("rP").value.split("\n").map(s=>s.trim()).filter(Boolean).forEach(l=>{let cd=1;const m=l.match(/^CD\s*(\d+)\s+/i);if(m){cd=+m[1];l=l.slice(m[0].length);}
+      const parts=l.split("|").map(s=>s.trim());const name=parts.length>1?parts[1]:parts[0].replace(/^\d+[.)\s-]+/,"");(byCd[cd]=byCd[cd]||[]).push({n:name,d:toSec(parts[2])});});
+    const ks=Object.keys(byCd).sort((x,y)=>x-y),n={id:"p"+Date.now(),a:a||"Artiste inconnu",t,l:$("rL").value.trim()};
+    if(ks.length>1){n.discs=ks.map(k=>({tr:byCd[k]}));n.box=true;}else n.tr=ks.length?byCd[ks[0]]:[];
+    (w?S.wish:S.col).push(n);if(cur&&!S.codes[cur])S.codes[cur]=n.id;
+    if(coverShot){const cs=coverShot;covPut(n.id,cs).then(()=>{COV[n.id]=cs;render();}).catch(()=>{});}
+    save();render();openDetail(n.id);};
+  $("rCol").onclick=()=>save2(false);$("rWish").onclick=()=>save2(true);}
+
 // ---------- Sauvegarde ----------
 $("dlB").onclick=()=>{const blob=new Blob([JSON.stringify(S,null,1)],{type:"application/json"});const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);a.download="collezione-cd-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();$("bMsg").textContent="Sauvegarde téléchargée.";};
 $("upB").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(!Array.isArray(o.col))throw 0;adopt(o);save();render();$("bMsg").textContent="Sauvegarde restaurée.";}catch(err){$("bMsg").textContent="Ce fichier n'est pas une sauvegarde de Collezione CD.";}};
 $("wipe").onclick=()=>{$("wipeConfirm").hidden=false;};$("wipeNo").onclick=()=>{$("wipeConfirm").hidden=true;};
-$("wipeYes").onclick=async()=>{S=emptyState();await covClear();save();render();$("wipeConfirm").hidden=true;$("detail").hidden=true;$("bMsg").textContent="Collection vidée. À toi de jouer.";};
+$("wipeYes").onclick=async()=>{S=emptyState();await covClear();save();render();$("wipeConfirm").hidden=true;closeSheet();$("bMsg").textContent="Collection vidée. À toi de jouer.";};
 
 // ---------- Démarrage ----------
+$("sheetX").onclick=()=>closeSheet();
+$("overlay").addEventListener("click",e=>{if(e.target.id==="overlay")closeSheet();});
 renderStats();render();
 covAll().then(o=>{Object.assign(COV,o);render();});
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
