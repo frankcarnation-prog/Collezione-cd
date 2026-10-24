@@ -37,7 +37,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .bars{display:inline-flex;gap:2px;height:22px;align-items:stretch}.bars i{background:currentColor;display:block}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
 label{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
-input[type=text],input[type=search]{width:100%;font:inherit;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+input[type=text],input[type=search],input[type=password],input[type=url],select{width:100%;font:inherit;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
 .ean{font-family:var(--mono);font-size:1.3rem;letter-spacing:.12em}
 .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1 1 140px}
 .primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600}
@@ -46,7 +46,7 @@ input[type=text],input[type=search]{width:100%;font:inherit;padding:12px;border-
 .verdict.own{background:var(--own-bg);color:var(--own)}.verdict.wish{background:var(--wish-bg);color:var(--wish)}
 .verdict strong{font-family:var(--display);font-size:1.25rem}.verdict span{color:var(--ink)}
 .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
-.tabs button{flex:none;white-space:nowrap;border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:10px 8px;color:var(--muted);font-weight:600}
+.tabs button{flex:none;white-space:nowrap;border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:10px 6px;font-size:.95rem;color:var(--muted);font-weight:600}
 .tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
 ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .item{display:flex;gap:12px;align-items:center;padding:12px 2px;border-bottom:1px solid var(--line)}
@@ -139,6 +139,12 @@ button.shotbtn{display:block;width:100%;padding:0;font:inherit}
 #shootFmt{position:absolute;left:50%;transform:translateX(-50%);top:calc(max(16px,env(safe-area-inset-top)) + 34px);display:flex;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.5);border-radius:999px;padding:3px;white-space:nowrap}
 #shootFmt button{background:none;border:0;color:#fff;border-radius:999px;padding:6px 12px;font-size:.85rem;min-height:0}
 #shootFmt button[aria-pressed="true"]{background:#fff;color:#000}
+.compo details>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.compo details>summary::-webkit-details-marker{display:none}
+.compo details>summary small{color:var(--muted);white-space:nowrap;font-size:.85rem}
+.compo details>summary h3::before{content:"▸";display:inline-block;width:1.1em;color:var(--muted);transition:transform .15s}
+.compo details[open]>summary h3::before{transform:rotate(90deg)}
+.compo{padding:12px 0}
 </style>
 </head>
 <body>
@@ -181,9 +187,16 @@ button.shotbtn{display:block;width:100%;padding:0;font:inherit}
 <div class="row"><button id="dlB" type="button">Télécharger la sauvegarde</button><label class="filebtn">Restaurer un fichier<input id="upB" type="file" accept="application/json,.json"></label></div>
 <label for="dgKey">Jeton Discogs (facultatif, deuxième source + n° de catalogue)</label>
 <input id="dgKey" type="text" autocomplete="off" spellcheck="false" placeholder="Jeton personnel Discogs">
-<label for="apiKey">Clé d'API Anthropic (facultatif, pour la lecture photo automatique)</label>
-<input id="apiKey" type="text" autocomplete="off" spellcheck="false" placeholder="sk-ant-…">
-<p class="hint">Gardée sur ce téléphone uniquement. Sans clé, la lecture photo passe par l'app Claude.</p>
+<label for="apiKey">Clé d'API de l'IA (facultatif, pour la lecture photo automatique)</label>
+<input id="apiKey" type="text" autocomplete="off" spellcheck="false" placeholder="Clé Claude, Gemini, OpenAI, Mistral…">
+<p class="hint" id="aiInfo"></p>
+<p class="hint">Gardée sur ce téléphone uniquement. Gratuit : Gemini (aistudio.google.com). Sans clé, la lecture passe par l'app Claude.</p>
+<details class="alt"><summary>Avancé : fournisseur et modèle</summary>
+<label for="aiProv">Fournisseur</label><select id="aiProv"></select>
+<label for="aiModel">Modèle</label><input id="aiModel" type="text" autocomplete="off" spellcheck="false">
+<label for="aiUrl">Adresse de l'API</label><input id="aiUrl" type="url" autocomplete="off" spellcheck="false">
+<p class="hint">Rempli automatiquement selon le fournisseur. Ne change le modèle que si le fournisseur l'a renommé ou si tu en préfères un autre (il doit lire les images).</p>
+</details>
 <div class="row"><button id="wipe" type="button">Effacer la démo et repartir de zéro</button></div>
 <div id="wipeConfirm" hidden class="row"><button id="wipeYes" class="primary" type="button">Oui, tout effacer</button><button id="wipeNo" type="button">Annuler</button></div>
 <p class="hint" id="bMsg"></p>
@@ -262,6 +275,76 @@ const COMPOSERS=[
  ["Richard Wagner",["wagner"],[]],["Giuseppe Verdi",["verdi"],[]],["Giacomo Puccini",["puccini"],[]],
  ["Isaac Albéniz",["albeniz"],[]],["Enrique Granados",["granados"],[]],["Manuel de Falla",["falla","de falla"],[]],
  ["Karol Szymanowski",["szymanowski"],[]],["Ferruccio Busoni",["busoni"],[]],["Alban Berg",["berg"],[]],["Arnold Schoenberg",["schoenberg","schonberg"],[]],
+ ["Claudio Monteverdi",["monteverdi"],[]],
+ ["Henry Purcell",["purcell"],[]],
+ ["Giovanni Pierluigi da Palestrina",["palestrina"],[]],
+ ["William Byrd",["byrd"],[]],
+ ["Thomas Tallis",["tallis"],[]],
+ ["Jean-Baptiste Lully",["lully"],[]],
+ ["Marc-Antoine Charpentier",["charpentier"],[]],
+ ["Arcangelo Corelli",["corelli"],[]],
+ ["Tomaso Albinoni",["albinoni"],[]],
+ ["Giovanni Battista Pergolesi",["pergolesi"],[]],
+ ["Girolamo Frescobaldi",["frescobaldi"],[]],
+ ["Jan Pieterszoon Sweelinck",["sweelinck"],[]],
+ ["Johann Jakob Froberger",["froberger"],[]],
+ ["Georg Böhm",["bohm"],[]],
+ ["Nicolaus Bruhns",["bruhns"],[]],
+ ["Nicolas de Grigny",["grigny"],[]],
+ ["Louis Marchand",["marchand"],[]],
+ ["Jean-François Dandrieu",["dandrieu"],[]],
+ ["Claude Balbastre",["balbastre"],[]],
+ ["Christoph Willibald Gluck",["gluck"],[]],
+ ["Luigi Boccherini",["boccherini"],[]],
+ ["Niccolò Paganini",["paganini"],[]],
+ ["Muzio Clementi",["clementi"],[]],
+ ["Johann Nepomuk Hummel",["hummel"],[]],
+ ["John Field",["field"],[]],
+ ["Carl Maria von Weber",["weber"],[]],
+ ["Gioachino Rossini",["rossini"],[]],
+ ["Vincenzo Bellini",["bellini"],[]],
+ ["Gaetano Donizetti",["donizetti"],[]],
+ ["Hector Berlioz",["berlioz"],[]],
+ ["Charles-Valentin Alkan",["alkan"],[]],
+ ["Georges Bizet",["bizet"],[]],
+ ["Jules Massenet",["massenet"],[]],
+ ["Charles Gounod",["gounod"],[]],
+ ["Emmanuel Chabrier",["chabrier"],[]],
+ ["Vincent d'Indy",["d'indy"],[]],
+ ["Ernest Chausson",["chausson"],[]],
+ ["Paul Dukas",["dukas"],[]],
+ ["Albert Roussel",["roussel"],[]],
+ ["Arthur Honegger",["honegger"],[]],
+ ["Darius Milhaud",["milhaud"],[]],
+ ["Reynaldo Hahn",["hahn"],[]],
+ ["Louis James Alfred Lefébure-Wély",["lefebure-wely"],[]],
+ ["Charles Tournemire",["tournemire"],[]],
+ ["Jean Langlais",["langlais"],[]],
+ ["Max Reger",["reger"],[]],
+ ["Paul Hindemith",["hindemith"],[]],
+ ["Ottorino Respighi",["respighi"],[]],
+ ["Edward Elgar",["elgar"],[]],
+ ["Gustav Holst",["holst"],[]],
+ ["Ralph Vaughan Williams",["vaughan williams"],[]],
+ ["Benjamin Britten",["britten"],[]],
+ ["Samuel Barber",["barber"],[]],
+ ["Aaron Copland",["copland"],[]],
+ ["George Gershwin",["gershwin"],[]],
+ ["Leonard Bernstein",["bernstein"],[]],
+ ["Philip Glass",["glass"],[]],
+ ["Steve Reich",["reich"],[]],
+ ["Arvo Pärt",["part"],[]],
+ ["Henryk Górecki",["gorecki"],[]],
+ ["György Ligeti",["ligeti"],[]],
+ ["Zoltán Kodály",["kodaly"],[]],
+ ["George Enescu",["enescu"],[]],
+ ["Bohuslav Martinů",["martinu"],[]],
+ ["Carl Nielsen",["nielsen"],[]],
+ ["Joaquín Rodrigo",["rodrigo"],[]],
+ ["Heitor Villa-Lobos",["villa-lobos"],[]],
+ ["Astor Piazzolla",["piazzolla"],[]],
+ ["Carlo Gesualdo",["gesualdo"],[]],
+ ["Josquin des Prez",["josquin"],[]],
 ];
 const cKey=s=>norm(s).replace(/\(.*?\)/g," ").replace(/[.,;]/g," ").replace(/\s+/g," ").trim();
 const C_FULL={},C_SUR={};
@@ -282,7 +365,7 @@ function canonC(name,sortName){if(!name)return "";const ck=name+"|"+(sortName||"
 // Migre les données existantes : noms unifiés + mouvements regroupés sous leur œuvre
 function tidyWorks(){const W=S.works,used=new Set();
   [...S.col,...S.wish].forEach(x=>discsOf(x).forEach(d=>d.tr.forEach(t=>{if(typeof t==="string"||!t.w)return;const o=W[t.w];
-    if(o&&/^mb:/.test(t.w)){const m=o.t.match(MVT);if(m){const c=canonC(o.c),pk="mbp:"+norm(c+"|"+m[1]).replace(/[^a-z0-9|]+/g,"-");
+    if(o&&/^mb:/.test(t.w)){const m=splitMvt(o.t);m&&m.unshift(o.t);if(m){const c=canonC(o.c),pk="mbp:"+norm(c+"|"+m[1]).replace(/[^a-z0-9|]+/g,"-");
       W[pk]=W[pk]||{c,t:m[1].trim(),cat:""};t.w=pk;if(norm(t.n).startsWith(norm(o.t))||!t.n)t.n=m[2].trim();else if(t.n.includes(": "))t.n=m[2].trim();}}
     used.add(t.w);})));
   [...S.col,...S.wish].forEach(x=>{if(x.a&&nonLatin(x.a))x.a=x.a.split(/(\s*[;,&\/]\s*)/).map(s=>nonLatin(s)?canonC(s):s).join("");});
@@ -308,8 +391,15 @@ function sleeve(x){const seed=[...x.t].reduce((s,c)=>s+c.charCodeAt(0),0),r=40+s
   return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);}
 const coverUrl=x=>COV[x.id]||x.img||(x.c1?sleeve(x):"");
 // Une œuvre étalée sur plusieurs CD d'un même coffret = 1 version (sauf enregistrements différents, indiqués par "rec")
-function versions(){const v={};[[S.col,true],[S.wish,false]].forEach(([arr,own])=>arr.forEach(x=>{const seen=new Set();discsOf(x).forEach((d,di)=>{
-  d.tr.forEach(t=>{if(typeof t==="string"||!t.w)return;const k=t.w+"|"+(d.rec||"");if(seen.has(k))return;seen.add(k);(v[t.w]=v[t.w]||[]).push({x,di,d,own});});});}));return v;}
+// Même compositeur + même numéro de catalogue = même œuvre, quelle que soit la langue du titre
+function workId(w,W){W=W||WORKS();const o=W[w];if(!o||!o.c)return w;const ck=catKey(o.t);return ck?"id:"+norm(canonC(o.c))+"|"+ck:w;}
+// Disque classique ? (sinon les « œuvres » MusicBrainz des chansons pop ne comptent pas)
+const OFFICIAL=new Set(COMPOSERS.map(c=>c[0]));
+function classicalWork(w,o){return !!o&&(/^(mbp|ai|dg|id):/.test(w)||!!catKey(o.t)||!!o.cat||!!o.cy||OFFICIAL.has(canonC(o.c)));}
+function isClassical(x,W){W=W||WORKS();return tracksOf(x).some(t=>typeof t!=="string"&&t.w&&classicalWork(t.w,W[t.w]));}
+function versions(){const v={},W=WORKS();[[S.col,true],[S.wish,false]].forEach(([arr,own])=>arr.forEach(x=>{if(!isClassical(x,W))return;const seen=new Set();discsOf(x).forEach((d,di)=>{
+  d.tr.forEach(t=>{if(typeof t==="string"||!t.w)return;const id=workId(t.w,W),k=id+"|"+(d.rec||"");if(seen.has(k))return;seen.add(k);
+    if(!v[id]){v[id]=[];v[id].rep=t.w;}v[id].push({x,di,d,own});});});}));return v;}
 function renderStats(){const cds=S.col.reduce((n,x)=>n+discsOf(x).length,0);
   $("stats").textContent=S.col.length+" titres ("+cds+" CD) · "+S.wish.length+" envies · "+Object.keys(versions()).length+" œuvres classiques";
   $("demoTag").hidden=!S.demo;}
@@ -328,29 +418,34 @@ function render(){
     (k==="own"?`<span class="chip own">Possédé</span>`:`<button class="small" data-buy="${x.id}" type="button">Acheté</button><button class="small" data-del="${x.id}" type="button" aria-label="Retirer des envies">✕</button>`)+`</li>`}).join("")
     :`<li class="empty">${q?"Rien trouvé : tu ne l'as pas.":(tab==="col"?"Collection vide. Touche SCAN pour ajouter ton premier disque.":"Aucune envie pour l'instant.")}</li>`;}
 const surname=c=>{const p=cKey(c).split(" ");return p[p.length-1]||"";};
+const OPENED=new Set();
+function fold(key,title,sub,inner){return `<li class="compo"><details data-k="${esc(key)}"${OPENED.has(key)?" open":""}><summary><h3>${esc(title)}</h3><small>${sub}</small></summary>${inner}</details></li>`;}
+$("list").addEventListener("toggle",e=>{const d=e.target;if(!d.matches||!d.matches("details[data-k]"))return;d.open?OPENED.add(d.dataset.k):OPENED.delete(d.dataset.k);},true);
 function renderComposers(){const v=versions(),W=WORKS(),byC={};
-  Object.keys(v).forEach(w=>{const o=W[w];if(!o||!o.c)return;const c=canonC(o.c);(byC[c]=byC[c]||[]).push(w);});
+  Object.keys(v).forEach(id=>{const o=W[v[id].rep];if(!o||!o.c)return;const c=canonC(o.c);(byC[c]=byC[c]||[]).push(id);});
   const comps=Object.keys(byC).sort((a,b)=>surname(a).localeCompare(surname(b),"fr"));
-  $("list").innerHTML=comps.map(c=>{
-    const cyc={};byC[c].forEach(w=>{const o=W[w];if(o.cy&&v[w].some(e=>e.own))(cyc[o.cy]=cyc[o.cy]||{of:o.of,n:[]}).n.push(o.n);});
+  $("list").innerHTML=comps.map(c=>{const ids=byC[c];
+    const cyc={};ids.forEach(id=>{const o=W[v[id].rep];if(o.cy&&v[id].some(e=>e.own))(cyc[o.cy]=cyc[o.cy]||{of:o.of,n:[]}).n.push(o.n);});
     const cycTxt=Object.entries(cyc).map(([k,o])=>`<span>${esc(k)} : ${o.n.length} sur ${o.of} (n° ${o.n.sort((a,b)=>a-b).join(", ")})</span>`).join("");
-    return `<li class="compo"><h3>${esc(c)}</h3>${cycTxt?`<p class="facts">${cycTxt}</p>`:""}<ul class="works">`+
-      byC[c].sort((a,b)=>W[a].t.localeCompare(W[b].t,"fr",{numeric:true})).map(w=>{const vs=v[w],own=vs.filter(e=>e.own).length;
-        return `<li class="item tap" data-work="${esc(w)}"><div class="meta"><b>${esc(wLabel(w))}</b><small>${own} version${own>1?"s":""} possédée${own>1?"s":""}${vs.length>own?" · "+(vs.length-own)+" en envie":""}</small></div><span class="count">${vs.length}</span></li>`;}).join("")+`</ul></li>`;}).join("")||`<li class="empty">Aucune œuvre classique repérée pour l'instant.</li>`;}
+    const inner=(cycTxt?`<p class="facts">${cycTxt}</p>`:"")+`<ul class="works">`+
+      ids.sort((a,b)=>W[v[a].rep].t.localeCompare(W[v[b].rep].t,"fr",{numeric:true})).map(id=>{const vs=v[id],w=vs.rep,own=vs.filter(e=>e.own).length;
+        return `<li class="item tap" data-work="${esc(w)}"><div class="meta"><b>${esc(wLabel(w))}</b><small>${own} version${own>1?"s":""} possédée${own>1?"s":""}${vs.length>own?" · "+(vs.length-own)+" en envie":""}</small></div><span class="count">${vs.length}</span></li>`;}).join("")+`</ul>`;
+    return fold("c:"+c,c,ids.length+" œuvre"+(ids.length>1?"s":"")+(cycTxt?" · "+Object.keys(cyc).length+" cycle"+(Object.keys(cyc).length>1?"s":""):""),inner);}).join("")||`<li class="empty">Aucune œuvre classique repérée pour l'instant.</li>`;}
 
 // ---------- Interprètes (surtout pour le classique) ----------
+const MAX_PERF=3;
+const firstPerf=p=>(p||"").split(/\s*,\s*/).filter(Boolean).slice(0,MAX_PERF).join(", ");
 const NOT_PERF=/^(various|divers|artiste inconnu|unknown|anonymous|anonyme|various artists)$/i;
-function perfNames(x){const W=WORKS(),comps=new Set();let classical=false;
-  tracksOf(x).forEach(t=>{const o=typeof t!=="string"&&W[t.w];if(o){classical=true;if(o.c)comps.add(canonC(o.c));}});
-  if(!classical)return [];
-  const raw=[x.perf||"",x.a||""].join(",").split(/\s*(?:,|;|\/|&|\bet\b|\band\b|\bfeat\.?)\s*/i).map(s=>s.replace(/\s*\(.*?\)\s*$/,"").trim()).filter(s=>s.length>2&&!NOT_PERF.test(s));
-  const out=new Map();raw.forEach(s=>{if(comps.has(canonC(s))||C_SUR[surname(s)]&&canonC(s)!==s)return;const k=norm(s);if(!out.has(k))out.set(k,s);});return [...out.values()];}
+function perfNames(x){const W=WORKS();if(!isClassical(x,W))return [];const comps=new Set();
+  tracksOf(x).forEach(t=>{const o=typeof t!=="string"&&W[t.w];if(o&&o.c)comps.add(canonC(o.c));});
+  const raw=[firstPerf(x.perf),x.a||""].join(",").split(/\s*(?:,|;|\/|&|\bet\b|\band\b|\bfeat\.?)\s*/i).map(s=>s.replace(/\s*\(.*?\)\s*$/,"").trim()).filter(s=>s.length>2&&!NOT_PERF.test(s));
+  const out=new Map();raw.forEach(s=>{if(comps.has(canonC(s))||C_SUR[surname(s)]&&canonC(s)!==s)return;const k=norm(s);if(!out.has(k))out.set(k,s);});return [...out.values()].slice(0,MAX_PERF);}
 const GROUP=/orchest|ensemble|quartet|quatuor|quartett|choir|chœur|choeur|chor\b|philharm|symphon|trio|consort|kammer|camerata|academy|akademie|sinfonia|solistes|soloists/i;
 const perfSort=n=>GROUP.test(n)?norm(n).replace(/^(the|l'|le|la|les|orchestre|orchestra)\s+/,""):surname(n);
 function renderPerformers(){const by={};
   [[S.col,true],[S.wish,false]].forEach(([arr,own])=>arr.forEach(x=>perfNames(x).forEach(p=>{const k=norm(p);(by[k]=by[k]||{name:p,items:[]}).items.push({x,own});})));
   const list=Object.values(by).sort((a,b)=>perfSort(a.name).localeCompare(perfSort(b.name),"fr"));
-  $("list").innerHTML=list.map(p=>`<li class="compo"><h3>${esc(p.name)}</h3><ul class="works">${p.items.map(({x,own})=>`<li class="item tap" data-open="${x.id}"><img class="cover" src="${coverUrl(x)}" alt="" onerror="this.style.visibility='hidden'"><div class="meta"><b>${esc(x.t)}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}</small></div><span class="chip ${own?"own":"wish"}">${own?"Possédé":"Envie"}</span></li>`).join("")}</ul></li>`).join("")
+  $("list").innerHTML=list.map(p=>fold("p:"+norm(p.name),p.name,p.items.length+" disque"+(p.items.length>1?"s":""),`<ul class="works">${p.items.map(({x,own})=>`<li class="item tap" data-open="${x.id}"><img class="cover" src="${coverUrl(x)}" alt="" onerror="this.style.visibility='hidden'"><div class="meta"><b>${esc(x.t)}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}</small></div><span class="chip ${own?"own":"wish"}">${own?"Possédé":"Envie"}</span></li>`).join("")}</ul>`)).join("")
     ||`<li class="empty">Aucun interprète repéré. Ils viennent des disques classiques (champ « Interprètes » de la fiche).</li>`;}
 function buy(id){const i=S.wish.findIndex(x=>x.id===id);if(i<0)return;S.col.push(S.wish.splice(i,1)[0]);save();render();}
 $("list").addEventListener("click",e=>{const b=e.target.closest("button");
@@ -429,6 +524,14 @@ async function mbLookup(code){
   const rel=(s.releases||[]).find(r=>r.barcode===code)||(s.releases||[])[0];if(!rel)return null;
   return mbRelease(rel.id);}
 const MVT=/^(.*?):\s+((?:[IVXLC]+|\d+|No\.?\s*\d+|N°\s*\d+)[.\s:-].*)$/;
+// Numéro de catalogue d'une œuvre : "op. 9 n° 2" → op9-2, "BWV 565" → bwv565, "K. 331" → k331…
+function catKey(t){const s=norm(t||"").replace(/n[°º]\s*/g,"no ").replace(/\s+/g," ");
+  let m=s.match(/\bop(?:us)?\.?\s*(\d+[a-z]?)(?:\s*,?\s*(?:no|nr|n)\.?\s*(\d+))?/);if(m)return "op"+m[1]+(m[2]?"-"+m[2]:"");
+  m=s.match(/\b(bwv|buxwv|hwv|rv|kv|k|d|hob|wwv|sz|kk|wq|trv|s|l|p)\.?\s*((?:[ivx]+|[a-z])\s*[:.]?\s*)?(\d+[a-z]?)\b/);
+  if(m)return (m[1]==="kv"?"k":m[1])+(m[2]?m[2].replace(/[\s:.]/g,""):"")+m[3];return "";}
+// "Œuvre, op. 43: Variation II: …" → [œuvre, mouvement]
+function splitMvt(title){const m=(title||"").match(MVT);if(m)return [m[1],m[2]];const i=(title||"").indexOf(": ");
+  if(i>0&&catKey(title.slice(0,i)))return [title.slice(0,i),title.slice(i+2)];return null;}
 async function mbRelease(rid){
   const d=await mbGet("release/"+rid+"?inc=artist-credits+labels+recordings+media+recording-level-rels+work-rels+work-level-rels+artist-rels");
   const newWorks={},perfs=new Set();
@@ -437,14 +540,14 @@ async function mbRelease(rid){
     (rec.relations||[]).forEach(x=>{if(["instrument","vocal","conductor","performing orchestra","performer"].includes(x.type)&&x.artist)perfs.add(nonLatin(x.artist.name)&&x.artist["sort-name"]?x.artist["sort-name"].split(",").map(s=>s.trim()).reverse().join(" "):x.artist.name);});
     const dur=tk.length?Math.round(tk.length/1000):0;
     if(pr){const w=pr.work,comp=(w.relations||[]).find(x=>x.type==="composer"&&x.artist),cn=comp?canonC(comp.artist.name,comp.artist["sort-name"]):"";
-      const m=w.title.match(MVT);
+      const m=splitMvt(w.title);m&&m.unshift(w.title);
       if(m){const key="mbp:"+norm(cn+"|"+m[1]).replace(/[^a-z0-9|]+/g,"-");newWorks[key]={c:cn,t:m[1].trim(),cat:""};return {w:key,n:m[2].trim(),d:dur};}
       newWorks["mb:"+w.id]={c:cn,t:w.title,cat:""};return {w:"mb:"+w.id,n:tk.title,d:dur};}
     return {n:tk.title,d:dur};})}));
   const lab=(d["label-info"]||[]).find(l=>l.label);
   const a={id:"mb"+d.id,a:credit(d["artist-credit"])||"Artiste inconnu",t:d.title,l:lab?lab.label.name:"",y:(d.date||"").slice(0,4),
     img:"https://coverartarchive.org/release/"+d.id+"/front-250",mbid:d.id,newWorks};
-  if(perfs.size)a.perf=[...perfs].slice(0,4).join(", ");
+  if(perfs.size)a.perf=[...perfs].slice(0,MAX_PERF).join(", ");
   if(discs.length>1){a.discs=discs;a.box=true;}else{a.tr=discs[0]?discs[0].tr:[];if(discs[0]&&discs[0].t)a.discs=discs;}
   return a;}
 
@@ -482,7 +585,7 @@ async function dgRelease(id){const d=await dgGet("releases/"+id);
   const img=((d.images||[]).find(i=>i.type==="primary")||(d.images||[])[0]||{});
   const a={id:"dg"+d.id,a:dgCredit(d.artists)||"Artiste inconnu",t:d.title,l:lab.name?lab.name.replace(/\s\(\d+\)$/,""):"",cat:lab.catno&&lab.catno!=="none"?lab.catno:"",
     y:d.year?String(d.year):"",img:img.uri150||img.uri||"",dgid:d.id,newWorks};
-  if(perfs.size)a.perf=[...perfs].slice(0,4).join(", ");
+  if(perfs.size)a.perf=[...perfs].slice(0,MAX_PERF).join(", ");
   if(ks.length>1){a.discs=ks.map(k=>({tr:discs[k]}));a.box=true;}else a.tr=ks.length?discs[ks[0]]:[];
   return a;}
 $("catGo").onclick=async()=>{stopCam();const q=$("catno").value.trim(),out=$("eanResult");cur="";
@@ -500,25 +603,25 @@ $("catGo").onclick=async()=>{stopCam();const q=$("catno").value.trim(),out=$("ea
 $("catno").addEventListener("keydown",e=>{if(e.key==="Enter")$("catGo").click();});
 
 // ---------- Fiches ----------
-function openWork(w){const o=WORKS()[w],vs=versions()[w]||[],p=$("detail");if(!o)return;
+function openWork(w){const o=WORKS()[w],vs=versions()[workId(w)]||[],p=$("detail");if(!o)return;
   p.innerHTML=`<p class="cat">${esc(canonC(o.c))}</p><h2 class="wh">${esc(wLabel(w))}</h2><p class="hint">${vs.length} version${vs.length>1?"s":""} dans ta collection et tes envies</p>
-   <ul class="list">${vs.map(e=>`<li class="item tap" data-open="${e.x.id}"><img class="cover" src="${coverUrl(e.x)}" alt=""><div class="meta"><b>${esc(e.x.perf||e.x.a)}</b><small>${esc(e.d.rec||e.x.rec||e.x.y||"")}${e.d.t?" · "+esc(e.d.t):""}</small><small>${esc(e.x.t)}${e.x.box?" · CD "+(e.di+1):""}</small></div><span class="chip ${e.own?"own":"wish"}">${e.own?"Possédé":"Envie"}</span></li>`).join("")}</ul>
+   <ul class="list">${vs.map(e=>`<li class="item tap" data-open="${e.x.id}"><img class="cover" src="${coverUrl(e.x)}" alt=""><div class="meta"><b>${esc(firstPerf(e.x.perf)||e.x.a)}</b><small>${esc(e.d.rec||e.x.rec||e.x.y||"")}${e.d.t?" · "+esc(e.d.t):""}</small><small>${esc(e.x.t)}${e.x.box?" · CD "+(e.di+1):""}</small></div><span class="chip ${e.own?"own":"wish"}">${e.own?"Possédé":"Envie"}</span></li>`).join("")}</ul>
    <div class="row"><button type="button" id="detClose">Fermer</button></div>`;
   openSheet();$("detClose").onclick=()=>closeSheet();
   p.querySelectorAll("[data-open]").forEach(n=>n.onclick=()=>openDetail(n.dataset.open));}
-function openDetail(id){const x=byId(id);if(!x)return;const p=$("detail"),cu=coverUrl(x),own=!isWish(id),c=codeOf(id),W=WORKS(),V=versions();
+function openDetail(id){const x=byId(id);if(!x)return;const p=$("detail"),cu=coverUrl(x),own=!isWish(id),c=codeOf(id),W=WORKS(),V=versions(),cls=isClassical(x,W);
   const multi=discsOf(x).length>1;
   let num=0;
   const tracks=tracksOf(x).length?discsOf(x).map((d,di)=>{num=0;let h=(multi||d.rec||d.t)?`<p class="discH">${multi?"CD "+(di+1)+(d.t?" · "+esc(d.t):""):(d.t?esc(d.t):"")}${d.rec&&!multi?esc(d.rec):""}</p>${multi&&d.rec?`<p class="hint">${esc(d.rec)}</p>`:""}`:"";
-      let cw=null;h+=`<div class="trk">`;d.tr.forEach(t=>{const w=typeof t==="string"?null:t.w,o=w&&W[w];num++;
-        if(w!==cw){if(o){const n=(V[w]||[]).length;h+=`<button type="button" class="wk" data-work="${esc(w)}">${o.c?esc(canonC(o.c))+" — ":""}${esc(wLabel(w))}<span>${n} version${n>1?"s":""}</span></button>`;}cw=w;}
+      let cw=null;h+=`<div class="trk">`;d.tr.forEach(t=>{const w=typeof t==="string"?null:t.w,o=cls&&w&&W[w];num++;
+        if(w!==cw){if(o){const n=(V[workId(w,W)]||[]).length;h+=`<button type="button" class="wk" data-work="${esc(w)}">${o.c?esc(canonC(o.c))+" — ":""}${esc(wLabel(w))}<span>${n} version${n>1?"s":""}</span></button>`;}cw=w;}
         let nm=tName(t);if(o&&nm.toLowerCase().startsWith(o.t.toLowerCase()+":"))nm=nm.slice(o.t.length+1).trim();
         h+=`<div class="tr${o?" sub":""}"><span class="n">${num}</span><span class="t">${esc(nm)}</span><span class="d">${fmtD(t.d)}</span></div>`;});
       return h+`</div>`;}).join("")
     :`<p class="hint">Pas encore de liste de pistes. Colle-la ici, une piste par ligne :</p><textarea id="trIn" aria-label="Pistes"></textarea><button type="button" id="trSave">Enregistrer les pistes</button>`;
   p.innerHTML=`<div class="detail"><div class="sleeve">${cu?`<img src="${cu}" alt="Pochette de ${esc(x.t)}" onerror="this.remove()">`:"Pas de pochette"}</div>
    <div class="meta"><h2>${esc(x.t)}</h2><p class="by">${esc(x.a)}</p>
-   ${x.perf?`<p class="by">${esc(x.perf)}</p>`:""}<p class="facts">${x.box?`<span>Coffret ${discsOf(x).length} CD</span>`:""}${x.l?`<span>${esc(x.l)}</span>`:""}${x.y?`<span>${esc(x.y)}</span>`:""}${x.g?`<span>${esc(x.g)}</span>`:""}</p>
+   ${x.perf?`<p class="by">${esc(firstPerf(x.perf))}</p>`:""}<p class="facts">${x.box?`<span>Coffret ${discsOf(x).length} CD</span>`:""}${x.l?`<span>${esc(x.l)}</span>`:""}${x.y?`<span>${esc(x.y)}</span>`:""}${x.g?`<span>${esc(x.g)}</span>`:""}</p>
    <p><span class="chip ${own?"own":"wish"}">${own?"Possédé":"Envie"}</span> ${c?`<span class="code">${fmtEan(c)}</span>`:""}</p>
    <div class="row"><button type="button" id="coverBtn">${COV[id]?"Changer la pochette":"Photographier la pochette"}</button><button type="button" id="detClose">Fermer</button></div>
    <div class="row"><button type="button" class="small" id="detEdit">Modifier</button><button type="button" class="small" id="detRead">Relire en photo (IA)</button><button type="button" class="small" id="detDel">Supprimer</button></div>
@@ -589,17 +692,67 @@ Réponds avec ce JSON seul, sans texte autour :
 - Autres musiques : "compositeur" et "oeuvre" = "", "titre" = le titre de la piste.
 - "duree" = "" si absente.`;
 let shots={recto:null,verso:null},coverShot=null,readTarget=null;
-function getKey(){try{return localStorage.getItem("anthropic-key")||"";}catch(e){return "";}}
-function setKey(v){try{localStorage.setItem("anthropic-key",v.trim());}catch(e){}if($("apiKey"))$("apiKey").value=v.trim();}
-$("apiKey").value=getKey();
+// ---------- Fournisseurs d'IA : une seule clé, fournisseur reconnu automatiquement ----------
+// Les noms de modèles évoluent : ils restent modifiables dans Réglages → Avancé.
+const PROVIDERS={
+  claude:{name:"Claude (Anthropic)",kind:"anthropic",url:"https://api.anthropic.com/v1",model:"claude-haiku-5-5",where:"platform.claude.com (crédit prépayé)"},
+  gemini:{name:"Gemini (Google)",kind:"gemini",url:"https://generativelanguage.googleapis.com/v1beta",model:"gemini-3.5-flash",where:"aistudio.google.com (offre gratuite)"},
+  openai:{name:"OpenAI (ChatGPT)",kind:"openai",url:"https://api.openai.com/v1",model:"gpt-5-mini",where:"platform.openai.com"},
+  mistral:{name:"Mistral",kind:"openai",url:"https://api.mistral.ai/v1",model:"mistral-small-latest",where:"console.mistral.ai (offre gratuite)"},
+  groq:{name:"Groq",kind:"openai",url:"https://api.groq.com/openai/v1",model:"meta-llama/llama-4-scout-17b-16e-instruct",where:"console.groq.com (offre gratuite)"},
+  openrouter:{name:"OpenRouter",kind:"openai",url:"https://openrouter.ai/api/v1",model:"",where:"openrouter.ai"},
+  custom:{name:"Autre (compatible OpenAI)",kind:"openai",url:"",model:"",where:""}};
+function detectProv(k){k=(k||"").trim();if(!k)return "";if(/^sk-ant-/.test(k))return "claude";if(/^AIza/.test(k))return "gemini";if(/^sk-or-/.test(k))return "openrouter";
+  if(/^gsk_/.test(k))return "groq";if(/^sk-/.test(k))return "openai";return "";}
+function aiCfg(){let c={};try{c=JSON.parse(localStorage.getItem("ai-cfg")||"{}");}catch(e){}
+  if(!c.key){try{const old=localStorage.getItem("anthropic-key");if(old)c.key=old;}catch(e){}}
+  const prov=c.prov&&c.prov!=="auto"?c.prov:detectProv(c.key),P=PROVIDERS[prov]||null;
+  return {key:c.key||"",chosen:c.prov||"auto",prov,P,url:(c.url||(P&&P.url)||"").replace(/\/+$/,""),model:c.model||(P&&P.model)||""};}
+function setAi(patch){let c={};try{c=JSON.parse(localStorage.getItem("ai-cfg")||"{}");}catch(e){}
+  Object.assign(c,patch);try{localStorage.setItem("ai-cfg",JSON.stringify(c));}catch(e){}syncAiUi();}
+const getKey=()=>aiCfg().key;
+const setKey=v=>{const k=v.trim();if(k!==getKey())setAi({key:k,url:"",model:""});};
+function provLine(){const c=aiCfg();if(!c.key)return "Colle une clé : Claude, Gemini, OpenAI, Mistral, Groq, OpenRouter… Le fournisseur est reconnu tout seul.";
+  if(!c.P)return "Fournisseur non reconnu : choisis-le dans Réglages → Avancé (Mistral, par exemple).";
+  return "Fournisseur : "+c.P.name+(c.model?" · modèle "+c.model:" · indique le modèle dans Réglages → Avancé");}
+function syncAiUi(){const c=aiCfg();if($("apiKey")&&document.activeElement!==$("apiKey"))$("apiKey").value=c.key;
+  if($("aiProv")){$("aiProv").value=c.chosen;$("aiUrl").value=c.url;$("aiModel").value=c.model;}
+  ["aiInfo","keyInfo"].forEach(i=>{if($(i))$(i).textContent=provLine();});}
+$("aiProv").innerHTML=`<option value="auto">Automatique (selon la clé)</option>`+Object.entries(PROVIDERS).map(([k,p])=>`<option value="${k}">${p.name}</option>`).join("");
 $("apiKey").addEventListener("change",e=>setKey(e.target.value));
+$("aiProv").addEventListener("change",e=>setAi({prov:e.target.value,url:"",model:""}));
+$("aiUrl").addEventListener("change",e=>setAi({url:e.target.value.trim()}));
+$("aiModel").addEventListener("change",e=>setAi({model:e.target.value.trim()}));
+syncAiUi();
+// Envoie le texte + les images au fournisseur choisi, renvoie le texte de la réponse
+async function callAI(prompt,images){const c=aiCfg();
+  if(!c.P)throw new Error("Fournisseur non reconnu : choisis-le dans Réglages → Avancé.");
+  if(!c.model)throw new Error("Indique le nom du modèle dans Réglages → Avancé.");
+  if(!c.url)throw new Error("Indique l'adresse de l'API dans Réglages → Avancé.");
+  const b64=d=>d.split(",")[1];let r,j;
+  try{
+    if(c.P.kind==="anthropic"){const content=[];images.forEach(([lab,d])=>{content.push({type:"text",text:lab});content.push({type:"image",source:{type:"base64",media_type:"image/jpeg",data:b64(d)}});});content.push({type:"text",text:prompt});
+      r=await fetch(c.url+"/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":c.key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:c.model,max_tokens:8000,messages:[{role:"user",content}]})});
+      j=await r.json();if(r.ok)return (j.content||[]).filter(x=>x.type==="text").map(x=>x.text).join("\n");}
+    else if(c.P.kind==="gemini"){const parts=[];images.forEach(([lab,d])=>{parts.push({text:lab});parts.push({inline_data:{mime_type:"image/jpeg",data:b64(d)}});});parts.push({text:prompt});
+      r=await fetch(c.url+"/models/"+encodeURIComponent(c.model)+":generateContent",{method:"POST",headers:{"content-type":"application/json","x-goog-api-key":c.key},body:JSON.stringify({contents:[{parts}],generationConfig:{responseMimeType:"application/json"}})});
+      j=await r.json();if(r.ok)return ((j.candidates||[])[0]?.content?.parts||[]).map(x=>x.text||"").join("\n");}
+    else{const content=[];images.forEach(([lab,d])=>{content.push({type:"text",text:lab});content.push({type:"image_url",image_url:{url:d}});});content.push({type:"text",text:prompt});
+      r=await fetch(c.url+"/chat/completions",{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+c.key},body:JSON.stringify({model:c.model,messages:[{role:"user",content}]})});
+      j=await r.json();if(r.ok){const m=(j.choices||[])[0]?.message?.content;return Array.isArray(m)?m.map(x=>x.text||"").join("\n"):(m||"");}}
+  }catch(e){if(e instanceof TypeError)throw new Error("Impossible de joindre "+c.P.name+" : pas de réseau, ou ce service refuse les appels depuis une app web.");throw e;}
+  const msg=(j&&(j.error&&(j.error.message||j.error)||j.message))||"";
+  if(r.status===401||r.status===403)throw new Error("Clé refusée par "+c.P.name+" : vérifie-la.");
+  if(r.status===429)throw new Error("Limite atteinte chez "+c.P.name+" (quota gratuit ou crédit épuisé). Réessaie plus tard.");
+  if(r.status===404)throw new Error("Modèle « "+c.model+" » introuvable chez "+c.P.name+" : corrige-le dans Réglages → Avancé.");
+  throw new Error("Erreur "+c.P.name+" ("+r.status+(msg?" : "+String(msg).slice(0,160):"")+").");}
 $("photoRead").onclick=()=>{stopCam();const v=$("ean").value.replace(/\D/g,"");cur=v.length>=8?v:"";openReader();};
 function openReader(target){readTarget=typeof target==="string"?target:null;shots={recto:null,verso:null};coverShot=null;const p=$("detail"),key=getKey(),tx=readTarget&&byId(readTarget);
   p.innerHTML=`<p class="cat">${tx?"Relecture : "+esc(tx.t):"Lecture de la pochette"}</p><h2 class="wh">Photographie le recto et le verso</h2>
   <div class="shots">${["recto","verso"].map(s=>`<button type="button" class="shot shotbtn" id="sh-${s}" data-shot="${s}"><b>${s==="recto"?"Recto":"Verso"}</b><span>${s==="recto"?"titre, artiste, label":"liste des pistes"}</span></button>`).join("")}</div>
-  <div class="keybox"><label for="keyIn">Clé d'API Anthropic</label>
-   <div class="row"><input id="keyIn" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…" value="${esc(key)}"><button type="button" id="keyShow" class="small">Voir</button></div>
-   <p class="hint">Gardée uniquement sur ce téléphone. À créer sur platform.claude.com (crédit prépayé, distinct de l'abonnement Claude Pro).</p></div>
+  <div class="keybox"><label for="keyIn">Clé d'API de l'IA</label>
+   <div class="row"><input id="keyIn" type="password" autocomplete="off" spellcheck="false" placeholder="Clé Claude, Gemini, OpenAI…" value="${esc(key)}"><button type="button" id="keyShow" class="small">Voir</button></div>
+   <p class="hint" id="keyInfo"></p><p class="hint">Gardée uniquement sur ce téléphone. Gemini (Google) a une offre gratuite : aistudio.google.com.</p></div>
   <button class="primary" id="readGo" type="button">Lire les photos</button>
   <details class="alt"><summary>Sans clé : passer par l'app Claude</summary>
    <p class="hint">Envoie les deux photos dans l'app Claude avec ce message, puis colle sa réponse ici.</p>
@@ -609,7 +762,7 @@ function openReader(target){readTarget=typeof target==="string"?target:null;shot
    <button id="pasteGo" type="button">Utiliser cette réponse</button></details>
   <p class="hint" id="readMsg"></p><div id="readOut"></div>`;
   openSheet();
-  $("keyIn").addEventListener("change",e=>setKey(e.target.value));
+  $("keyIn").addEventListener("change",e=>setKey(e.target.value));$("keyIn").addEventListener("input",()=>{const k=$("keyIn").value.trim(),pv=PROVIDERS[detectProv(k)];$("keyInfo").textContent=k?(pv?"Fournisseur : "+pv.name:"Fournisseur non reconnu : choisis-le dans Réglages → Avancé."):provLine();});syncAiUi();
   $("keyShow").onclick=()=>{const i=$("keyIn");i.type=i.type==="password"?"text":"password";$("keyShow").textContent=i.type==="password"?"Voir":"Masquer";};
   p.querySelectorAll("[data-shot]").forEach(btn=>btn.onclick=async()=>{const s=btn.dataset.shot,r=await shoot(s);if(!r)return;
     shots[s]=r.full;if(s==="recto")coverShot=r.small;btn.querySelector("img")?.remove();const im=document.createElement("img");im.src=r.full;im.alt="";btn.prepend(im);});
@@ -630,14 +783,8 @@ async function readWithApi(){const m=$("readMsg");const imgs=["recto","verso"].f
   if(!getKey()){m.textContent="Colle d'abord ta clé d'API, ou utilise l'option sans clé.";$("keyIn").focus();return;}
   if(!imgs.length){m.textContent="Prends au moins une photo.";return;}
   if(!navigator.onLine){m.textContent="Pas de connexion Internet.";return;}
-  m.textContent="Lecture en cours… (10 à 30 secondes)";$("readGo").disabled=true;
-  const content=[];imgs.forEach(s=>{content.push({type:"text",text:s==="recto"?"Recto :":"Verso :"});content.push({type:"image",source:{type:"base64",media_type:"image/jpeg",data:shots[s].split(",")[1]}});});
-  content.push({type:"text",text:READ_PROMPT});
-  try{const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":getKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:"claude-haiku-5-5",max_tokens:8000,messages:[{role:"user",content}]})});
-    const j=await r.json();
-    if(!r.ok)throw new Error(r.status===401?"Clé d'API refusée : vérifie-la.":r.status===400&&/credit/i.test(j.error&&j.error.message||"")?"Plus de crédit sur ton compte API.":"Erreur de lecture ("+(j.error&&j.error.message||r.status)+").");
-    const txt=(j.content||[]).filter(c=>c.type==="text").map(c=>c.text).join("\n");
+  m.textContent="Lecture en cours avec "+(aiCfg().P?aiCfg().P.name:"l'IA")+"… (10 à 30 secondes)";$("readGo").disabled=true;
+  try{const txt=await callAI(READ_PROMPT,imgs.map(s=>[s==="recto"?"Recto :":"Verso :",shots[s]]));
     showRead(parseRead(txt));m.textContent="Vérifie et corrige si besoin avant d'enregistrer.";
   }catch(err){m.textContent=err.message||"La lecture a échoué.";}
   finally{if($("readGo"))$("readGo").disabled=false;}}
