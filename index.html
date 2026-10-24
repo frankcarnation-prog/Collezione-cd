@@ -172,6 +172,23 @@ button.next{width:100%;margin-top:10px}
 .copies{display:inline-block;font-family:var(--mono);font-size:.78rem;font-weight:700;background:var(--accent);color:#fff;border-radius:6px;padding:1px 6px;vertical-align:2px}
 .copiesRow{display:flex;align-items:center;gap:10px;margin:2px 0 8px;color:var(--muted);font-size:.9rem}.copiesRow b{min-width:1.5em;text-align:center;color:var(--ink);font-size:1.05rem}
 .copiesRow button{width:38px;padding:4px 0;font-size:1.1rem}
+.srch{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:10px 0 6px;font-size:.9rem;color:var(--muted)}.srch a{color:var(--accent);font-weight:600}
+.pickEd{width:100%;margin:4px 0 8px}.pick small.src{color:var(--accent);font-weight:600}
+.linklike{border:0;background:none;padding:0;min-height:0;color:var(--accent);font-weight:600;text-decoration:underline;font:inherit;display:inline}
+#ncChip{background:var(--accent);color:#fff;border:0}
+.hint.okc{color:var(--own)}.hint.err,.linklike.err{color:#d9534f}.srcl{color:var(--muted)}
+.lastres{color:var(--ink)}
+.chk{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;margin-right:2px}
+.item.picked .chk{background:var(--accent);border-color:var(--accent);color:#fff}.item.picked{background:var(--own-bg)}
+.selbar{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:70;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 8px 8px 14px;box-shadow:0 6px 24px rgba(0,0,0,.35);max-width:560px;margin:0 auto}
+.selbar[hidden]{display:none}.selbar span{flex:1;font-size:.9rem}.selbar .primary{padding:10px 14px}.selbar button:last-child{padding:10px 12px}
+.boxer .item{gap:10px;align-items:center}.bxCov{padding:0;border:3px solid transparent;border-radius:8px;background:none;min-height:0;flex:none}.bxCov.on{border-color:var(--accent)}
+.boxer .ord{display:flex;flex-direction:column;gap:4px}.boxer .ord button{padding:4px 10px}
+#selBtn{margin-right:auto}
+body.locked .selbar{display:none}
+.bxCov img,.bxCov .disc{width:52px;height:52px;border-radius:6px;display:block}
+.sortbar label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.sortbar span{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -209,17 +226,19 @@ button.next{width:100%;margin-top:10px}
   <button role="tab" id="tabComp" aria-selected="false" type="button">Compositeurs</button>
   <button role="tab" id="tabPerf" aria-selected="false" type="button">Interprètes</button>
 </nav>
-<div class="sortbar" id="sortBar"><span id="sortCount"></span><label for="sortSel">Trier</label><select id="sortSel"><option value="recent">Ajouts récents</option><option value="artist">Artiste</option><option value="title">Titre</option><option value="year">Année</option></select></div>
+<div class="sortbar" id="sortBar"><span id="sortCount"></span><button type="button" class="small" id="ncChip" hidden>Sans pochette ✕</button><button type="button" class="small" id="selBtn">Sélection</button><label for="sortSel">Trier</label><select id="sortSel"><option value="recent">Ajouts récents</option><option value="artist">Artiste</option><option value="title">Titre</option><option value="year">Année</option></select></div>
 <ul class="list" id="list"></ul>
 <div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
+<div class="selbar" id="selBar" hidden><span id="selTxt"></span><button type="button" class="primary" id="selBox" disabled>Regrouper en coffret</button><button type="button" id="selCancel" aria-label="Annuler la sélection">✕</button></div>
 <p class="empty" id="more" hidden></p>
 
-<details><summary>Réglages : clés IA et Discogs, sauvegarde</summary>
+<details id="settings"><summary>Réglages : clés IA et Discogs, sauvegarde</summary>
 <p>Ta collection est enregistrée sur ce téléphone. Télécharge une sauvegarde de temps en temps (les photos de pochettes n'y sont pas incluses). « Restaurer un fichier » accepte aussi un fichier d'import de collection : il s'ajoute à ce que tu as déjà.</p>
 <div class="row"><button id="dlB" type="button">Télécharger la sauvegarde</button><label class="filebtn">Restaurer un fichier<input id="upB" type="file" accept="application/json,.json"></label></div>
 <div class="row"><button type="button" id="enrOpen">Compléter pochettes et infos automatiquement</button></div>
 <label for="dgKey">Jeton Discogs (facultatif, deuxième source + n° de catalogue)</label>
 <input id="dgKey" type="text" autocomplete="off" spellcheck="false" placeholder="Jeton personnel Discogs">
+<p class="hint" id="dgInfo"></p><p class="hint">À créer gratuitement sur discogs.com → Paramètres → Développeurs → « Generate new token ».</p>
 <label for="apiKey">Clé d'API de l'IA (facultatif, pour la lecture photo automatique)</label>
 <input id="apiKey" type="text" autocomplete="off" spellcheck="false" placeholder="Clé Claude, Gemini, OpenAI, Mistral…">
 <p class="hint" id="aiInfo"></p>
@@ -468,25 +487,61 @@ function renderStats(){const cds=S.col.reduce((n,x)=>n+discsOf(x).length,0);
 let tab="col";
 const matches=(x,q)=>{const W=WORKS();return !q||norm([x.a,x.t,x.g,x.l,x.perf,x.y,x.note,x.cat,...discsOf(x).map(d=>(d.t||"")+" "+(d.rec||"")),...tracksOf(x).map(t=>typeof t==="string"?t:t.n+" "+(W[t.w]?W[t.w].c+" "+wLabel(t.w):""))].join(" ")).includes(q);};
 const getSort=()=>{try{return localStorage.getItem("sort")||"recent";}catch(e){return "recent";}};
+$("ncChip").onclick=()=>{noCoverOnly=false;render();};
 $("sortSel").value=getSort();$("sortSel").onchange=e=>{try{localStorage.setItem("sort",e.target.value);}catch(err){}render();};
 // ---------- Derniers ajouts (accueil) ----------
 function renderRecent(){const items=[...S.col.map(x=>[x,1]),...S.wish.map(x=>[x,0])].filter(([x])=>x.at).sort((a,b)=>b[0].at-a[0].at).slice(0,12);
   $("recent").hidden=!items.length;
   $("recentRow").innerHTML=items.map(([x,own])=>{const cu=coverUrl(x);return `<button type="button" class="rc" data-open="${x.id}">${cu?`<img src="${cu}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc"></span>`}<b>${esc(x.t)}</b><small>${own?"":"Envie · "}${esc(x.a)}</small></button>`;}).join("");}
 $("recentRow").addEventListener("click",e=>{const b=e.target.closest("[data-open]");if(b)openDetail(b.dataset.open);});
-function render(){renderRecent();
+// ---------- Sélection → coffret ----------
+let SEL=null;
+function selUi(){const on=!!SEL;$("selBtn").textContent=on?"Terminer":"Sélection";$("selBar").hidden=!on;
+  if(on){$("selTxt").textContent=SEL.length?SEL.length+" sélectionné"+(SEL.length>1?"s":""):"Touche les disques à regrouper";$("selBox").disabled=SEL.length<2;}}
+$("selBtn").onclick=()=>{SEL=SEL?null:[];render();};$("selCancel").onclick=()=>{SEL=null;render();};
+$("selBox").onclick=()=>{if(SEL&&SEL.length>1)openBoxer(SEL.slice());};
+function commonTitle(ts){const strip=t=>t.replace(/\s*[\[(](?:disc|disque|cd|vol\.?|volume)\s*\d+[\])]\s*/ig," ").replace(/\s*[-–:,]?\s*(?:disc|disque|cd|vol\.?|volume)\s*\d+\s*$/i,"").trim();
+  const s=ts.map(strip);if(s.every(t=>t===s[0]))return s[0];let p=s[0];s.forEach(t=>{let i=0;while(i<p.length&&i<t.length&&p[i].toLowerCase()===t[i].toLowerCase())i++;p=p.slice(0,i);});
+  p=p.replace(/[\s\-–:,;.(]+$/,"").trim();return p.length>=6?p:s[0];}
+function openBoxer(ids){let order=ids.filter(byId).sort((a,b)=>byId(a).t.localeCompare(byId(b).t,"fr",{numeric:true}));const p=$("detail");let cov=order.find(id=>coverUrl(byId(id)))||order[0];
+  const xs=()=>order.map(byId);const arts=[...new Set(xs().map(x=>x.a))];
+  const draw=()=>{p.innerHTML=`<p class="cat">Regrouper en coffret</p><h2 class="wh">${order.length} disques → 1 coffret</h2>
+   <label for="bxT">Titre du coffret</label><input id="bxT" type="text" value="${esc($("bxT")?$("bxT").value:commonTitle(xs().map(x=>x.t)))}">
+   <label for="bxA">Artiste</label><input id="bxA" type="text" value="${esc($("bxA")?$("bxA").value:(arts.length===1?arts[0]:arts[0]))}">
+   <p class="hint" style="margin-top:12px">Pochette : touche celle à garder. Ordre des CD : flèches.</p>
+   <ul class="list boxer">${order.map((id,i)=>{const x=byId(id),cu=coverUrl(x);return `<li class="item"><button type="button" class="bxCov${id===cov?" on":""}" data-cov="${id}" aria-label="Choisir cette pochette">${cu?`<img class="cover" src="${cu}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc"></span>`}</button>
+     <div class="meta"><b>CD ${i+1} · ${esc(x.t)}</b><small>${esc(x.a)} · ${discsOf(x).length>1?discsOf(x).length+" CD · ":""}${tracksOf(x).length} pistes</small></div>
+     <span class="ord"><button type="button" class="small" data-up="${i}" ${i?"":"disabled"} aria-label="Monter">↑</button><button type="button" class="small" data-dn="${i}" ${i<order.length-1?"":"disabled"} aria-label="Descendre">↓</button></span></li>`;}).join("")}</ul>
+   <div class="row"><button type="button" class="primary" id="bxGo">Créer le coffret</button><button type="button" id="bxNo">Annuler</button></div>`;
+   p.querySelectorAll("[data-cov]").forEach(b=>b.onclick=()=>{cov=b.dataset.cov;draw();});
+   p.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>{const i=+b.dataset.up;[order[i-1],order[i]]=[order[i],order[i-1]];draw();});
+   p.querySelectorAll("[data-dn]").forEach(b=>b.onclick=()=>{const i=+b.dataset.dn;[order[i+1],order[i]]=[order[i],order[i+1]];draw();});
+   $("bxNo").onclick=()=>closeSheet();
+   $("bxGo").onclick=async()=>{const t=$("bxT").value.trim(),a=$("bxA").value.trim();if(!t){$("bxT").focus();return;}
+     undoable("Coffret « "+t+" » créé");const src=xs(),c=byId(cov),own=src.some(x=>!isWish(x.id));
+     const discs=[];src.forEach(x=>discsOf(x).forEach((d,j)=>{const nd=JSON.parse(JSON.stringify(d));if(!nd.t)nd.t=x.t+(discsOf(x).length>1?" (CD "+(j+1)+")":"");discs.push(nd);}));
+     const perf=[...new Set(src.flatMap(x=>(x.perf||"").split(/\s*,\s*/).filter(Boolean)))].slice(0,MAX_PERF).join(", ");
+     const n={id:"b"+Date.now().toString(36),a:a||c.a,t,discs,box:true,at:Math.max(...src.map(x=>x.at||0))};
+     ["img","l","y","cat","mbid","dgid","rgid"].forEach(k=>{if(c[k])n[k]=c[k];});if(perf)n.perf=perf;const notes=src.map(x=>x.note).filter(Boolean);if(notes.length)n.note=notes.join(" · ");
+     const ids=new Set(src.map(x=>x.id));S.col=S.col.filter(x=>!ids.has(x.id));S.wish=S.wish.filter(x=>!ids.has(x.id));(own?S.col:S.wish).push(n);
+     for(const k in S.codes)if(ids.has(S.codes[k]))S.codes[k]=n.id;
+     if(COV[cov]){COV[n.id]=COV[cov];covPut(n.id,COV[cov]).catch(()=>{});}
+     SEL=null;save();render();openDetail(n.id);};};
+  draw();openSheet();}
+function render(){renderRecent();selUi();
   const q=norm($("q").value.trim()),ul=$("list");
   ["Col","Wish","Comp","Perf"].forEach(k=>$("tab"+k).setAttribute("aria-selected",!q&&tab===k.toLowerCase()));
   if(!q&&tab==="comp"){renderComposers();return;}
   if(!q&&tab==="perf"){renderPerformers();return;}
   $("sortBar").hidden=!!q;
   let rows=q?S.col.filter(x=>matches(x,q)).map(x=>[x,"own"]).concat(S.wish.filter(x=>matches(x,q)).map(x=>[x,"wish"])):(tab==="col"?S.col.map(x=>[x,"own"]):S.wish.map(x=>[x,"wish"]));
+  if(!q&&noCoverOnly&&tab==="col")rows=rows.filter(([x])=>!hasCover(x));$("ncChip").hidden=!(!q&&noCoverOnly&&tab==="col");
   if(!q){const by=getSort(),idx=new Map(rows.map((r,i)=>[r[0],i])),artKey=x=>norm(x.a).replace(/^(the|les|le|la|l')\s+/,"");
     const cmp={recent:(a,b)=>(b.at||0)-(a.at||0)||idx.get(b)-idx.get(a),artist:(a,b)=>artKey(a).localeCompare(artKey(b),"fr")||norm(a.t).localeCompare(norm(b.t),"fr"),
       title:(a,b)=>norm(a.t).localeCompare(norm(b.t),"fr",{numeric:true}),year:(a,b)=>(+b.y||0)-(+a.y||0)||artKey(a).localeCompare(artKey(b),"fr")}[by];
     rows.sort((r1,r2)=>cmp(r1[0],r2[0]));$("sortCount").textContent=rows.length+(tab==="col"?" disque"+(rows.length>1?"s":""):" envie"+(rows.length>1?"s":""));}
   ul.innerHTML=rows.length?rows.map(([x,k])=>{const c=codeOf(x.id),cu=coverUrl(x);
-    return `<li class="item tap" data-open="${x.id}">${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${x.box?" · Coffret "+discsOf(x).length+" CD":" · "+tracksOf(x).length+" pistes"}</small>${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
+    return `<li class="item tap${SEL?(SEL.includes(x.id)?" picked":" pickable"):""}" data-open="${x.id}">${SEL?`<span class="chk" aria-hidden="true">${SEL.includes(x.id)?SEL.indexOf(x.id)+1:""}</span>`:""}${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${x.box?" · Coffret "+discsOf(x).length+" CD":" · "+tracksOf(x).length+" pistes"}</small>${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
     (k==="own"?`<span class="chip own">Possédé</span>`:`<button class="small" data-buy="${x.id}" type="button">Acheté</button><button class="small" data-del="${x.id}" type="button" aria-label="Retirer des envies">✕</button>`)+`</li>`}).join("")
     :`<li class="empty">${q?"Rien trouvé : tu ne l'as pas.":(tab==="col"?"Collection vide. Touche SCAN pour ajouter ton premier disque.":"Aucune envie pour l'instant.")}</li>`;}
 const surname=c=>{const p=cKey(c).split(" ");return p[p.length-1]||"";};
@@ -545,7 +600,9 @@ let UNDO=null,toastT=0;
 function undoable(label){UNDO={s:JSON.stringify(S),label};S.chg=(S.chg||0)+1;setTimeout(()=>{if(UNDO)toast(UNDO.label,"Annuler",()=>{const u=UNDO;UNDO=null;if(!u)return;S=JSON.parse(u.s);save();render();if(sheetOpen)closeSheet();toast("Annulé");});},0);}
 function toast(msg,btn,fn){const t=$("toast");t.innerHTML=`<span>${esc(msg)}</span>${btn?`<button type="button">${esc(btn)}</button>`:""}`;t.hidden=false;
   if(btn)t.querySelector("button").onclick=()=>{t.hidden=true;fn();};clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true;},btn?7000:2500);}
-$("list").addEventListener("click",e=>{const b=e.target.closest("button");
+$("list").addEventListener("click",e=>{
+  if(SEL){const o=e.target.closest("[data-open]");if(o){const i=SEL.indexOf(o.dataset.open);if(i<0)SEL.push(o.dataset.open);else SEL.splice(i,1);render();}return;}
+  const b=e.target.closest("button");
   if(!b){const wk=e.target.closest("[data-work]");if(wk){openWork(wk.dataset.work);return;}const o=e.target.closest("[data-open]");if(o)openDetail(o.dataset.open);return;}
   if(b.dataset.buy)buy(b.dataset.buy);
   if(b.dataset.del)setStatus(b.dataset.del,"del");});
@@ -662,7 +719,7 @@ async function mbRelease(rid){
       newWorks["mb:"+w.id]={c:cn,t:w.title,cat:""};return {w:"mb:"+w.id,n:tk.title,d:dur};}
     return {n:tk.title,d:dur};})}));
   const lab=(d["label-info"]||[]).find(l=>l.label);
-  const a={id:"mb"+d.id,a:credit(d["artist-credit"])||"Artiste inconnu",t:d.title,l:lab?lab.label.name:"",y:(d.date||"").slice(0,4),
+  const a={id:"mb"+d.id,a:credit(d["artist-credit"])||"Artiste inconnu",t:d.title,l:lab?lab.label.name:"",cat:lab&&lab["catalog-number"]&&lab["catalog-number"]!=="[none]"?lab["catalog-number"]:"",y:(d.date||"").slice(0,4),
     img:"https://coverartarchive.org/release/"+d.id+"/front-250",mbid:d.id,newWorks};
   if(perfs.size)a.perf=[...perfs].slice(0,MAX_PERF).join(", ");
   if(discs.length>1){a.discs=discs;a.box=true;}else{a.tr=discs[0]?discs[0].tr:[];if(discs[0]&&discs[0].t)a.discs=discs;}
@@ -673,7 +730,22 @@ async function mbRelease(rid){
 const DG="https://api.discogs.com/";
 function dgKey(){try{return localStorage.getItem("discogs-token")||"";}catch(e){return "";}}
 $("dgKey").value=dgKey();
-$("dgKey").addEventListener("change",e=>{try{localStorage.setItem("discogs-token",e.target.value.trim());}catch(err){}});
+// Jeton Discogs : enregistré dès la saisie, puis vérifié auprès de Discogs (nom du compte affiché)
+let dgT=0;
+function dgState(){try{return JSON.parse(localStorage.getItem("discogs-state")||"{}");}catch(e){return {};}}
+function dgSetState(o){try{localStorage.setItem("discogs-state",JSON.stringify(o));}catch(e){}dgInfoUi();if(typeof enrUi==="function"&&!$("enr").hidden)enrUi();}
+function dgInfoUi(){const k=dgKey(),s=dgState(),el=$("dgInfo");if(!el)return;
+  el.className="hint "+(k&&s.ok&&s.k===k?"okc":k&&s.k===k&&s.ok===false?"err":"");
+  el.textContent=!k?"Pas de jeton : Discogs n'est pas utilisé.":s.k!==k?"Vérification du jeton…":s.ok?"✓ Jeton valide · compte Discogs : "+s.user:s.net?"Jeton enregistré (vérification impossible pour l'instant, il sera utilisé quand même).":"✗ Jeton refusé par Discogs : vérifie-le (copie-colle complet, sans espace).";}
+async function dgCheck(){const k=dgKey();if(!k){dgInfoUi();return;}if(!navigator.onLine){dgSetState({k,net:1});return;}
+  try{const r=await fetch(DG+"oauth/identity?token="+encodeURIComponent(k),{headers:{Accept:"application/json"}});
+    if(r.ok){const j=await r.json();dgSetState({k,ok:true,user:j.username||"?"});}else dgSetState(r.status===401||r.status===403?{k,ok:false}:{k,net:1});}
+  catch(e){dgSetState({k,net:1});}}
+$("dgKey").addEventListener("input",e=>{try{localStorage.setItem("discogs-token",e.target.value.trim());}catch(err){}dgInfoUi();if(typeof enrUi==="function"&&!$("enr").hidden)enrUi();clearTimeout(dgT);dgT=setTimeout(dgCheck,900);});
+// statut des sources, affiché là où il compte
+function srcLine(){const k=dgKey(),s=dgState();return `Sources : MusicBrainz ✓ · Discogs ${!k?`<button type="button" class="linklike" data-gokey="1">non configuré (ajouter le jeton)</button>`:s.k===k&&s.ok===false?`<button type="button" class="linklike err" data-gokey="1">jeton refusé</button>`:"✓"+(s.ok&&s.k===k?" ("+esc(s.user)+")":"")}`;}
+document.addEventListener("click",e=>{if(!e.target.closest("[data-gokey]"))return;closeSheet();const st=$("settings");st.open=true;$("dgKey").scrollIntoView({behavior:"smooth",block:"center"});setTimeout(()=>$("dgKey").focus(),400);});
+dgInfoUi();if(dgKey()&&dgState().k!==dgKey())dgCheck();
 let lastDg=0;
 async function dgGet(path,params={}){const wait=Math.max(0,1100-(Date.now()-lastDg));if(wait)await new Promise(r=>setTimeout(r,wait));lastDg=Date.now();
   const q=new URLSearchParams({...params,token:dgKey()});
@@ -707,7 +779,7 @@ async function dgRelease(id){const d=await dgGet("releases/"+id);
   return a;}
 $("catGo").onclick=async()=>{stopCam();const q=$("catno").value.trim(),out=$("eanResult");cur="";
   if(!q){out.innerHTML=`<p class="hint err">Tape le numéro de catalogue imprimé sur la tranche ou le dos du CD.</p>`;return;}
-  if(!dgKey()){out.innerHTML=`<p class="hint err">Ajoute d'abord ton jeton Discogs dans les réglages (en bas de page).</p>`;return;}
+  if(!dgKey()){out.innerHTML=`<p class="hint err">La recherche par n° de catalogue passe par Discogs. <button type="button" class="linklike" data-gokey="1">Ajouter mon jeton Discogs</button></p>`;return;}
   out.innerHTML=`<p class="hint">Recherche sur Discogs…</p>`;
   try{let rs=await dgSearch({catno:q});if(!rs.length)rs=await dgSearch({q});
     if(!rs.length){out.innerHTML=`<div class="verdict wish"><strong>Rien trouvé</strong><span>Essaie sans espaces ni tirets, ou lis la pochette en photo.</span></div>`;return;}
@@ -738,17 +810,20 @@ function openDetail(id){const x=byId(id);if(!x)return;const p=$("detail"),cu=cov
     :`<p class="hint">Pas encore de liste de pistes. Colle-la ici, une piste par ligne :</p><textarea id="trIn" aria-label="Pistes"></textarea><button type="button" id="trSave">Enregistrer les pistes</button>`;
   p.innerHTML=`<div class="detail"><div class="sleeve${cu?"":" nocov"}">${cu?`<img src="${cu}" alt="Pochette de ${esc(x.t)}" onerror="this.remove()">`:"Pas de pochette"}</div>
    <div class="meta"><h2>${esc(x.t)}</h2><p class="by">${esc(x.a)}</p>
-   ${x.perf?`<p class="by">${esc(firstPerf(x.perf))}</p>`:""}<p class="facts">${x.box?`<span>Coffret ${discsOf(x).length} CD</span>`:""}${x.l?`<span>${esc(x.l)}</span>`:""}${x.y?`<span>${esc(x.y)}</span>`:""}${x.g?`<span>${esc(x.g)}</span>`:""}</p>
+   ${x.perf&&norm(firstPerf(x.perf))!==norm(x.a)?`<p class="by">${esc(firstPerf(x.perf))}</p>`:""}<p class="facts">${x.box?`<span>Coffret ${discsOf(x).length} CD</span>`:""}${x.l?`<span>${esc(x.l)}</span>`:""}${x.y?`<span>${esc(x.y)}</span>`:""}${x.g?`<span>${esc(x.g)}</span>`:""}</p>
    <div class="seg" role="group" aria-label="État"><button type="button" data-st="own" aria-pressed="${own}">Possédé</button><button type="button" data-st="wish" aria-pressed="${!own}">Envie</button></div>
    ${own?`<div class="copiesRow"><span>Exemplaires</span><button type="button" class="small" data-cp="-1" aria-label="Un de moins">−</button><b>${x.copies||1}</b><button type="button" class="small" data-cp="1" aria-label="Un de plus">+</button></div>`:""}
    ${c?`<p><span class="code">${fmtEan(c)}</span></p>`:""}${x.note?`<p class="note">${esc(x.note)}</p>`:""}${x.at?`<p class="hint">Ajouté le ${new Date(x.at).toLocaleDateString("fr-FR")}</p>`:""}
    <div class="row"><button type="button" id="coverBtn">${COV[id]?"Changer la pochette":"Photographier la pochette"}</button><button type="button" id="detClose">Fermer</button></div>
    <div class="row"><button type="button" class="small" id="detEdit">Modifier</button><button type="button" class="small" id="detRead">Relire en photo (IA)</button><button type="button" class="small" id="detDel">Supprimer</button></div>
-   <p class="hint" id="covMsg"></p>${x.mbid?`<p class="hint"><a href="https://musicbrainz.org/release/${x.mbid}" target="_blank" rel="noopener">Voir sur MusicBrainz</a> · <button type="button" class="small" id="mbRefresh">Actualiser</button></p>`:""}${x.dgid?`<p class="hint"><a href="https://www.discogs.com/release/${x.dgid}" target="_blank" rel="noopener">Voir sur Discogs</a>${x.cat?" · "+esc(x.cat):""}</p>`:""}${x.auto?`<p class="hint">Trouvé automatiquement. <button type="button" class="small" id="notThis">Pas le bon disque</button></p>`:""}</div></div>${tracks}`;
+   <p class="hint" id="covMsg"></p>${x.mbid?`<p class="hint"><a href="https://musicbrainz.org/release/${x.mbid}" target="_blank" rel="noopener">Voir sur MusicBrainz</a> · <button type="button" class="small" id="mbRefresh">Actualiser</button></p>`:""}${x.dgid?`<p class="hint"><a href="https://www.discogs.com/release/${x.dgid}" target="_blank" rel="noopener">Voir sur Discogs</a>${x.cat?" · "+esc(x.cat):""}</p>`:""}<div class="srch"><span>Chercher :</span>${(()=>{const q=encodeURIComponent((x.a!=="Artiste inconnu"?x.a.split(/[;,]/)[0]+" ":"")+x.t.replace(/\s:\s/," "));
+     return `<a href="https://www.discogs.com/search/?q=${q}&type=release" target="_blank" rel="noopener">Discogs</a><a href="https://musicbrainz.org/search?query=${q}&type=release" target="_blank" rel="noopener">MusicBrainz</a><a href="https://www.google.com/search?q=${q}+CD" target="_blank" rel="noopener">Google</a>`;})()}</div>
+   <button type="button" id="pickEd" class="pickEd">Choisir la bonne édition</button>
+   ${x.auto?`<p class="hint">Trouvé automatiquement. <button type="button" class="small" id="notThis">Pas le bon disque</button></p>`:""}</div></div>${tracks}`;
   openSheet();
   $("detClose").onclick=()=>closeSheet();
-  $("detEdit").onclick=()=>editTracks(id);
-  if($("notThis"))$("notThis").onclick=()=>{undoable("Correspondance retirée");(Array.isArray(x.auto)?x.auto:[]).forEach(k=>delete x[k]);["mbid","dgid","rgid","img","auto"].forEach(k=>delete x[k]);x.enr="none";save();render();openDetail(id);};$("detRead").onclick=()=>openReader(id);
+  $("detEdit").onclick=()=>editTracks(id);$("pickEd").onclick=()=>openPicker(id);
+  if($("notThis"))$("notThis").onclick=()=>{undoable("Correspondance retirée");(Array.isArray(x.auto)?x.auto:[]).forEach(k=>delete x[k]);["mbid","dgid","rgid","img","auto"].forEach(k=>delete x[k]);x.enr="none";x.enrP=2;save();render();openDetail(id);};$("detRead").onclick=()=>openReader(id);
   $("detDel").onclick=()=>{setStatus(id,"del");closeSheet();};
   p.querySelectorAll("[data-cp]").forEach(b=>b.onclick=()=>{const n=Math.max(1,(x.copies||1)+ +b.dataset.cp);if(n===(x.copies||1))return;undoable("Exemplaires de « "+x.t+" » : "+n);if(n>1)x.copies=n;else delete x.copies;save();render();openDetail(id);});
   p.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{setStatus(id,b.dataset.st);openDetail(id);});
@@ -998,47 +1073,104 @@ function importList(list){undoable("Import de ta collection");let added=0,skippe
 
 
 // ---------- Compléter automatiquement (pochettes, année, label) ----------
-const ENR={run:false,done:0,found:0,total:0,lock:null};
-const needsEnrich=x=>!x.mbid&&!x.dgid&&!COV[x.id]&&!x.img&&!x.enr;
+const ENR={run:false,done:0,found:0,total:0,pass:1,lock:null};
+const ALL=()=>[...S.col,...S.wish];
+const hasCover=x=>!!(COV[x.id]||x.img);
+// Passe 0 : jamais cherché · 1 : recherche normale faite · 2 : recherche élargie faite (on n'insiste plus)
+const passOf=x=>x.enrP||(x.enr?1:0);
+const needsEnrich=x=>!hasCover(x)&&x.enr!=="manual"&&passOf(x)===0;
+const needsPass2=x=>!hasCover(x)&&x.enr!=="manual"&&passOf(x)===1;
 const luc=s=>norm(s).replace(/[+\-&|!(){}\[\]^"~*?:\\\/.,;'’]/g," ").replace(/\b(and|the|et|le|la|les|de|of|in|no|op|vol|disc|cd)\b/g," ").replace(/\s+/g," ").trim().split(" ").filter(w=>w.length>1).slice(0,8).join(" ");
 const toks=s=>new Set(luc(s).split(" ").filter(Boolean));
 const overlap=(a,b)=>{const A=toks(a),B=toks(b);if(!A.size)return 0;let n=0;A.forEach(w=>{if(B.has(w))n++;});return n/A.size;};
-function imgOk(url){return new Promise(res=>{const i=new Image();const t=setTimeout(()=>res(false),9000);i.onload=()=>{clearTimeout(t);res(i.naturalWidth>10);};i.onerror=()=>{clearTimeout(t);res(false);};i.src=url;});}
+function imgOk(url){return new Promise(res=>{const i=new Image();const t=setTimeout(()=>res(false),12000);i.onload=()=>{clearTimeout(t);res(i.naturalWidth>10);};i.onerror=()=>{clearTimeout(t);res(false);};i.src=url;});}
 function enrichQuery(x){const W=WORKS(),cs=new Set();tracksOf(x).forEach(t=>{const o=typeof t!=="string"&&W[t.w];if(o&&o.c)cs.add(surname(canonC(o.c)));});
   const title=x.t.replace(/^[^:]{2,40}\s:\s/,""),who=[firstPerf(x.perf).split(",")[0],x.a!=="Artiste inconnu"?x.a.split(/[,;]/)[0]:"",...[...cs].slice(0,1)].filter(Boolean);
   return {title,who:[...new Set(who.map(luc).filter(Boolean))]};}
-async function enrichOne(x){const {title,who}=enrichQuery(x),n=tracksOf(x).length;
-  let q="release:("+luc(title)+")";if(who.length)q+=" AND ("+who.map(w=>"artist:("+w+")").join(" OR ")+")";
-  const s=await mbGet("release/?query="+encodeURIComponent(q)+"&limit=8");
-  let best=null,bs=0;(s.releases||[]).forEach(r=>{const ov=overlap(title,r.title),tc=r["track-count"]||0,close=!n||!tc||Math.abs(tc-n)<=Math.max(2,n*.15);
-    const sc=(r.score||0)+40*ov+(close?15:-25);if(ov>=.6&&(r.score||0)>=70&&sc>bs){bs=sc;best=r;}});
-  if(best){const rg=best["release-group"]&&best["release-group"].id,url=rg?"https://coverartarchive.org/release-group/"+rg+"/front-250":"";
-    const li=(best["label-info"]||[]).find(l=>l.label);
-    x.mbid=best.id;if(rg)x.rgid=rg;x.auto=[];if(!x.y&&best.date){x.y=best.date.slice(0,4);x.auto.push("y");}if(!x.l&&li){x.l=li.label.name;x.auto.push("l");}if(!x.cat&&li&&li["catalog-number"]){x.cat=li["catalog-number"];x.auto.push("cat");}
-    if(url&&await imgOk(url)){x.img=url;return "cover";}}
-  if(dgKey()){const rs=await dgSearch({release_title:title,artist:who[0]||"",per_page:"5"}).catch(()=>[]);
-    const r=rs.find(r=>overlap(title,(r.title||"").split(" - ").slice(1).join(" - ")||r.title)>=.6&&(r.cover_image||r.thumb));
+function takeMb(x,best){const rg=best["release-group"]&&best["release-group"].id,li=(best["label-info"]||[]).find(l=>l.label);
+  x.mbid=best.id;if(rg)x.rgid=rg;x.auto=x.auto||[];if(!x.y&&best.date){x.y=best.date.slice(0,4);x.auto.push("y");}if(!x.l&&li){x.l=li.label.name;x.auto.push("l");}if(!x.cat&&li&&li["catalog-number"]){x.cat=li["catalog-number"];x.auto.push("cat");}}
+async function mbCover(x){for(const u of [x.mbid&&"https://coverartarchive.org/release/"+x.mbid+"/front-250",x.rgid&&"https://coverartarchive.org/release-group/"+x.rgid+"/front-250"].filter(Boolean))if(await imgOk(u)){x.img=u;return true;}return false;}
+async function enrichOne(x,pass){const {title,who}=enrichQuery(x),n=tracksOf(x).length;
+  if(!x.mbid){let q="release:("+luc(title)+")";if(pass===1&&who.length)q+=" AND ("+who.map(w=>"artist:("+w+")").join(" OR ")+")";
+    const s=await mbGet("release/?query="+encodeURIComponent(q)+"&limit="+(pass===1?8:15));
+    let best=null,bs=0;(s.releases||[]).forEach(r=>{const ov=overlap(title,r.title),tc=r["track-count"]||0,close=!n||!tc||Math.abs(tc-n)<=Math.max(2,n*.15);
+      // passe 2 (sans l'artiste) : plus exigeante sur le titre et les pistes, pour éviter les faux amis
+      const ok=pass===1?ov>=.6&&(r.score||0)>=70:ov>=.8&&close&&(r.score||0)>=85;
+      const sc=(r.score||0)+40*ov+(close?15:-25);if(ok&&sc>bs){bs=sc;best=r;}});
+    if(best)takeMb(x,best);}
+  if(x.mbid&&await mbCover(x))return "cover";
+  if(dgKey()){const p=pass===1?{release_title:title,artist:who[0]||"",format:"CD"}:{q:((who[0]||"")+" "+title).trim(),format:"CD"};
+    const rs=await dgSearch(p);
+    const r=rs.find(r=>overlap(title,(r.title||"").split(" - ").slice(1).join(" - ")||r.title)>=(pass===1?.6:.5)&&(r.cover_image||r.thumb));
     if(r){x.dgid=r.id;x.auto=x.auto||[];x.img=r.cover_image||r.thumb;if(!x.y&&r.year){x.y=String(r.year);x.auto.push("y");}if(!x.l&&r.label&&r.label[0]){x.l=r.label[0];x.auto.push("l");}return "cover";}}
-  return best?"info":"";}
-async function enrichAll(){if(ENR.run)return;const todo=[...S.col,...S.wish].filter(needsEnrich);if(!todo.length){enrUi("Rien à compléter.");return;}
+  return x.mbid?"info":"";}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function enrichAll(pass){if(ENR.run)return;const todo=ALL().filter(pass===1?needsEnrich:needsPass2);if(!todo.length){enrUi();return;}
   if(!navigator.onLine){enrUi("Pas de connexion Internet.");return;}
-  ENR.run=true;ENR.done=0;ENR.found=0;ENR.total=todo.length;try{ENR.lock=await navigator.wakeLock?.request("screen");}catch(e){}
+  try{if(window.Notification&&Notification.permission==="default")Notification.requestPermission();}catch(e){}
+  ENR.run=true;ENR.pass=pass;ENR.done=0;ENR.found=0;ENR.err=0;ENR.total=todo.length;try{ENR.lock=await navigator.wakeLock?.request("screen");}catch(e){}
   enrUi();
   for(const x of todo){if(!ENR.run)break;
-    try{const r=await enrichOne(x);x.enr=r||"none";if(r==="cover")ENR.found++;}
-    catch(e){if(/surcharg|503/.test(e.message)){await new Promise(r=>setTimeout(r,5000));}else if(!navigator.onLine){ENR.run=false;enrUi("Connexion perdue : reprends plus tard.");break;}}
+    // Serveur surchargé ou réseau capricieux : on attend et on réessaie le même disque (jusqu'à 3 fois)
+    let ok=false;for(let k=0;k<4&&ENR.run;k++){try{const r=await enrichOne(x,pass);x.enr=r||"none";x.enrP=pass;if(r==="cover")ENR.found++;ok=true;break;}
+      catch(e){if(!navigator.onLine){ENR.run=false;enrUi("Connexion perdue : relance quand tu seras connecté, ça reprendra où ça s'est arrêté.");break;}
+        if(/jeton|Jeton/.test(e.message))break;await sleep([3000,8000,15000][k]||15000);}}
+    if(!ok)ENR.err++;
     ENR.done++;if(ENR.done%5===0){save();render();}enrUi();}
-  ENR.run=false;try{ENR.lock&&ENR.lock.release();}catch(e){}save();render();enrUi();}
-function enrUi(msg){const box=$("enr"),left=[...S.col,...S.wish].filter(needsEnrich).length,miss=[...S.col,...S.wish].filter(x=>x.enr==="none"||x.enr==="info").length;
-  box.hidden=!ENR.run&&!left&&!msg&&!ENR.total;
-  $("enrTxt").innerHTML=ENR.run?`Recherche des pochettes… <b>${ENR.done}/${ENR.total}</b> · ${ENR.found} trouvée${ENR.found>1?"s":""}<br><small>Garde l'app ouverte (l'écran reste allumé). Environ ${Math.ceil((ENR.total-ENR.done)*1.6/60)} min restantes.</small>`
-    :msg?esc(msg):left?`<b>${left} disque${left>1?"s":""} sans pochette ni infos.</b> L'app peut les chercher sur MusicBrainz${dgKey()?" et Discogs":""} (≈ ${Math.max(1,Math.ceil(left*1.6/60))} min).`
-    :`Terminé : ${ENR.found} pochette${ENR.found>1?"s":""} trouvée${ENR.found>1?"s":""}.${miss?` ${miss} disque${miss>1?"s":""} sans pochette : tu peux les photographier depuis leur fiche${dgKey()?"":", ou ajouter un jeton Discogs et relancer"}.`:""}`;
-  $("enrGo").textContent=ENR.run?"Pause":left?"Lancer la recherche":"Relancer pour les non trouvés";
-  $("enrGo").hidden=!ENR.run&&!left&&!miss;}
+  const wasRun=ENR.run;ENR.run=false;try{ENR.lock&&ENR.lock.release();}catch(e){}
+  const last={pass,found:ENR.found,done:ENR.done,total:ENR.total,err:ENR.err,at:Date.now(),paused:!wasRun};try{localStorage.setItem("enr-last",JSON.stringify(last));}catch(e){}
+  save();render();enrUi();
+  // Résultat signalé même si tu ne regardes pas l'écran : vibration + notification + bandeau
+  const msg=(wasRun?"Recherche terminée":"Recherche en pause")+" : "+ENR.found+" pochette"+(ENR.found>1?"s":"")+" trouvée"+(ENR.found>1?"s":"")+" sur "+ENR.done+" disque"+(ENR.done>1?"s":"")+" cherché"+(ENR.done>1?"s":"")+".";
+  if(wasRun){navigator.vibrate?.([200,120,200]);toast(msg);
+    try{if(window.Notification&&Notification.permission==="granted"){const reg=await navigator.serviceWorker?.getRegistration();const opt={body:msg+" "+ALL().filter(hasCover).length+"/"+ALL().length+" disques ont une pochette.",icon:"icon-192.png",tag:"enr"};
+      if(reg)reg.showNotification("Collezione CD",opt);else new Notification("Collezione CD",opt);}}catch(e){}}}
+let noCoverOnly=false;
+function enrUi(msg){const box=$("enr"),all=ALL(),tot=all.length,withC=all.filter(hasCover).length,p1=all.filter(needsEnrich).length,p2=all.filter(needsPass2).length,miss=tot-withC;
+  box.hidden=!tot;
+  const stat=`<b>${withC}/${tot}</b> disques ont une pochette.`;
+  const see=miss?` <button type="button" class="linklike" id="enrSee">${miss>1?"Voir les "+miss+" disques sans pochette":"Voir le disque sans pochette"}</button>`:"";
+  $("enrTxt").innerHTML=ENR.run?`${ENR.pass===2?"Recherche élargie":"Recherche des pochettes"}… <b>${ENR.done}/${ENR.total}</b> · ${ENR.found} trouvée${ENR.found>1?"s":""} ce tour<br><small>${stat} Garde l'app ouverte (l'écran reste allumé). Environ ${Math.max(1,Math.ceil((ENR.total-ENR.done)*1.8/60))} min restantes.</small>`
+    :(msg?esc(msg)+"<br>":"")+(p1?`${stat} <b>${p1} disque${p1>1?"s":""} jamais cherché${p1>1?"s":""}</b> sur MusicBrainz${dgKey()?" et Discogs":""} (≈ ${Math.max(1,Math.ceil(p1*1.8/60))} min).`
+    :p2?`${stat} Pour les ${p2} restants, une <b>recherche élargie</b> est possible : titre seul, autres éditions${dgKey()?", Discogs plus large":""}. Plus de risques de confusion : vérifie ensuite.${dgKey()?"":" Ajoute d'abord ton jeton Discogs : il trouve beaucoup de vieux pressages."}`
+    :miss?`${stat} Les recherches automatiques sont terminées. Pour les autres : « Choisir la bonne édition » ou « Photographier la pochette » dans leur fiche.`:`Toute ta collection a une pochette.`)+see;
+  let last=null;try{last=JSON.parse(localStorage.getItem("enr-last")||"null");}catch(e){}
+  if(!ENR.run&&last)$("enrTxt").insertAdjacentHTML("afterbegin",`<span class="lastres">${last.paused?"Recherche en pause":"Dernière recherche"+(last.pass===2?" élargie":"")} (${new Date(last.at).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}) : <b>${last.found}/${last.done}</b> trouvée${last.found>1?"s":""}${last.err?` · ${last.err} erreur${last.err>1?"s":""} réseau (seront retentées)`:""}</span><br>`);
+  $("enrTxt").insertAdjacentHTML("beforeend",`<br><small class="srcl">${srcLine()}</small>`);
+  $("enrGo").textContent=ENR.run?"Pause":p1?"Lancer la recherche":"Lancer la recherche élargie";
+  $("enrGo").hidden=!ENR.run&&!p1&&!p2;
+  if($("enrSee"))$("enrSee").onclick=()=>{noCoverOnly=true;$("q").value="";tab="col";render();$("sortBar").scrollIntoView({behavior:"smooth"});};}
 $("enrGo").onclick=()=>{if(ENR.run){ENR.run=false;enrUi("En pause. Relance quand tu veux, ça reprend où ça s'est arrêté.");return;}
-  if(![...S.col,...S.wish].some(needsEnrich))[...S.col,...S.wish].forEach(x=>{if(x.enr==="none"||x.enr==="info")delete x.enr;});enrichAll();};
+  enrichAll(ALL().some(needsEnrich)?1:2);};
 $("enrX").onclick=()=>{$("enr").hidden=true;try{localStorage.setItem("enr-hide","1");}catch(e){}};
+
+
+// ---------- Choisir la bonne édition (MusicBrainz + Discogs) ----------
+function openPicker(id){const x=byId(id),p=$("detail");if(!x)return;const {title,who}=enrichQuery(x);
+  p.innerHTML=`<p class="cat">Choisir la bonne édition</p><h2 class="wh">${esc(x.t)}</h2>
+   <div class="row catrow"><input id="pkQ" type="search" value="${esc((who[0]?x.a.split(/[;,]/)[0]+" ":"")+title)}" aria-label="Recherche"><button type="button" id="pkGo">Chercher</button></div>
+   <p class="hint" id="pkMsg"></p><div id="pkOut"></div><div class="row"><button type="button" id="pkBack">Retour à la fiche</button></div>`;
+  openSheet();$("pkBack").onclick=()=>openDetail(id);
+  const run=async()=>{const q=$("pkQ").value.trim(),out=$("pkOut"),m=$("pkMsg");if(!q)return;if(!navigator.onLine){m.textContent="Pas de connexion Internet.";return;}
+    m.textContent="Recherche…";out.innerHTML="";const res=[];
+    try{const s=await mbGet("release/?query="+encodeURIComponent(luc(q)||q)+"&limit=10");(s.releases||[]).forEach(r=>res.push({src:"MusicBrainz",id:r.id,t:r.title,
+      sub:[credit(r["artist-credit"]),((r["label-info"]||[]).find(l=>l.label)||{label:{}}).label.name,(r.date||"").slice(0,4),r.country,(r.media||[]).map(m=>m.format).filter(Boolean)[0],r["track-count"]?r["track-count"]+" pistes":""].filter(Boolean).join(" · "),
+      img:"https://coverartarchive.org/release/"+r.id+"/front-250"}));}catch(e){m.textContent=e.message;}
+    if(dgKey()){try{(await dgSearch({q,format:"CD"})).forEach(r=>res.push({src:"Discogs",id:r.id,t:r.title,sub:[(r.label||[])[0],r.catno,r.year,r.country,(r.format||[]).slice(0,2).join(", ")].filter(Boolean).join(" · "),img:r.thumb||r.cover_image||""}));}catch(e){}}
+    m.innerHTML=(res.length?res.length+" éditions trouvées. Touche la bonne :":"Rien trouvé. Modifie la recherche (moins de mots, nom de famille seul…).")+`<br><small>${srcLine()}</small>`;
+    out.innerHTML=res.map((r,i)=>`<button type="button" class="pick" data-i="${i}">${r.img?`<img src="${esc(r.img)}" alt="" onerror="this.style.visibility='hidden'">`:""}<span><b>${esc(r.t)}</b><br><small>${esc(r.sub)}</small><br><small class="src">${r.src}</small></span></button>`).join("");
+    out.querySelectorAll(".pick").forEach(b=>b.onclick=async()=>{const r=res[+b.dataset.i];m.textContent="Chargement…";
+      try{const f=r.src==="Discogs"?await dgRelease(r.id):await mbRelease(r.id);if(r.src==="MusicBrainz"&&!(await imgOk(f.img)))f.img=r.img&&await imgOk(r.img)?r.img:"";
+        m.textContent="";out.innerHTML=`<div class="found"><img src="${esc(f.img||"")}" alt="" onerror="this.style.visibility='hidden'"><div class="meta"><b>${esc(f.t)}</b><small>${esc(f.a)}${f.l?" · "+esc(f.l):""}${f.cat?" · "+esc(f.cat):""}${f.y?" · "+f.y:""} · ${tracksOf(f).length} pistes</small></div></div>
+          <div class="row"><button class="primary" type="button" id="pkInfo">Pochette et infos seulement</button></div><div class="row"><button type="button" id="pkAll">Tout remplacer (pistes comprises)</button><button type="button" id="pkAgain">Autre résultat</button></div>`;
+        $("pkAgain").onclick=run;
+        const apply=all=>{undoable("Fiche « "+x.t+" » complétée");(Array.isArray(x.auto)?x.auto:[]).forEach(k=>delete x[k]);["mbid","dgid","rgid","auto"].forEach(k=>delete x[k]);
+          if(f.mbid)x.mbid=f.mbid;if(f.dgid)x.dgid=f.dgid;if(f.img)x.img=f.img;["l","y","cat"].forEach(k=>{if(f[k])x[k]=f[k];});x.enr="manual";
+          if(all){if(f.newWorks)Object.assign(S.works,f.newWorks);["tr","discs","box"].forEach(k=>delete x[k]);if(f.discs){x.discs=f.discs;if(f.box)x.box=true;}else x.tr=f.tr||[];if(f.perf)x.perf=f.perf;if(f.a)x.a=f.a;if(f.t)x.t=f.t;}
+          save();render();openDetail(id);};
+        $("pkInfo").onclick=()=>apply(false);$("pkAll").onclick=()=>apply(true);
+      }catch(e){m.textContent=e.message||"Chargement impossible.";}});};
+  $("pkGo").onclick=run;$("pkQ").addEventListener("keydown",e=>{if(e.key==="Enter")run();});run();}
 
 // ---------- Démarrage ----------
 try{tidyWorks();localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
