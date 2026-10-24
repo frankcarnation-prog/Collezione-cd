@@ -189,6 +189,18 @@ body.locked .selbar{display:none}
 .bxCov img,.bxCov .disc{width:52px;height:52px;border-radius:6px;display:block}
 .sortbar label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .sortbar span{white-space:nowrap}
+/* barre de recherche fixe en haut, onglets fixes en bas */
+.stick{position:sticky;top:0;z-index:30;background:var(--bg);margin:0 -16px;padding:10px 16px 6px;box-shadow:0 1px 0 var(--line)}
+.stick label{display:block;margin-bottom:4px}.stick .sortbar{margin-top:8px}
+body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+.bnav{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;align-items:flex-end;justify-content:space-around;gap:0;background:var(--surface);border-top:1px solid var(--line);border-bottom:0;padding:6px 4px calc(6px + env(safe-area-inset-bottom));overflow:visible}
+.bnav button[role=tab]{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:none;color:var(--muted);font-size:.68rem;font-weight:600;padding:4px 2px;border-radius:10px;white-space:nowrap}
+.bnav button[role=tab] svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bnav button[aria-selected=true]{color:var(--accent);border:0}
+.bnav .navscan{flex:none;width:58px;height:58px;margin:-22px 6px 0;border-radius:50%;border:4px solid var(--bg);background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.bnav .navscan svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.toast,.selbar{bottom:calc(84px + env(safe-area-inset-bottom))}
+#more button{width:100%}
 </style>
 </head>
 <body>
@@ -213,21 +225,24 @@ body.locked .selbar{display:none}
   <div id="eanResult"></div>
 </section>
 
-<div>
+<div class="stick" id="stick">
   <label for="q">J'ai déjà ce disque ?</label>
-  <input id="q" type="search" placeholder="Artiste, album, compositeur…" autocomplete="off">
+  <input id="q" type="search" placeholder="Artiste, album, compositeur, interprète…" autocomplete="off">
+  <div class="sortbar" id="sortBar"><span id="sortCount"></span><button type="button" class="small" id="ncChip" hidden>Sans pochette ✕</button><button type="button" class="small" id="selBtn">Sélection</button><label for="sortSel">Trier</label><select id="sortSel"><option value="recent">Ajouts récents</option><option value="artist">Artiste</option><option value="title">Titre</option><option value="year">Année</option></select></div>
 </div>
 
 
 
-<nav class="tabs" role="tablist">
-  <button role="tab" id="tabCol" aria-selected="true" type="button">Collection</button>
-  <button role="tab" id="tabWish" aria-selected="false" type="button">Envies</button>
-  <button role="tab" id="tabComp" aria-selected="false" type="button">Compositeurs</button>
-  <button role="tab" id="tabPerf" aria-selected="false" type="button">Interprètes</button>
-</nav>
-<div class="sortbar" id="sortBar"><span id="sortCount"></span><button type="button" class="small" id="ncChip" hidden>Sans pochette ✕</button><button type="button" class="small" id="selBtn">Sélection</button><label for="sortSel">Trier</label><select id="sortSel"><option value="recent">Ajouts récents</option><option value="artist">Artiste</option><option value="title">Titre</option><option value="year">Année</option></select></div>
+
+
 <ul class="list" id="list"></ul>
+<nav class="tabs bnav" role="tablist" aria-label="Sections">
+  <button role="tab" id="tabCol" aria-selected="true" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg>Collection</button>
+  <button role="tab" id="tabWish" aria-selected="false" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>Envies</button>
+  <button type="button" id="navScan" class="navscan" aria-label="Scanner un disque"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6v12M7 6v12M10 6v12M13 6v12M16 6v12M20 6v12"/></svg></button>
+  <button role="tab" id="tabComp" aria-selected="false" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>Compositeurs</button>
+  <button role="tab" id="tabPerf" aria-selected="false" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/></svg>Interprètes</button>
+</nav>
 <div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
 <div class="selbar" id="selBar" hidden><span id="selTxt"></span><button type="button" class="primary" id="selBox" disabled>Regrouper en coffret</button><button type="button" id="selCancel" aria-label="Annuler la sélection">✕</button></div>
 <p class="empty" id="more" hidden></p>
@@ -286,9 +301,11 @@ try{const r=localStorage.getItem(KEY);if(r)adopt(JSON.parse(r));}catch(e){}
 // Les disques fictifs de la démo disparaissent ; ce que tu as ajouté toi-même reste
 if(S.demo){const isD=x=>/^d\d+$/.test(x.id);S.col=S.col.filter(x=>!isD(x));S.wish=S.wish.filter(x=>!isD(x));
   for(const k in S.codes)if(/^d\d+$/.test(S.codes[k]))delete S.codes[k];S.demo=false;}
-const WORKS=()=>Object.assign({},S.demo?DEMO.works:{},S.works);
+// Caches (la recherche tape à chaque lettre : on ne recalcule que si les données ont changé)
+let DATAV=0,_W=null,_Wref=null,_Wn=-1;
+const WORKS=()=>{const n=Object.keys(S.works).length;if(_W&&_Wref===S.works&&_Wn===n)return _W;_Wref=S.works;_Wn=n;return _W=Object.assign({},S.demo?DEMO.works:{},S.works);};
 let tidied=false;
-function save(){tidyWorks();setTimeout(nag,0);try{localStorage.setItem(KEY,JSON.stringify(S));$("sync").textContent="";}catch(e){$("sync").textContent="Mémoire du téléphone pleine : télécharge une sauvegarde.";}renderStats();}
+function save(){DATAV++;_W=null;tidyWorks();_W=null;setTimeout(nag,0);try{localStorage.setItem(KEY,JSON.stringify(S));$("sync").textContent="";}catch(e){$("sync").textContent="Mémoire du téléphone pleine : télécharge une sauvegarde.";}renderStats();}
 
 // Photos de pochettes : IndexedDB (plus de place que localStorage)
 const COV={};
@@ -476,7 +493,9 @@ function workId(w,W){W=W||WORKS();const o=W[w];if(!o||!o.c)return w;const ck=cat
 const OFFICIAL=new Set(COMPOSERS.map(c=>c[0]));
 function classicalWork(w,o){return !!o&&(/^(mbp|ai|dg|id|imp):/.test(w)||!!catKey(o.t)||!!o.cat||!!o.cy||OFFICIAL.has(canonC(o.c)));}
 function isClassical(x,W){W=W||WORKS();return tracksOf(x).some(t=>typeof t!=="string"&&t.w&&classicalWork(t.w,W[t.w]));}
-function versions(){const v={},W=WORKS();[[S.col,true],[S.wish,false]].forEach(([arr,own])=>arr.forEach(x=>{if(!isClassical(x,W))return;const seen=new Set();discsOf(x).forEach((d,di)=>{
+let _V=null,_Vk="";
+function versions(){const vk=DATAV+"|"+S.col.length+"|"+S.wish.length+"|"+_Wn+"|"+(S.works===_Wref);if(_V&&_Vk===vk)return _V;const v=versions0();_V=v;_Vk=DATAV+"|"+S.col.length+"|"+S.wish.length+"|"+_Wn+"|"+(S.works===_Wref);return v;}
+function versions0(){const v={},W=WORKS();[[S.col,true],[S.wish,false]].forEach(([arr,own])=>arr.forEach(x=>{if(!isClassical(x,W))return;const seen=new Set();discsOf(x).forEach((d,di)=>{
   d.tr.forEach(t=>{if(typeof t==="string"||!t.w)return;const id=workId(t.w,W),k=id+"|"+(d.rec||"");if(seen.has(k))return;seen.add(k);
     if(!v[id]){v[id]=[];v[id].rep=t.w;}v[id].push({x,di,d,own});});});}));return v;}
 function renderStats(){const cds=S.col.reduce((n,x)=>n+discsOf(x).length,0);
@@ -485,7 +504,12 @@ function renderStats(){const cds=S.col.reduce((n,x)=>n+discsOf(x).length,0);
 
 // ---------- Listes ----------
 let tab="col";
-const matches=(x,q)=>{const W=WORKS();return !q||norm([x.a,x.t,x.g,x.l,x.perf,x.y,x.note,x.cat,...discsOf(x).map(d=>(d.t||"")+" "+(d.rec||"")),...tracksOf(x).map(t=>typeof t==="string"?t:t.n+" "+(W[t.w]?W[t.w].c+" "+wLabel(t.w):""))].join(" ")).includes(q);};
+const HAY=new WeakMap();
+function hay(x){const h=HAY.get(x);if(h&&h.v===DATAV)return h.s;const W=WORKS();
+  const s=norm([x.a,x.t,x.g,x.l,x.perf,x.y,x.note,x.cat,...discsOf(x).map(d=>(d.t||"")+" "+(d.rec||"")),...tracksOf(x).map(t=>typeof t==="string"?t:t.n+" "+(W[t.w]?W[t.w].c+" "+W[t.w].t:""))].join(" "));
+  HAY.set(x,{v:DATAV,s});return s;}
+// Tous les mots tapés doivent être présents, dans n'importe quel ordre ("chopin rubinstein")
+const matches=(x,q)=>{if(!q)return true;const s=hay(x);return q.split(/\s+/).every(w=>s.includes(w));};
 const getSort=()=>{try{return localStorage.getItem("sort")||"recent";}catch(e){return "recent";}};
 $("ncChip").onclick=()=>{noCoverOnly=false;render();};
 $("sortSel").value=getSort();$("sortSel").onchange=e=>{try{localStorage.setItem("sort",e.target.value);}catch(err){}render();};
@@ -528,19 +552,26 @@ function openBoxer(ids){let order=ids.filter(byId).sort((a,b)=>byId(a).t.localeC
      if(COV[cov]){COV[n.id]=COV[cov];covPut(n.id,COV[cov]).catch(()=>{});}
      SEL=null;save();render();openDetail(n.id);};};
   draw();openSheet();}
-function render(){renderRecent();selUi();
+let LIMIT=60,qT=0,lastView="";
+$("more").addEventListener("click",e=>{if(e.target.closest("#moreBtn")){LIMIT+=120;render();}});
+function render(){const view=tab+"|"+$("q").value;if(view!==lastView){LIMIT=60;lastView=view;}renderRecent();selUi();
   const q=norm($("q").value.trim()),ul=$("list");
   ["Col","Wish","Comp","Perf"].forEach(k=>$("tab"+k).setAttribute("aria-selected",!q&&tab===k.toLowerCase()));
+  $("sortBar").hidden=!q&&(tab==="comp"||tab==="perf");
   if(!q&&tab==="comp"){renderComposers();return;}
   if(!q&&tab==="perf"){renderPerformers();return;}
-  $("sortBar").hidden=!!q;
+  $("sortBar").hidden=false;$("sortSel").hidden=$("selBtn").hidden=!!q;
   let rows=q?S.col.filter(x=>matches(x,q)).map(x=>[x,"own"]).concat(S.wish.filter(x=>matches(x,q)).map(x=>[x,"wish"])):(tab==="col"?S.col.map(x=>[x,"own"]):S.wish.map(x=>[x,"wish"]));
   if(!q&&noCoverOnly&&tab==="col")rows=rows.filter(([x])=>!hasCover(x));$("ncChip").hidden=!(!q&&noCoverOnly&&tab==="col");
-  if(!q){const by=getSort(),idx=new Map(rows.map((r,i)=>[r[0],i])),artKey=x=>norm(x.a).replace(/^(the|les|le|la|l')\s+/,"");
-    const cmp={recent:(a,b)=>(b.at||0)-(a.at||0)||idx.get(b)-idx.get(a),artist:(a,b)=>artKey(a).localeCompare(artKey(b),"fr")||norm(a.t).localeCompare(norm(b.t),"fr"),
-      title:(a,b)=>norm(a.t).localeCompare(norm(b.t),"fr",{numeric:true}),year:(a,b)=>(+b.y||0)-(+a.y||0)||artKey(a).localeCompare(artKey(b),"fr")}[by];
+  if(!q){const by=getSort(),idx=new Map(rows.map((r,i)=>[r[0],i])),AK=new Map(),TK=new Map();
+    rows.forEach(([x])=>{AK.set(x,norm(x.a).replace(/^(the|les|le|la|l')\s+/,""));TK.set(x,norm(x.t));});const artKey=x=>AK.get(x),tk=x=>TK.get(x);
+    const cmp={recent:(a,b)=>(b.at||0)-(a.at||0)||idx.get(b)-idx.get(a),artist:(a,b)=>artKey(a).localeCompare(artKey(b),"fr")||tk(a).localeCompare(tk(b),"fr"),
+      title:(a,b)=>tk(a).localeCompare(tk(b),"fr",{numeric:true}),year:(a,b)=>(+b.y||0)-(+a.y||0)||artKey(a).localeCompare(artKey(b),"fr")}[by];
     rows.sort((r1,r2)=>cmp(r1[0],r2[0]));$("sortCount").textContent=rows.length+(tab==="col"?" disque"+(rows.length>1?"s":""):" envie"+(rows.length>1?"s":""));}
-  ul.innerHTML=rows.length?rows.map(([x,k])=>{const c=codeOf(x.id),cu=coverUrl(x);
+  const CODE={};for(const k in S.codes)if(!CODE[S.codes[k]])CODE[S.codes[k]]=k;
+  const total=rows.length;if(q)$("sortCount").textContent=total+" résultat"+(total>1?"s":"");rows=rows.slice(0,LIMIT);
+  $("more").hidden=total<=LIMIT;$("more").innerHTML=total>LIMIT?`<button type="button" id="moreBtn">Afficher la suite (${total-LIMIT} de plus)</button>`:"";
+  ul.innerHTML=rows.length?rows.map(([x,k])=>{const c=CODE[x.id],cu=coverUrl(x);
     return `<li class="item tap${SEL?(SEL.includes(x.id)?" picked":" pickable"):""}" data-open="${x.id}">${SEL?`<span class="chk" aria-hidden="true">${SEL.includes(x.id)?SEL.indexOf(x.id)+1:""}</span>`:""}${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${x.box?" · Coffret "+discsOf(x).length+" CD":" · "+tracksOf(x).length+" pistes"}</small>${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
     (k==="own"?`<span class="chip own">Possédé</span>`:`<button class="small" data-buy="${x.id}" type="button">Acheté</button><button class="small" data-del="${x.id}" type="button" aria-label="Retirer des envies">✕</button>`)+`</li>`}).join("")
     :`<li class="empty">${q?"Rien trouvé : tu ne l'as pas.":(tab==="col"?"Collection vide. Touche SCAN pour ajouter ton premier disque.":"Aucune envie pour l'instant.")}</li>`;}
@@ -606,8 +637,10 @@ $("list").addEventListener("click",e=>{
   if(!b){const wk=e.target.closest("[data-work]");if(wk){openWork(wk.dataset.work);return;}const o=e.target.closest("[data-open]");if(o)openDetail(o.dataset.open);return;}
   if(b.dataset.buy)buy(b.dataset.buy);
   if(b.dataset.del)setStatus(b.dataset.del,"del");});
-$("q").addEventListener("input",render);
-$("tabCol").onclick=()=>{tab="col";render()};$("tabWish").onclick=()=>{tab="wish";render()};$("tabComp").onclick=()=>{tab="comp";render()};$("tabPerf").onclick=()=>{tab="perf";render()};
+$("q").addEventListener("input",()=>{clearTimeout(qT);qT=setTimeout(render,120);});
+const goTab=t=>{if($("q").value){$("q").value="";}tab=t;render();const top=$("stick").offsetTop;if(scrollY>top)scrollTo({top:top-4});};
+$("tabCol").onclick=()=>goTab("col");$("tabWish").onclick=()=>goTab("wish");$("tabComp").onclick=()=>goTab("comp");$("tabPerf").onclick=()=>goTab("perf");
+$("navScan").onclick=()=>{scrollTo({top:0,behavior:"smooth"});if($("scanPanel").hidden)$("scanBtn").click();};
 
 // ---------- Caméra ----------
 let stream=null,detector=null,scanning=false;
