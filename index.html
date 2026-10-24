@@ -166,6 +166,12 @@ button.shotbtn{display:block;width:100%;padding:0;font:inherit}
 button.next{width:100%;margin-top:10px}
 .sleeve.nocov{aspect-ratio:auto;height:96px;max-width:none}
 .rc .disc,.rc span.disc{background:radial-gradient(circle,var(--bg) 0 8%,var(--line) 9% 11%,transparent 12% 44%,var(--line) 45% 46%,transparent 47%),var(--surface)}
+.enr{position:relative;margin:14px 0 4px;padding:14px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.enr p{margin:0 28px 10px 0;font-size:.92rem;line-height:1.4}.enr small{color:var(--muted)}.enr .primary{width:100%}
+.enr .x2{position:absolute;top:8px;right:8px;border:0;background:none;color:var(--muted);padding:6px;min-height:0}
+.copies{display:inline-block;font-family:var(--mono);font-size:.78rem;font-weight:700;background:var(--accent);color:#fff;border-radius:6px;padding:1px 6px;vertical-align:2px}
+.copiesRow{display:flex;align-items:center;gap:10px;margin:2px 0 8px;color:var(--muted);font-size:.9rem}.copiesRow b{min-width:1.5em;text-align:center;color:var(--ink);font-size:1.05rem}
+.copiesRow button{width:38px;padding:4px 0;font-size:1.1rem}
 </style>
 </head>
 <body>
@@ -174,6 +180,7 @@ button.next{width:100%;margin-top:10px}
 
 <button class="scan" id="scanBtn" type="button"><span class="bars" aria-hidden="true"><i style="width:3px"></i><i style="width:1px"></i><i style="width:2px"></i><i style="width:1px"></i><i style="width:3px"></i><i style="width:1px"></i></span>SCAN</button>
 
+<section class="enr" id="enr" hidden><button type="button" class="x2" id="enrX" aria-label="Masquer">✕</button><p id="enrTxt"></p><button type="button" class="primary" id="enrGo">Lancer la recherche</button></section>
 <section class="recent" id="recent" hidden><h2>Derniers ajouts</h2><div class="rrow" id="recentRow"></div></section>
 
 <section class="panel" id="scanPanel" hidden>
@@ -210,6 +217,7 @@ button.next{width:100%;margin-top:10px}
 <details><summary>Réglages : clés IA et Discogs, sauvegarde</summary>
 <p>Ta collection est enregistrée sur ce téléphone. Télécharge une sauvegarde de temps en temps (les photos de pochettes n'y sont pas incluses). « Restaurer un fichier » accepte aussi un fichier d'import de collection : il s'ajoute à ce que tu as déjà.</p>
 <div class="row"><button id="dlB" type="button">Télécharger la sauvegarde</button><label class="filebtn">Restaurer un fichier<input id="upB" type="file" accept="application/json,.json"></label></div>
+<div class="row"><button type="button" id="enrOpen">Compléter pochettes et infos automatiquement</button></div>
 <label for="dgKey">Jeton Discogs (facultatif, deuxième source + n° de catalogue)</label>
 <input id="dgKey" type="text" autocomplete="off" spellcheck="false" placeholder="Jeton personnel Discogs">
 <label for="apiKey">Clé d'API de l'IA (facultatif, pour la lecture photo automatique)</label>
@@ -478,7 +486,7 @@ function render(){renderRecent();
       title:(a,b)=>norm(a.t).localeCompare(norm(b.t),"fr",{numeric:true}),year:(a,b)=>(+b.y||0)-(+a.y||0)||artKey(a).localeCompare(artKey(b),"fr")}[by];
     rows.sort((r1,r2)=>cmp(r1[0],r2[0]));$("sortCount").textContent=rows.length+(tab==="col"?" disque"+(rows.length>1?"s":""):" envie"+(rows.length>1?"s":""));}
   ul.innerHTML=rows.length?rows.map(([x,k])=>{const c=codeOf(x.id),cu=coverUrl(x);
-    return `<li class="item tap" data-open="${x.id}">${cu?`<img class="cover" src="${cu}" alt="" loading="lazy">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${x.box?" · Coffret "+discsOf(x).length+" CD":" · "+tracksOf(x).length+" pistes"}</small>${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
+    return `<li class="item tap" data-open="${x.id}">${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${x.box?" · Coffret "+discsOf(x).length+" CD":" · "+tracksOf(x).length+" pistes"}</small>${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
     (k==="own"?`<span class="chip own">Possédé</span>`:`<button class="small" data-buy="${x.id}" type="button">Acheté</button><button class="small" data-del="${x.id}" type="button" aria-label="Retirer des envies">✕</button>`)+`</li>`}).join("")
     :`<li class="empty">${q?"Rien trouvé : tu ne l'as pas.":(tab==="col"?"Collection vide. Touche SCAN pour ajouter ton premier disque.":"Aucune envie pour l'instant.")}</li>`;}
 const surname=c=>{const p=cKey(c).split(" ");return p[p.length-1]||"";};
@@ -506,13 +514,22 @@ function perfNames(x){const W=WORKS();if(!isClassical(x,W))return [];const comps
   const out=new Map();raw.forEach(s=>{if(comps.has(canonC(s))||C_SUR[surname(s)]&&canonC(s)!==s)return;const k=norm(s);if(!out.has(k))out.set(k,s);});return [...out.values()].slice(0,MAX_PERF);}
 const GROUP=/orchest|ensemble|quartet|quatuor|quartett|choir|chœur|choeur|chor\b|philharm|symphon|trio|consort|kammer|camerata|academy|akademie|sinfonia|solistes|soloists/i;
 const perfSort=n=>GROUP.test(n)?norm(n).replace(/^(the|l'|le|la|les|orchestre|orchestra)\s+/,""):surname(n);
+// "Arthur Rubinstein" → "Rubinstein Arthur", "Herbert von Karajan" → "Karajan Herbert von" (ensembles inchangés)
+function lastFirst(n){if(GROUP.test(n))return n;const t=n.trim().split(/\s+/);if(t.length<2)return n;
+  const last=t.pop(),parts=[];while(t.length&&/^(von|van|de|di|del|della|da|du|le|la|der|den|ter|dos|das)$/i.test(t[t.length-1]))parts.unshift(t.pop().toLowerCase());
+  return last+" "+t.join(" ")+(parts.length?" "+parts.join(" "):"");}
 function renderPerformers(){const by={};
   [[S.col,true],[S.wish,false]].forEach(([arr,own])=>arr.forEach(x=>perfNames(x).forEach(p=>{const k=norm(p);(by[k]=by[k]||{name:p,items:[]}).items.push({x,own});})));
   // "Horowitz" seul rejoint "Vladimir Horowitz"
   Object.keys(by).forEach(k=>{if(k.includes(" "))return;const full=Object.keys(by).find(o=>o!==k&&o.includes(" ")&&!GROUP.test(o)&&surname(by[o].name)===k);
     if(full){by[k].items.forEach(it=>{if(!by[full].items.some(j=>j.x===it.x))by[full].items.push(it);});delete by[k];}});
+  // "Arthur Rubinstein" = "Artur Rubinstein" : même nom de famille + même initiale → une seule entrée (le nom le plus fréquent)
+  const pk=n=>{const t=cKey(n).split(" ");return t.length>1?surname(n)+"|"+t[0][0]:"";},grp={};
+  Object.keys(by).forEach(k=>{const e=by[k];if(GROUP.test(e.name))return;const g=pk(e.name);if(!g)return;
+    if(!grp[g]){grp[g]=k;return;}const m=by[grp[g]],keep=m.items.length>=e.items.length?m:e,drop=keep===m?e:m;
+    drop.items.forEach(it=>{if(!keep.items.some(j=>j.x===it.x))keep.items.push(it);});const dk=keep===m?k:grp[g];delete by[dk];grp[g]=keep===m?grp[g]:k;});
   const list=Object.values(by).sort((a,b)=>perfSort(a.name).localeCompare(perfSort(b.name),"fr"));
-  $("list").innerHTML=list.map(p=>fold("p:"+norm(p.name),p.name,p.items.length+" disque"+(p.items.length>1?"s":""),`<ul class="works">${p.items.map(({x,own})=>`<li class="item tap" data-open="${x.id}"><img class="cover" src="${coverUrl(x)}" alt="" onerror="this.style.visibility='hidden'"><div class="meta"><b>${esc(x.t)}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}</small></div><span class="chip ${own?"own":"wish"}">${own?"Possédé":"Envie"}</span></li>`).join("")}</ul>`)).join("")
+  $("list").innerHTML=list.map(p=>fold("p:"+norm(p.name),lastFirst(p.name),p.items.length+" disque"+(p.items.length>1?"s":""),`<ul class="works">${p.items.map(({x,own})=>`<li class="item tap" data-open="${x.id}"><img class="cover" src="${coverUrl(x)}" alt="" onerror="this.style.visibility='hidden'"><div class="meta"><b>${esc(x.t)}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}</small></div><span class="chip ${own?"own":"wish"}">${own?"Possédé":"Envie"}</span></li>`).join("")}</ul>`)).join("")
     ||`<li class="empty">Aucun interprète repéré. Ils viennent des disques classiques (champ « Interprètes » de la fiche).</li>`;}
 function buy(id){const i=S.wish.findIndex(x=>x.id===id);if(i<0)return;const x=S.wish[i];undoable("« "+x.t+" » passé dans ta collection");x.at=Date.now();S.col.push(S.wish.splice(i,1)[0]);save();render();}
 // Ajout d'un disque : date d'ajout + annulation possible
@@ -576,7 +593,7 @@ async function check(){
 const tNorm=s=>norm(s).replace(/\[.*?\]|\(.*?\)/g," ").replace(/[^a-z0-9]+/g," ").trim();
 function sameDisc(f){const ft=tNorm(f.t),fa=tNorm(f.a).split(" ").filter(w=>w.length>2);
   return [...S.col,...S.wish].find(x=>(f.mbid&&x.mbid===f.mbid)||(f.dgid&&x.dgid===f.dgid)||
-    (ft.length>3&&(tNorm(x.t)===ft||(ft.length>10&&(tNorm(x.t).includes(ft)||ft.includes(tNorm(x.t))&&tNorm(x.t).length>10)))&&(!fa.length||fa.some(w=>tNorm(x.a+" "+(x.perf||"")).includes(w)))));}
+    (ft.length>3&&(tNorm(x.t)===ft||(ft.length>10&&(tNorm(x.t).includes(ft)||ft.includes(tNorm(x.t))&&tNorm(x.t).length>10)))&&(!fa.length||fa.some(w=>tNorm(x.a+" "+(x.perf||"")+" "+x.t).includes(w)))));}
 function ownedWorks(f){const W=Object.assign({},WORKS(),f.newWorks||{}),V=versions(),out=new Map();
   tracksOf(f).forEach(t=>{if(typeof t==="string"||!t.w||!W[t.w])return;const id=workId(t.w,W),vs=V[id];if(vs&&vs.length&&!out.has(id))out.set(id,{t:W[t.w].t,c:canonC(W[t.w].c),own:vs.filter(e=>e.own).length,wish:vs.filter(e=>!e.own).length});});
   return [...out.values()];}
@@ -587,13 +604,21 @@ function showFound(out,f,src,c){const box=discsOf(f).length>1,dup=sameDisc(f),ow
       :`<div class="verdict wish"><strong>Pas dans ta collection</strong><span>Trouvé (${src}) :</span></div>`)+
   `<div class="found"><img src="${coverUrl(f)}" alt="" onerror="this.style.visibility='hidden'"><div class="meta"><b>${esc(f.t)}</b><small>${esc(f.a)}${f.l?" · "+esc(f.l):""}${f.cat?" · "+esc(f.cat):""}${f.y?" · "+f.y:""} · ${box?discsOf(f).length+" CD · ":""}${tracksOf(f).length} pistes</small></div></div>`+
   (ow.length?`<div class="already"><strong>Œuvres que tu as déjà :</strong><ul>${ow.slice(0,6).map(o=>`<li>${esc(o.t)}${o.c?" <small>("+esc(o.c)+")</small>":""} — ${o.own?o.own+" version"+(o.own>1?"s":""):""}${o.own&&o.wish?", ":""}${o.wish?o.wish+" en envie":""}</li>`).join("")}${ow.length>6?`<li>… et ${ow.length-6} autre${ow.length>7?"s":""}</li>`:""}</ul></div>`:"")+
-  `<p class="ask">Ajouter ce disque ?</p><div class="row three"><button class="primary" id="addCol" type="button">À ma collection</button><button id="addWish" type="button">Aux envies</button><button id="addNo" type="button">Non merci</button></div>`;
-  if(dup)$("seeDup").onclick=()=>openDetail(dup.id);
+  (dup?`<p class="ask">Que faire ?</p><div class="row"><button class="primary" id="addRep" type="button">Remplacer ma fiche par celle-ci</button></div>
+    <div class="row three"><button id="addCopy" type="button">C'est un 2ᵉ exemplaire</button><button id="addCol" type="button">Ajouter quand même</button><button id="addNo" type="button">Non merci</button></div>`
+  :`<p class="ask">Ajouter ce disque ?</p><div class="row three"><button class="primary" id="addCol" type="button">À ma collection</button><button id="addWish" type="button">Aux envies</button><button id="addNo" type="button">Non merci</button></div>`);
+  if(dup){$("seeDup").onclick=()=>openDetail(dup.id);
+    // Remplacer : garde l'état, la date d'ajout, la note, les exemplaires et ta photo ; reprend tout le reste
+    $("addRep").onclick=()=>{undoable("Fiche « "+dup.t+" » remplacée");const n=pick(f);delete n.newWorks;if(f.newWorks)Object.assign(S.works,f.newWorks);
+      ["tr","discs","box","enr","auto"].forEach(k=>delete dup[k]);Object.keys(n).forEach(k=>{if(k!=="id"&&n[k]!==""&&n[k]!=null)dup[k]=n[k];});
+      if(c)S.codes[c]=dup.id;save();render();out.innerHTML=`<div class="verdict own"><strong>Fiche remplacée</strong><span>${esc(dup.t)} · ${esc(dup.a)}</span></div><div class="row"><button type="button" id="seeNew">Voir la fiche</button>${nextBtn()}</div>`;$("seeNew").onclick=()=>openDetail(dup.id);};
+    $("addCopy").onclick=()=>{undoable("2ᵉ exemplaire de « "+dup.t+" »");dup.copies=(dup.copies||1)+1;if(c&&!S.codes[c])S.codes[c]=dup.id;save();render();
+      out.innerHTML=`<div class="verdict own"><strong>Exemplaire n° ${dup.copies} enregistré</strong><span>${esc(dup.t)} · ${esc(dup.a)}</span></div>${nextBtn()}`;};}
   $("addNo").onclick=()=>{out.innerHTML=`<p class="hint">Rien n'a été ajouté.</p>`+nextBtn();};
   const add=w=>{const n=pick(f);delete n.newWorks;addAlbum(n,w,c);if(f.newWorks)Object.assign(S.works,f.newWorks);save();render();
     out.innerHTML=`<div class="verdict ${w?"wish":"own"}"><strong>${w?"Ajouté à tes envies":"Ajouté à ta collection"}</strong><span>${esc(n.t)} · ${esc(n.a)}</span></div><div class="row"><button type="button" id="seeNew">Voir la fiche</button>${nextBtn()}</div>`;
     $("seeNew").onclick=()=>openDetail(n.id);};
-  $("addCol").onclick=()=>add(false);$("addWish").onclick=()=>add(true);}
+  $("addCol").onclick=()=>add(false);if($("addWish"))$("addWish").onclick=()=>add(true);}
 function manual(out,append){out.insertAdjacentHTML("beforeend",`<label for="fa">Artiste / compositeur</label><input id="fa" type="text" autocomplete="off">
   <label for="ft">Album / œuvre et interprète</label><input id="ft" type="text" autocomplete="off">
   <div class="row"><button class="primary" id="addCol" type="button">Ajouter à la collection</button><button id="addWish" type="button">Ajouter aux envies</button></div>`);
@@ -715,14 +740,17 @@ function openDetail(id){const x=byId(id);if(!x)return;const p=$("detail"),cu=cov
    <div class="meta"><h2>${esc(x.t)}</h2><p class="by">${esc(x.a)}</p>
    ${x.perf?`<p class="by">${esc(firstPerf(x.perf))}</p>`:""}<p class="facts">${x.box?`<span>Coffret ${discsOf(x).length} CD</span>`:""}${x.l?`<span>${esc(x.l)}</span>`:""}${x.y?`<span>${esc(x.y)}</span>`:""}${x.g?`<span>${esc(x.g)}</span>`:""}</p>
    <div class="seg" role="group" aria-label="État"><button type="button" data-st="own" aria-pressed="${own}">Possédé</button><button type="button" data-st="wish" aria-pressed="${!own}">Envie</button></div>
+   ${own?`<div class="copiesRow"><span>Exemplaires</span><button type="button" class="small" data-cp="-1" aria-label="Un de moins">−</button><b>${x.copies||1}</b><button type="button" class="small" data-cp="1" aria-label="Un de plus">+</button></div>`:""}
    ${c?`<p><span class="code">${fmtEan(c)}</span></p>`:""}${x.note?`<p class="note">${esc(x.note)}</p>`:""}${x.at?`<p class="hint">Ajouté le ${new Date(x.at).toLocaleDateString("fr-FR")}</p>`:""}
    <div class="row"><button type="button" id="coverBtn">${COV[id]?"Changer la pochette":"Photographier la pochette"}</button><button type="button" id="detClose">Fermer</button></div>
    <div class="row"><button type="button" class="small" id="detEdit">Modifier</button><button type="button" class="small" id="detRead">Relire en photo (IA)</button><button type="button" class="small" id="detDel">Supprimer</button></div>
-   <p class="hint" id="covMsg"></p>${x.mbid?`<p class="hint"><a href="https://musicbrainz.org/release/${x.mbid}" target="_blank" rel="noopener">Voir sur MusicBrainz</a> · <button type="button" class="small" id="mbRefresh">Actualiser</button></p>`:""}${x.dgid?`<p class="hint"><a href="https://www.discogs.com/release/${x.dgid}" target="_blank" rel="noopener">Voir sur Discogs</a>${x.cat?" · "+esc(x.cat):""}</p>`:""}</div></div>${tracks}`;
+   <p class="hint" id="covMsg"></p>${x.mbid?`<p class="hint"><a href="https://musicbrainz.org/release/${x.mbid}" target="_blank" rel="noopener">Voir sur MusicBrainz</a> · <button type="button" class="small" id="mbRefresh">Actualiser</button></p>`:""}${x.dgid?`<p class="hint"><a href="https://www.discogs.com/release/${x.dgid}" target="_blank" rel="noopener">Voir sur Discogs</a>${x.cat?" · "+esc(x.cat):""}</p>`:""}${x.auto?`<p class="hint">Trouvé automatiquement. <button type="button" class="small" id="notThis">Pas le bon disque</button></p>`:""}</div></div>${tracks}`;
   openSheet();
   $("detClose").onclick=()=>closeSheet();
-  $("detEdit").onclick=()=>editTracks(id);$("detRead").onclick=()=>openReader(id);
+  $("detEdit").onclick=()=>editTracks(id);
+  if($("notThis"))$("notThis").onclick=()=>{undoable("Correspondance retirée");(Array.isArray(x.auto)?x.auto:[]).forEach(k=>delete x[k]);["mbid","dgid","rgid","img","auto"].forEach(k=>delete x[k]);x.enr="none";save();render();openDetail(id);};$("detRead").onclick=()=>openReader(id);
   $("detDel").onclick=()=>{setStatus(id,"del");closeSheet();};
+  p.querySelectorAll("[data-cp]").forEach(b=>b.onclick=()=>{const n=Math.max(1,(x.copies||1)+ +b.dataset.cp);if(n===(x.copies||1))return;undoable("Exemplaires de « "+x.t+" » : "+n);if(n>1)x.copies=n;else delete x.copies;save();render();openDetail(id);});
   p.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{setStatus(id,b.dataset.st);openDetail(id);});
   if($("mbRefresh"))$("mbRefresh").onclick=async()=>{$("covMsg").textContent="Mise à jour depuis MusicBrainz…";
     try{const f=await mbRelease(x.mbid);undoable("Fiche « "+x.t+" » actualisée");Object.assign(S.works,f.newWorks);["a","t","l","y","perf","tr","discs","box","img"].forEach(k=>{delete x[k];if(f[k]!==undefined)x[k]=f[k];});save();render();openDetail(id);}
@@ -935,6 +963,7 @@ function editTracks(id){const x=byId(id),p=$("detail");if(!x)return;const W=WORK
   $("edSave").onclick=()=>{undoable("Fiche « "+x.t+" » modifiée");const nt=$("eN").value.trim();if(nt)x.note=nt;else delete x.note;const pf=$("eI").value.trim();if(pf)x.perf=pf;else delete x.perf;applyTracks(x,parseLines($("rP").value,$("rC").value.trim()));save();render();openDetail(id);};}
 // ---------- Sauvegarde ----------
 $("nagGo").onclick=()=>$("dlB").click();
+$("enrOpen").onclick=()=>{try{localStorage.removeItem("enr-hide");}catch(e){}$("enr").hidden=false;enrUi();$("enr").scrollIntoView({behavior:"smooth"});};
 $("dlB").onclick=()=>{S.chg=0;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}nag();const blob=new Blob([JSON.stringify(S,null,1)],{type:"application/json"});const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);a.download="collezione-cd-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();$("bMsg").textContent="Sauvegarde téléchargée.";};
 $("upB").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(o&&o.collezione_import){const r=importList(o.albums||[]);$("bMsg").textContent=r.added+" disques importés"+(r.skipped?", "+r.skipped+" déjà présents (ignorés)":"")+".";e.target.value="";return;}if(!Array.isArray(o.col))throw 0;adopt(o);save();render();$("bMsg").textContent="Sauvegarde restaurée.";}catch(err){$("bMsg").textContent="Ce fichier n'est pas une sauvegarde de Collezione CD.";}};
@@ -967,13 +996,57 @@ function importList(list){undoable("Import de ta collection");let added=0,skippe
     S.col.push(n);added++;});
   save();render();return {added,skipped};}
 
+
+// ---------- Compléter automatiquement (pochettes, année, label) ----------
+const ENR={run:false,done:0,found:0,total:0,lock:null};
+const needsEnrich=x=>!x.mbid&&!x.dgid&&!COV[x.id]&&!x.img&&!x.enr;
+const luc=s=>norm(s).replace(/[+\-&|!(){}\[\]^"~*?:\\\/.,;'’]/g," ").replace(/\b(and|the|et|le|la|les|de|of|in|no|op|vol|disc|cd)\b/g," ").replace(/\s+/g," ").trim().split(" ").filter(w=>w.length>1).slice(0,8).join(" ");
+const toks=s=>new Set(luc(s).split(" ").filter(Boolean));
+const overlap=(a,b)=>{const A=toks(a),B=toks(b);if(!A.size)return 0;let n=0;A.forEach(w=>{if(B.has(w))n++;});return n/A.size;};
+function imgOk(url){return new Promise(res=>{const i=new Image();const t=setTimeout(()=>res(false),9000);i.onload=()=>{clearTimeout(t);res(i.naturalWidth>10);};i.onerror=()=>{clearTimeout(t);res(false);};i.src=url;});}
+function enrichQuery(x){const W=WORKS(),cs=new Set();tracksOf(x).forEach(t=>{const o=typeof t!=="string"&&W[t.w];if(o&&o.c)cs.add(surname(canonC(o.c)));});
+  const title=x.t.replace(/^[^:]{2,40}\s:\s/,""),who=[firstPerf(x.perf).split(",")[0],x.a!=="Artiste inconnu"?x.a.split(/[,;]/)[0]:"",...[...cs].slice(0,1)].filter(Boolean);
+  return {title,who:[...new Set(who.map(luc).filter(Boolean))]};}
+async function enrichOne(x){const {title,who}=enrichQuery(x),n=tracksOf(x).length;
+  let q="release:("+luc(title)+")";if(who.length)q+=" AND ("+who.map(w=>"artist:("+w+")").join(" OR ")+")";
+  const s=await mbGet("release/?query="+encodeURIComponent(q)+"&limit=8");
+  let best=null,bs=0;(s.releases||[]).forEach(r=>{const ov=overlap(title,r.title),tc=r["track-count"]||0,close=!n||!tc||Math.abs(tc-n)<=Math.max(2,n*.15);
+    const sc=(r.score||0)+40*ov+(close?15:-25);if(ov>=.6&&(r.score||0)>=70&&sc>bs){bs=sc;best=r;}});
+  if(best){const rg=best["release-group"]&&best["release-group"].id,url=rg?"https://coverartarchive.org/release-group/"+rg+"/front-250":"";
+    const li=(best["label-info"]||[]).find(l=>l.label);
+    x.mbid=best.id;if(rg)x.rgid=rg;x.auto=[];if(!x.y&&best.date){x.y=best.date.slice(0,4);x.auto.push("y");}if(!x.l&&li){x.l=li.label.name;x.auto.push("l");}if(!x.cat&&li&&li["catalog-number"]){x.cat=li["catalog-number"];x.auto.push("cat");}
+    if(url&&await imgOk(url)){x.img=url;return "cover";}}
+  if(dgKey()){const rs=await dgSearch({release_title:title,artist:who[0]||"",per_page:"5"}).catch(()=>[]);
+    const r=rs.find(r=>overlap(title,(r.title||"").split(" - ").slice(1).join(" - ")||r.title)>=.6&&(r.cover_image||r.thumb));
+    if(r){x.dgid=r.id;x.auto=x.auto||[];x.img=r.cover_image||r.thumb;if(!x.y&&r.year){x.y=String(r.year);x.auto.push("y");}if(!x.l&&r.label&&r.label[0]){x.l=r.label[0];x.auto.push("l");}return "cover";}}
+  return best?"info":"";}
+async function enrichAll(){if(ENR.run)return;const todo=[...S.col,...S.wish].filter(needsEnrich);if(!todo.length){enrUi("Rien à compléter.");return;}
+  if(!navigator.onLine){enrUi("Pas de connexion Internet.");return;}
+  ENR.run=true;ENR.done=0;ENR.found=0;ENR.total=todo.length;try{ENR.lock=await navigator.wakeLock?.request("screen");}catch(e){}
+  enrUi();
+  for(const x of todo){if(!ENR.run)break;
+    try{const r=await enrichOne(x);x.enr=r||"none";if(r==="cover")ENR.found++;}
+    catch(e){if(/surcharg|503/.test(e.message)){await new Promise(r=>setTimeout(r,5000));}else if(!navigator.onLine){ENR.run=false;enrUi("Connexion perdue : reprends plus tard.");break;}}
+    ENR.done++;if(ENR.done%5===0){save();render();}enrUi();}
+  ENR.run=false;try{ENR.lock&&ENR.lock.release();}catch(e){}save();render();enrUi();}
+function enrUi(msg){const box=$("enr"),left=[...S.col,...S.wish].filter(needsEnrich).length,miss=[...S.col,...S.wish].filter(x=>x.enr==="none"||x.enr==="info").length;
+  box.hidden=!ENR.run&&!left&&!msg&&!ENR.total;
+  $("enrTxt").innerHTML=ENR.run?`Recherche des pochettes… <b>${ENR.done}/${ENR.total}</b> · ${ENR.found} trouvée${ENR.found>1?"s":""}<br><small>Garde l'app ouverte (l'écran reste allumé). Environ ${Math.ceil((ENR.total-ENR.done)*1.6/60)} min restantes.</small>`
+    :msg?esc(msg):left?`<b>${left} disque${left>1?"s":""} sans pochette ni infos.</b> L'app peut les chercher sur MusicBrainz${dgKey()?" et Discogs":""} (≈ ${Math.max(1,Math.ceil(left*1.6/60))} min).`
+    :`Terminé : ${ENR.found} pochette${ENR.found>1?"s":""} trouvée${ENR.found>1?"s":""}.${miss?` ${miss} disque${miss>1?"s":""} sans pochette : tu peux les photographier depuis leur fiche${dgKey()?"":", ou ajouter un jeton Discogs et relancer"}.`:""}`;
+  $("enrGo").textContent=ENR.run?"Pause":left?"Lancer la recherche":"Relancer pour les non trouvés";
+  $("enrGo").hidden=!ENR.run&&!left&&!miss;}
+$("enrGo").onclick=()=>{if(ENR.run){ENR.run=false;enrUi("En pause. Relance quand tu veux, ça reprend où ça s'est arrêté.");return;}
+  if(![...S.col,...S.wish].some(needsEnrich))[...S.col,...S.wish].forEach(x=>{if(x.enr==="none"||x.enr==="info")delete x.enr;});enrichAll();};
+$("enrX").onclick=()=>{$("enr").hidden=true;try{localStorage.setItem("enr-hide","1");}catch(e){}};
+
 // ---------- Démarrage ----------
 try{tidyWorks();localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
 if(DEMO.works)Object.values(DEMO.works).forEach(o=>{if(o.c)o.c=canonC(o.c);});
 $("sheetX").onclick=()=>closeSheet();
 $("overlay").addEventListener("click",e=>{if(e.target.id==="overlay")closeSheet();});
 renderStats();render();
-covAll().then(o=>{Object.assign(COV,o);render();});
+covAll().then(o=>{Object.assign(COV,o);render();let hide=false;try{hide=!!localStorage.getItem("enr-hide");}catch(e){}if(!hide)enrUi();});
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
