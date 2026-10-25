@@ -334,6 +334,24 @@ details.more[open]>summary{border-bottom:1px dotted var(--line)}
 .toolbox .enr{background:none;border:0;box-shadow:none;padding:0;margin:0}
 .toolbox #tbTodo{background:var(--win);border:1px solid;border-color:var(--sh) var(--hi) var(--hi) var(--sh);border-radius:3px;padding:0 10px}
 .tr{border-bottom:1px dotted var(--line)}button.wk{background:var(--face)}
+/* ---- cohérence : 3 tailles de boutons seulement ----
+   .primary / .wide : pleine largeur, 46 px de haut (actions de fenêtre)
+   .small           : dans une ligne de liste ou un compteur
+   .linklike        : lien dans une phrase, sans relief */
+button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{width:100%;min-height:46px;padding:10px 14px;font-size:1rem;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center}
+.enrLinks{display:flex;flex-direction:column;gap:8px;align-items:stretch;margin:10px 0 6px}.enrLinks .wide{font-weight:500}
+.linklike{all:unset;display:inline;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit}
+.linklike.err{color:var(--err)}
+.ghint{flex-wrap:wrap}.ghint span{flex:1 1 100%}.ghint .wide{flex:1 1 100%}
+.row>button,.row>.filebtn{min-height:46px}
+.setItem{min-height:56px;justify-content:center}
+.small{min-height:34px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.pair>button{min-height:42px;width:100%;font-weight:600}
+.autobox{display:block;padding:10px 12px}.autobox span{display:block}
+.gsug .meta{width:100%}.glist{margin:6px 0 0;font-size:.8rem;color:var(--muted)}.glist summary{cursor:pointer;color:var(--accent)}
+.tact.col button,.tact button.small{min-width:88px;justify-content:center;text-align:center}
+.sortbar>*{min-height:38px}
+.rvl .item{align-items:flex-start}.rvl .meta{width:100%}
 </style>
 </head>
 <body>
@@ -370,7 +388,7 @@ details.more[open]>summary{border-bottom:1px dotted var(--line)}
 
 
 
-<div class="ghint" id="gHint" hidden><span>Ces disques n'ont pas encore de genre.</span><button type="button" class="small" id="gGo2">Les classer automatiquement</button></div>
+<div class="ghint" id="gHint" hidden><span>Ces disques n'ont pas encore de genre.</span><button type="button" class="wide" id="gGo2">Les classer automatiquement</button></div>
 <ul class="list" id="list"></ul>
 <nav class="tabs bnav" role="tablist" aria-label="Sections">
   <button role="tab" id="tabCol" aria-selected="true" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg>Collection</button>
@@ -1086,7 +1104,7 @@ function openDetail(id){const x=byId(id);if(!x)return;const p=$("detail"),cu=cov
    ${(()=>{const cs=codesOf(id),ps=Object.keys(S.pcodes||{}).filter(k=>S.pcodes[k]===id);return cs.length||ps.length?`<p>${cs.map(k=>`<span class="code">${fmtEan(k)}</span>`).join(" ")}${ps.map(k=>`<span class="code prob" title="Code probable">${fmtEan(k)} ?</span>`).join(" ")}</p>`:"";})()}${x.cat?`<p class="hint">N° de catalogue : ${esc(x.cat)}</p>`:""}${x.note?`<p class="note">${esc(x.note)}</p>`:""}${x.at?`<p class="hint">Ajouté le ${new Date(x.at).toLocaleDateString("fr-FR")}</p>`:""}
    <div class="row acts"><button type="button" class="primary" id="detEdit">Modifier</button><button type="button" id="coverBtn">${hasCover(x)?"Pochette…":"Ajouter une pochette"}</button></div>
    <div class="photos" id="phRow">${(COV["ph:"+id]||[]).map((d,i)=>`<button type="button" class="ph" data-ph="${i}" aria-label="Photo ${i+1}"><img src="${d}" alt=""></button>`).join("")}<button type="button" class="ph add" id="phAdd" aria-label="Ajouter une photo">＋<small>Photo</small></button></div>
-   ${x.auto&&x.enr!=="manual"?`<div class="autobox"><span>Pochette et infos trouvées automatiquement.</span><button type="button" class="small primary" id="okThis">C'est bon</button><button type="button" class="small" id="notThis">Pas lui</button></div>`:""}
+   ${x.auto&&x.enr!=="manual"?`<div class="autobox"><span>Pochette et infos trouvées automatiquement. C'est le bon disque ?</span><div class="pair"><button type="button" class="primary" id="okThis">Oui, c'est bon</button><button type="button" id="notThis">Pas lui</button></div></div>`:""}
    <p class="hint" id="covMsg"></p>
    <details class="more"><summary>⋯ Plus d'actions</summary>
     <div class="mgrp"><span class="mlab">Compléter</span>
@@ -1420,7 +1438,7 @@ function enrUi(msg){const box=$("enr"),all=ALL(),tot=all.length,withC=all.filter
   else{h=(msg?esc(msg)+"<br>":"")+`<span class="big"><b>${withC}</b> disques sur ${tot} ont une pochette · <b>${miss}</b> sans.</span>`;
     if(last)h+=`<br><small>${last.paused?"Recherche en pause":"Dernière recherche"+(last.pass===2?" élargie":"")} (${dt(last.at)}) : ${last.done} disque${last.done>1?"s":""} cherché${last.done>1?"s":""}, ${last.found} pochette${last.found>1?"s":""} trouvée${last.found>1?"s":""}${last.err?`, ${last.err} erreur${last.err>1?"s":""} réseau`:""}.</small>`;
     h+=p1?`<br>Étape 1 : <b>${p1}</b> disque${p1>1?"s":""} pas encore cherché${p1>1?"s":""}.`:p2?`<br>Étape 2 possible : une <b>recherche élargie</b> pour ${p2>1?"les "+p2+" disques":"le disque"} sans pochette (titre seul, autres éditions). Plus de risque d'erreur : tu valideras ensuite.`:miss?`<br>Recherches automatiques terminées. ${miss>1?"Les "+miss+" restants se font":"Le dernier se fait"} à la main (fiche → Changer la pochette).`:"";}
-  h+=`<div class="enrLinks">${rv?`<button type="button" class="linklike" id="enrRev">Vérifier les ${rv} pochette${rv>1?"s":""} trouvée${rv>1?"s":""} automatiquement</button>`:""}${miss?`<button type="button" class="linklike" id="enrSee">${miss>1?"Voir les "+miss+" disques sans pochette":"Voir le disque sans pochette"}</button>`:""}</div><small class="srcl">${srcLine()}</small>`;
+  h+=`<div class="enrLinks">${rv?`<button type="button" class="wide" id="enrRev">Vérifier les ${rv} pochette${rv>1?"s":""} trouvée${rv>1?"s":""} automatiquement</button>`:""}${miss?`<button type="button" class="wide" id="enrSee">${miss>1?"Voir les "+miss+" disques sans pochette":"Voir le disque sans pochette"}</button>`:""}</div><small class="srcl">${srcLine()}</small>`;
   $("enrTxt").innerHTML=h;
   $("enrGo").textContent=ENR.run?"Pause":p1?"Lancer la recherche":"Lancer la recherche élargie";
   $("enrGo").hidden=!ENR.run&&!p1&&!p2;
@@ -1431,8 +1449,8 @@ function openReview(){closeSettings();const p=$("detail"),L=toReview();
   p.innerHTML=`<p class="cat">À vérifier</p><h2 class="wh">${L.length} pochette${L.length>1?"s":""} trouvée${L.length>1?"s":""} automatiquement</h2>
    <p class="hint">Garde ce qui est juste. « Pas lui » retire la pochette et les infos ajoutées (année, label, n° de catalogue) et remet le disque dans « À compléter ».</p>
    ${L.length?`<div class="row"><button type="button" class="primary" id="rvAll">Tout garder</button></div>`:""}
-   <ul class="list rvl">${L.map(x=>`<li class="item" data-rv="${x.id}"><img class="rvc" src="${esc(coverUrl(x))}" alt="" onerror="this.style.visibility='hidden'"><div class="meta"><b>${esc(x.t)}</b><small>${esc(x.a)}</small><small>${[x.l,x.y,x.cat].filter(Boolean).map(esc).join(" · ")}</small></div>
-     <span class="tact col"><button type="button" class="small primary" data-keep="${x.id}">Garder</button><button type="button" class="small" data-drop="${x.id}">Pas lui</button></span></li>`).join("")||`<li class="empty">Rien à vérifier ✓</li>`}</ul>
+   <ul class="list rvl">${L.map(x=>`<li class="item" data-rv="${x.id}"><img class="rvc" src="${esc(coverUrl(x))}" alt="" onerror="this.style.visibility='hidden'"><div class="meta"><b>${esc(x.t)}</b><small>${esc(x.a)}</small><small>${[x.l,x.y,x.cat].filter(Boolean).map(esc).join(" · ")}</small>
+     <div class="pair"><button type="button" class="primary" data-keep="${x.id}">Garder</button><button type="button" data-drop="${x.id}">Pas lui</button></div></div></li>`).join("")||`<li class="empty">Rien à vérifier ✓</li>`}</ul>
    <div class="row"><button type="button" id="rvClose">Fermer</button></div>`;
   openSheet();$("rvClose").onclick=()=>closeSheet();
   const keep=x=>{delete x.auto;x.enr="manual";},drop=x=>{(Array.isArray(x.auto)?x.auto:[]).forEach(k=>delete x[k]);["mbid","dgid","rgid","img","auto"].forEach(k=>delete x[k]);x.enr="none";x.enrP=2;};
@@ -1557,13 +1575,13 @@ async function importLink(s){const out=$("eanResult");$("scanPanel").hidden=fals
 
 
 // ---------- Réglages (panneau plein écran) ----------
-const APPV="36";
+const APPV="39";
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
 // ---------- À compléter ----------
 const TODOS=[["code","Sans code-barres",x=>!codesOf(x.id).length],["cover","Pochette manquante",x=>!hasCover(x)],["genre","Genre manquant",x=>!genreOf(x)],["year","Année manquante",x=>!x.y],["label","Label manquant",x=>!x.l],
-  ["tracks","Pistes manquantes",x=>!tracksOf(x).length],["auto","Trouvés automatiquement, à vérifier",x=>!!x.auto&&x.enr!=="manual"]];
+  ["tracks","Pistes manquantes",x=>!tracksOf(x).length],["auto","Pochettes automatiques à vérifier",x=>!!x.auto&&x.enr!=="manual"&&hasCover(x)]];
 let TODOF="";
 function todoUi(){const all=[...S.col,...S.wish],n=all.filter(x=>!hasCover(x)||!genreOf(x)||(x.auto&&x.enr!=="manual"&&hasCover(x))).length;$("todoN").hidden=!n;$("todoN").textContent=n>99?"99+":n;}
 function openTodo(){closeSettings();closeSheet();goTab("tools");return;const p=$("detail"),all=[...S.col,...S.wish];
@@ -1622,7 +1640,8 @@ function groupSuggestions(){const by={},ign=new Set(S.noGroup||[]);
 function openGroupSugg(){const p=$("detail"),G=groupSuggestions();
   p.innerHTML=`<p class="cat">À regrouper</p><h2 class="wh">${G.length} suggestion${G.length>1?"s":""}</h2><p class="hint">Disques du même artiste dont les titres ne diffèrent que par un numéro (CD 1, Vol. 2, [Disc 3]…). Vérifie avant de regrouper : une série n'est pas toujours un coffret.</p>
    <ul class="list">${G.map((g,i)=>`<li class="item gsug"><div class="meta"><b>${esc(commonTitle(g.xs.map(x=>x.t)))}</b><small>${esc(g.xs[0].a)} · ${g.xs.length} disques${new Set(g.xs.map(x=>tNorm(x.t))).size<g.xs.length?" · <b class=\"warn\">titres identiques : doublon ?</b>":""}</small>
-     <small class="glist">${g.xs.map(x=>esc(x.t)).join("<br>")}</small></div><span class="tact"><button type="button" class="small primary" data-g="${i}">Regrouper</button><button type="button" class="small" data-gi="${i}" aria-label="Ignorer cette suggestion">Ignorer</button></span></li>`).join("")||`<li class="empty">Rien à regrouper pour l'instant.</li>`}</ul>
+     <details class="glist"><summary>Voir les ${g.xs.length} titres</summary>${g.xs.map(x=>esc(x.t)).join("<br>")}</details>
+     <div class="pair"><button type="button" class="primary" data-g="${i}">Regrouper</button><button type="button" data-gi="${i}">Ignorer</button></div></div></li>`).join("")||`<li class="empty">Rien à regrouper pour l'instant.</li>`}</ul>
    <div class="row"><button type="button" id="gsBack">Retour</button></div>`;
   openSheet();$("gsBack").onclick=openTodo;
   p.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>openBoxer(G[+b.dataset.g].xs.map(x=>x.id)));
@@ -1673,19 +1692,22 @@ $("autoCodes").checked=autoCodes();$("autoCodes").onchange=e=>{try{localStorage.
 
 // ---------- Codes-barres probables en masse (depuis MusicBrainz / Discogs) ----------
 const CB={run:false};
+const hasPCode=x=>Object.keys(S.pcodes||{}).some(k=>S.pcodes[k]===x.id);
+// disques dont l'édition est connue, sans code, et pas encore interrogés
+const cbTodo=()=>ALL().filter(x=>(x.mbid||x.dgid)&&!x.cbT&&!codesOf(x.id).length&&!hasPCode(x));
 async function fetchCodesAll(){if(CB.run){CB.run=false;return;}const m=$("cbMsg");
-  const todo=ALL().filter(x=>(x.mbid||x.dgid)&&!codesOf(x.id).length&&!Object.keys(S.pcodes||{}).some(k=>S.pcodes[k]===x.id));
+  const todo=cbTodo();
   if(!todo.length){m.textContent="Aucun disque à traiter : il faut d'abord que la recherche des pochettes ait trouvé l'édition (MusicBrainz ou Discogs).";return;}
   if(!navigator.onLine){m.textContent="Pas de connexion Internet.";return;}
   CB.run=true;$("cbGo").querySelector("b").textContent="Arrêter";let n=0,f=0;try{CB.lock=await navigator.wakeLock?.request("screen");}catch(e){}
   for(const x of todo){if(!CB.run)break;m.textContent=`Récupération… ${n}/${todo.length} · ${f} code${f>1?"s":""} trouvé${f>1?"s":""}. Garde l'app ouverte.`;
     try{let bc=[];if(x.mbid){const d=await mbGet("release/"+x.mbid);if(d.barcode)bc=[d.barcode];}
       if(!bc.length&&x.dgid&&dgKey()){const d=await dgGet("releases/"+x.dgid);bc=(d.identifiers||[]).filter(i=>/barcode/i.test(i.type)).map(i=>i.value);}
-      const before=Object.keys(S.pcodes||{}).length;bc.forEach(c=>addPCode(c,x.id));if(Object.keys(S.pcodes||{}).length>before)f++;}catch(e){await sleep(3000);}
+      const before=Object.keys(S.pcodes||{}).length;bc.forEach(c=>addPCode(c,x.id));if(Object.keys(S.pcodes||{}).length>before)f++;x.cbT=1;}catch(e){await sleep(3000);}
     n++;if(n%10===0)save();}
   CB.run=false;try{CB.lock&&CB.lock.release();}catch(e){}$("cbGo").querySelector("b").textContent="Récupérer les codes probables maintenant";
   logA("Codes-barres probables récupérés : "+f+" sur "+n+" disques","","auto");save();render();
-  m.textContent=`Terminé : ${f} code${f>1?"s":""} probable${f>1?"s":""} ajouté${f>1?"s":""} sur ${n} disques. Les disques sans édition trouvée n'ont pas de code : utilise l'inventaire.`;toast(f+" codes probables ajoutés");}
+  m.textContent=`Terminé : ${f} code${f>1?"s":""} probable${f>1?"s":""} ajouté${f>1?"s":""} sur ${n} disques interrogés. Les autres éditions n'ont pas de code-barres enregistré en ligne (fréquent pour les vieux CD) : pour ceux-là, l'inventaire.`;renderToolsCounts();toast(f+" codes probables ajoutés");}
 $("cbGo").onclick=fetchCodesAll;
 // ---------- Journal des activités ----------
 function openLog(filter){closeSettings();const p=$("detail"),L=(S.log||[]).filter(e=>!filter||(filter==="auto"?e.k==="auto":e.k!=="auto"));
@@ -1702,10 +1724,14 @@ $("logOpen").onclick=()=>openLog("");
 
 // ---------- Onglet Outils ----------
 function todoCounts(){const all=[...S.col,...S.wish];return TODOS.map(([k,lab,f])=>[k,lab,all.filter(f).length]);}
+function renderToolsCounts(){const all=ALL(),noc=all.filter(x=>!codesOf(x.id).length),pc=noc.filter(hasPCode).length,ed=noc.filter(x=>!hasPCode(x)&&(x.mbid||x.dgid)).length,q=cbTodo().length;
+  const li=document.querySelector('#tbTodo [data-todo="code"] small');if(li&&noc.length)li.textContent=`${noc.length} disques sans code confirmé · dont ${pc} avec un code probable à confirmer au scan`;
+  const s=$("cbGo")&&$("cbGo").querySelector("small");if(s&&!CB.run)s.textContent=q?`${q} disque${q>1?"s":""} à interroger (édition trouvée, pas encore de code)`:`Rien à interroger : ${ed} disques ont été interrogés sans code trouvé, les autres n'ont pas d'édition trouvée`;}
 function renderTools(){$("list").classList.add("toolsMode");$("list").innerHTML=`<li class="toolsli" id="toolsLi"></li>`;$("toolsLi").appendChild(TB);
   const g=groupSuggestions().length;
   $("tbTodo").innerHTML=todoCounts().map(([k,lab,n])=>`<li class="item tap${n?"":" done"}" data-todo="${k}"><div class="meta"><b>${lab}</b><small>${n?n+" disque"+(n>1?"s":""):"Rien à faire ✓"}</small></div>${n?`<span class="count">${n}</span>`:""}</li>`).join("")+
     `<li class="item tap${g?"":" done"}" data-todo="group"><div class="meta"><b>À regrouper en coffret</b><small>${g?g+" suggestion"+(g>1?"s":""):"Rien à regrouper ✓"}</small></div>${g?`<span class="count">${g}</span>`:""}</li>`;
+  renderToolsCounts();
   $("tbGroupN").textContent=g?g+" suggestion"+(g>1?"s":"")+" en attente":"Rien à regrouper pour l'instant";
   $("tbTodo").querySelectorAll("[data-todo]").forEach(li=>li.onclick=()=>{if(li.classList.contains("done"))return;const k=li.dataset.todo;
     if(k==="group"){openGroupSugg();return;}if(k==="auto"){openReview();return;}TODOF=k;$("q").value="";tab="col";render();setTimeout(()=>$("stick").scrollIntoView({behavior:"smooth"}),50);});
@@ -1713,7 +1739,7 @@ function renderTools(){$("list").classList.add("toolsMode");$("list").innerHTML=
 function homeTodo(){const c=$("todoCard");if(!c)return;const t=todoCounts().filter(([k,,n])=>n&&k!=="label"),g=groupSuggestions().length;
   const parts=t.map(([k,lab,n])=>({cover:"pochette",genre:"genre",code:"code-barres",year:"année",tracks:"liste de pistes",auto:"à vérifier"}[k]?`<b>${n}</b> ${({cover:"sans pochette",genre:"sans genre",code:"sans code-barres",year:"sans année",tracks:"sans pistes",auto:"à vérifier"})[k]}`:"")).filter(Boolean);
   if(g)parts.push(`<b>${g}</b> à regrouper`);c.hidden=!parts.length||tab==="tools";
-  c.innerHTML=`<div class="wtitle">À faire</div><div class="wbody"><p>${parts.join(" · ")}</p><button type="button" class="small" id="tcGo">Ouvrir les outils</button></div>`;$("tcGo").onclick=()=>goTab("tools");}
+  c.innerHTML=`<div class="wtitle">À faire</div><div class="wbody"><p>${parts.join(" · ")}</p><button type="button" class="wide" id="tcGo">Ouvrir les outils</button></div>`;$("tcGo").onclick=()=>goTab("tools");}
 $("tbGroup").onclick=()=>openGroupSugg();
 
 // ---------- Démarrage ----------
