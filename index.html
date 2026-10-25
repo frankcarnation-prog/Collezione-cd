@@ -215,6 +215,7 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 .lightbox{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px}
 .lightbox img{max-width:100%;max-height:75vh;object-fit:contain;border-radius:6px}
 .lbBar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}.lbBar button{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35)}
+.tact{display:flex;gap:6px;flex:none}
 </style>
 </head>
 <body>
@@ -265,6 +266,7 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 <details id="settings"><summary>Réglages : clés IA et Discogs, sauvegarde</summary>
 <p>Ta collection est enregistrée sur ce téléphone. Télécharge une sauvegarde de temps en temps (les photos de pochettes n'y sont pas incluses). « Restaurer un fichier » accepte aussi un fichier d'import de collection : il s'ajoute à ce que tu as déjà.</p>
 <div class="row"><button id="dlB" type="button">Télécharger la sauvegarde</button><label class="filebtn">Restaurer un fichier<input id="upB" type="file" accept="application/json,.json"></label></div>
+<div class="row"><button type="button" id="trashOpen">Corbeille et anciennes versions</button></div>
 <div class="row"><button type="button" id="enrOpen">Compléter pochettes et infos automatiquement</button></div>
 <label for="dgKey">Jeton Discogs (facultatif, deuxième source + n° de catalogue)</label>
 <input id="dgKey" type="text" autocomplete="off" spellcheck="false" placeholder="Jeton personnel Discogs">
@@ -480,6 +482,7 @@ function tidyWorks(){const W=S.works,used=new Set();
     if(o&&/^mb:/.test(t.w)){const m=splitMvt(o.t);m&&m.unshift(o.t);if(m){const c=canonC(o.c),pk="mbp:"+norm(c+"|"+m[1]).replace(/[^a-z0-9|]+/g,"-");
       W[pk]=W[pk]||{c,t:m[1].trim(),cat:""};t.w=pk;if(norm(t.n).startsWith(norm(o.t))||!t.n)t.n=m[2].trim();else if(t.n.includes(": "))t.n=m[2].trim();}}
     used.add(t.w);})));
+  (S.trash||[]).forEach(e=>tracksOf(e.x).forEach(t=>{if(typeof t!=="string"&&t.w)used.add(t.w);}));
   [...S.col,...S.wish].forEach(x=>{if(x.a&&nonLatin(x.a))x.a=x.a.split(/(\s*[;,&\/]\s*)/).map(s=>nonLatin(s)?canonC(s):s).join("");});
   Object.keys(W).forEach(k=>{if(!used.has(k))delete W[k];else if(W[k].c)W[k].c=canonC(W[k].c);});}
 
@@ -563,7 +566,7 @@ function openBoxer(ids){let order=ids.filter(byId).sort((a,b)=>byId(a).t.localeC
      const perf=[...new Set(src.flatMap(x=>(x.perf||"").split(/\s*,\s*/).filter(Boolean)))].slice(0,MAX_PERF).join(", ");
      const n={id:"b"+Date.now().toString(36),a:a||c.a,t,discs,box:true,at:Math.max(...src.map(x=>x.at||0))};
      ["img","l","y","cat","mbid","dgid","rgid"].forEach(k=>{if(c[k])n[k]=c[k];});if(perf)n.perf=perf;const notes=src.map(x=>x.note).filter(Boolean);if(notes.length)n.note=notes.join(" · ");
-     const ids=new Set(src.map(x=>x.id));S.col=S.col.filter(x=>!ids.has(x.id));S.wish=S.wish.filter(x=>!ids.has(x.id));(own?S.col:S.wish).push(n);
+     src.forEach(o=>toTrash(o,"box",{own:!isWish(o.id),into:t}));const ids=new Set(src.map(x=>x.id));S.col=S.col.filter(x=>!ids.has(x.id));S.wish=S.wish.filter(x=>!ids.has(x.id));(own?S.col:S.wish).push(n);
      for(const k in S.codes)if(ids.has(S.codes[k]))S.codes[k]=n.id;
      if(COV[cov]){COV[n.id]=COV[cov];covPut(n.id,COV[cov]).catch(()=>{});}
      SEL=null;save();render();openDetail(n.id);};};
@@ -636,12 +639,16 @@ function renderPerformers(){const by={};
 function buy(id){const i=S.wish.findIndex(x=>x.id===id);if(i<0)return;const x=S.wish[i];undoable("« "+x.t+" » passé dans ta collection");x.at=Date.now();S.col.push(S.wish.splice(i,1)[0]);save();render();}
 // Ajout d'un disque : date d'ajout + annulation possible
 function addAlbum(n,wish,code){undoable("« "+n.t+" » ajouté "+(wish?"aux envies":"à ta collection"));n.at=Date.now();(wish?S.wish:S.col).push(n);if(code&&!S.codes[code])S.codes[code]=n.id;}
+// ---------- Corbeille et anciennes versions ----------
+const TRASH_MAX=150;
+function toTrash(x,kind,extra){S.trash=S.trash||[];const e=Object.assign({k:kind,at:Date.now(),x:JSON.parse(JSON.stringify(x))},extra||{});S.trash.unshift(e);if(S.trash.length>TRASH_MAX)S.trash.length=TRASH_MAX;}
 function setStatus(id,st){const x=byId(id);if(!x)return;const own=!isWish(id);
-  if(st==="del"){undoable("« "+x.t+" » supprimé");S.col=S.col.filter(y=>y.id!==id);S.wish=S.wish.filter(y=>y.id!==id);for(const k in S.codes)if(S.codes[k]===id)delete S.codes[k];}
+  if(st==="del"){undoable("« "+x.t+" » mis à la corbeille");toTrash(x,"del",{own,codes:Object.keys(S.codes).filter(k=>S.codes[k]===id)});S.col=S.col.filter(y=>y.id!==id);S.wish=S.wish.filter(y=>y.id!==id);for(const k in S.codes)if(S.codes[k]===id)delete S.codes[k];}
   else if(st==="own"&&!own){buy(id);return;}
   else if(st==="wish"&&own){undoable("« "+x.t+" » remis dans les envies");S.col=S.col.filter(y=>y.id!==id);S.wish.push(x);}
   else return;save();render();}
-function nag(){const n=S.chg||0;$("nag").hidden=n<10;$("nagTxt").textContent=n+" modifications depuis ta dernière sauvegarde.";}
+function trashUi(){const n=(S.trash||[]).length;$("trashOpen").textContent="Corbeille et anciennes versions"+(n?" ("+n+")":"");}
+function nag(){trashUi();const n=S.chg||0;$("nag").hidden=n<10;$("nagTxt").textContent=n+" modifications depuis ta dernière sauvegarde.";}
 // ---------- Annuler ----------
 let UNDO=null,toastT=0;
 function undoable(label){UNDO={s:JSON.stringify(S),label};S.chg=(S.chg||0)+1;setTimeout(()=>{if(UNDO)toast(UNDO.label,"Annuler",()=>{const u=UNDO;UNDO=null;if(!u)return;S=JSON.parse(u.s);save();render();if(sheetOpen)closeSheet();toast("Annulé");});},0);}
@@ -1067,10 +1074,13 @@ function showRead(r){const tx=readTarget&&byId(readTarget),out=$("readOut");
    <label for="rI">Interprètes</label><input id="rI" type="text" value="${esc(r.interpretes||(tx&&tx.perf)||"")}" placeholder="Soliste, chef, orchestre…">
    <label for="rL">Maison de disque</label><input id="rL" type="text" value="${esc(r.label||(tx&&tx.l)||"")}"><div id="rEd"></div>
    ${cur&&!tx?`<p class="hint">Code-barres associé : ${fmtEan(cur)}</p>`:""}
-   <div class="row">${tx?`<button class="primary" id="rRep" type="button">Remplacer la fiche</button>`:`<button class="primary" id="rCol" type="button">Ajouter à la collection</button><button id="rWish" type="button">Ajouter aux envies</button>`}</div>`;
+   <div class="row">${tx?`<button class="primary" id="rRep" type="button">Comparer avec ma fiche</button>`:`<button class="primary" id="rCol" type="button">Ajouter à la collection</button><button id="rWish" type="button">Ajouter aux envies</button>`}</div>`;
   trackEditor($("rEd"),linesFrom(r.pistes,r.compositeur),r.compositeur);
   const save2=w=>{const t=$("rT").value.trim(),a=$("rA").value.trim();if(!t){$("readMsg").textContent="Il faut au moins le titre du CD.";return;}
-    if(tx)undoable("Fiche « "+tx.t+" » relue");
+    if(tx){// fiche existante : on compare avant de remplacer
+      const parsed=parseLines($("rP").value,$("rC").value.trim()),pf=$("rI").value.trim();
+      const f={t,a:a||firstPerf(pf).split(",")[0]||$("rC").value.trim()||"",perf:pf,l:$("rL").value.trim(),coverData:coverShot||"",newWorks:parsed.works,discs:parsed.discs};
+      const verso=shots.verso;openCompare(tx,f,"Lecture photo",ok=>{if(ok&&verso)phAdd(tx.id,verso);openDetail(tx.id);});return;}
     const parsed=parseLines($("rP").value,$("rC").value.trim());
     const n=tx||{id:"p"+Date.now()};n.t=t;n.a=a||$("rC").value.trim()||"Artiste inconnu";n.l=$("rL").value.trim();const pf=$("rI").value.trim();if(pf)n.perf=pf;else delete n.perf;applyTracks(n,parsed);
     if(!tx)addAlbum(n,w,cur);
@@ -1085,7 +1095,7 @@ function editTracks(id){const x=byId(id),p=$("detail");if(!x)return;const W=WORK
    <div class="row"><button class="primary" id="edSave" type="button">Enregistrer</button><button type="button" id="edCancel">Annuler</button></div><p class="hint" id="edMsg"></p>`;
   trackEditor($("rEd"),linesFrom(linesFromAlbum(x),mainC),mainC);
   $("edCancel").onclick=()=>openDetail(id);
-  $("edSave").onclick=()=>{undoable("Fiche « "+x.t+" » modifiée");const nt=$("eN").value.trim();if(nt)x.note=nt;else delete x.note;const pf=$("eI").value.trim();if(pf)x.perf=pf;else delete x.perf;const old=JSON.parse(JSON.stringify(x));applyTracks(x,parseLines($("rP").value,$("rC").value.trim()));attachWorks(x,old,$("rC").value.trim());save();render();openDetail(id);};}
+  $("edSave").onclick=()=>{undoable("Fiche « "+x.t+" » modifiée");const nt=$("eN").value.trim();if(nt)x.note=nt;else delete x.note;const pf=$("eI").value.trim();if(pf)x.perf=pf;else delete x.perf;const old=JSON.parse(JSON.stringify(x));toTrash(old,"old",{why:"modification"});applyTracks(x,parseLines($("rP").value,$("rC").value.trim()));attachWorks(x,old,$("rC").value.trim());save();render();openDetail(id);};}
 // ---------- Sauvegarde ----------
 $("nagGo").onclick=()=>$("dlB").click();
 $("enrOpen").onclick=()=>{try{localStorage.removeItem("enr-hide");}catch(e){}$("enr").hidden=false;enrUi();$("enr").scrollIntoView({behavior:"smooth"});};
@@ -1199,7 +1209,7 @@ $("enrX").onclick=()=>{$("enr").hidden=true;try{localStorage.setItem("enr-hide",
 
 // ---------- Comparer avant / après, et choisir ce qu'on prend ----------
 const CMP_FIELDS=[["cover","Pochette"],["t","Titre"],["a","Artiste"],["perf","Interprètes"],["l","Label"],["y","Année"],["cat","N° catalogue"],["tracks","Pistes"]];
-function cmpVal(o,k,isOld){if(k==="cover")return isOld?coverUrl(o):(o.img||"");if(k==="tracks"){const n=tracksOf(o).length;return n?n:"";}return o[k]||"";}
+function cmpVal(o,k,isOld){if(k==="cover")return isOld?coverUrl(o):(o.img||o.coverData||"");if(k==="tracks"){const tr=tracksOf(o);return tr.length?tr.map(t=>norm(tName(t))).join("|"):"";}return o[k]||"";}
 function cmpCell(o,k,isOld){const v=cmpVal(o,k,isOld);if(v===""||v==null)return `<span class="nil">—</span>`;
   if(k==="cover")return `<img src="${esc(v)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'nil',textContent:'—'}))">`;
   if(k==="tracks"){const tr=tracksOf(o),W=WORKS();return `<b>${tr.length} piste${tr.length>1?"s":""}${discsOf(o).length>1?" · "+discsOf(o).length+" CD":""}</b>`+tr.slice(0,3).map(t=>{const w=typeof t!=="string"&&W[t.w];return `<small>${esc(tName(t)||(w&&w.t)||"")}</small>`;}).join("")+(tr.length>3?"<small>…</small>":"");}
@@ -1218,11 +1228,11 @@ function openCompare(x,f,src,after){const id=x.id,p=$("detail"),sel={};
     $("cmpNo").onclick=()=>{if(after)after(false);else openDetail(id);};
     $("cmpAll").onclick=()=>{CMP_FIELDS.forEach(([k])=>{const n=cmpVal(f,k,false);if(n!==""&&n!=null)sel[k]="new";});apply();};
     $("cmpGo").onclick=apply;};
-  const apply=()=>{undoable("Fiche « "+x.t+" » mise à jour ("+src+")");const old=JSON.parse(JSON.stringify(x));
+  const apply=()=>{undoable("Fiche « "+x.t+" » mise à jour ("+src+")");const old=JSON.parse(JSON.stringify(x));toTrash(old,"old",{why:src});
     (Array.isArray(x.auto)?x.auto:[]).forEach(k=>{if(sel[k]!=="old")delete x[k];});delete x.auto;
     if(f.mbid)x.mbid=f.mbid;if(f.dgid)x.dgid=f.dgid;if(f.rgid)x.rgid=f.rgid;x.enr="manual";
     ["t","a","perf","l","y","cat"].forEach(k=>{if(sel[k]==="new")x[k]=f[k];});
-    if(sel.cover==="new"){x.img=f.img;if(COV[id])covDel(id);}
+    if(sel.cover==="new"){if(f.coverData){delete x.img;COV[id]=f.coverData;covPut(id,f.coverData).catch(()=>{});}else{x.img=f.img;if(COV[id])covDel(id);}}
     if(sel.tracks==="new"){if(f.newWorks)Object.assign(S.works,f.newWorks);["tr","discs","box"].forEach(k=>delete x[k]);if(f.discs&&f.discs.length>1){x.discs=JSON.parse(JSON.stringify(f.discs));x.box=true;}else x.tr=JSON.parse(JSON.stringify(f.discs?f.discs[0].tr:(f.tr||[])));attachWorks(x,old);}
     save();render();if(after)after(true);else openDetail(id);};
   draw();openSheet();$("sheet").scrollTop=0;}
@@ -1275,12 +1285,29 @@ function viewPhoto(id,i){const a=COV["ph:"+id]||[],lb=$("lightbox");if(!a[i])ret
     const small=await new Promise(res=>{const im=new Image();im.onload=()=>{const k=Math.min(1,500/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.85));};im.onerror=()=>res(chosen);im.src=chosen;});
     COV[id]=small;await covPut(id,small);await phSet(id,b);lb.hidden=true;render();openDetail(id);toast("Pochette changée");};}
 
+
+function openTrash(){const p=$("detail"),T=S.trash||[];
+  const lab=e=>e.k==="del"?"Supprimé":e.k==="box"?"Regroupé dans « "+esc(e.into||"un coffret")+" »":"Ancienne version"+(e.why?" (avant "+esc(e.why)+")":"");
+  p.innerHTML=`<p class="cat">Corbeille et anciennes versions</p><h2 class="wh">${T.length} élément${T.length>1?"s":""}</h2>
+   <p class="hint">Les ${TRASH_MAX} derniers sont gardés. Les photos ne sont pas copiées ici.</p>
+   <ul class="list">${T.map((e,i)=>{const cur=byId(e.x.id);return `<li class="item"><div class="meta"><b>${esc(e.x.t)}</b><small>${esc(e.x.a)} · ${tracksOf(e.x).length} pistes</small><small>${lab(e)} · ${new Date(e.at).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</small></div>
+     <span class="tact"><button type="button" class="small" data-tr="${i}">${e.k==="old"&&cur?"Comparer":"Restaurer"}</button><button type="button" class="small" data-tx="${i}" aria-label="Effacer définitivement">✕</button></span></li>`;}).join("")||`<li class="empty">La corbeille est vide.</li>`}</ul>
+   <div class="row">${T.length?`<button type="button" id="trEmpty">Vider la corbeille</button>`:""}<button type="button" id="trClose">Fermer</button></div>`;
+  openSheet();$("trClose").onclick=()=>closeSheet();
+  if($("trEmpty"))$("trEmpty").onclick=()=>{undoable("Corbeille vidée");S.trash=[];save();openTrash();};
+  p.querySelectorAll("[data-tx]").forEach(b=>b.onclick=()=>{undoable("Élément effacé");S.trash.splice(+b.dataset.tx,1);save();openTrash();});
+  p.querySelectorAll("[data-tr]").forEach(b=>b.onclick=()=>{const i=+b.dataset.tr,e=S.trash[i],cur=byId(e.x.id);
+    if(e.k==="old"&&cur){openCompare(cur,JSON.parse(JSON.stringify(e.x)),"Ancienne version",()=>openDetail(cur.id));return;}
+    undoable("« "+e.x.t+" » restauré");const n=JSON.parse(JSON.stringify(e.x));if(byId(n.id))n.id=n.id+"r"+Date.now().toString(36);
+    (e.own===false?S.wish:S.col).push(n);(e.codes||[]).forEach(k=>{if(!S.codes[k])S.codes[k]=n.id;});S.trash.splice(i,1);save();render();openDetail(n.id);});}
+$("trashOpen").onclick=()=>openTrash();
+
 // ---------- Démarrage ----------
 try{tidyWorks();localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
 if(DEMO.works)Object.values(DEMO.works).forEach(o=>{if(o.c)o.c=canonC(o.c);});
 $("sheetX").onclick=()=>closeSheet();
 $("overlay").addEventListener("click",e=>{if(e.target.id==="overlay")closeSheet();});
-renderStats();render();
+renderStats();render();trashUi();
 covAll().then(o=>{Object.assign(COV,o);render();let hide=false;try{hide=!!localStorage.getItem("enr-hide");}catch(e){}if(!hide)enrUi();});
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
