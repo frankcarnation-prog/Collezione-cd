@@ -216,6 +216,8 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 .lightbox img{max-width:100%;max-height:75vh;object-fit:contain;border-radius:6px}
 .lbBar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}.lbBar button{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35)}
 .tact{display:flex;gap:6px;flex:none}
+.sortbar select{max-width:42vw}.sortbar{flex-wrap:wrap}
+.ghint{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:.88rem;margin-top:8px}.ghint span{flex:1}
 </style>
 </head>
 <body>
@@ -234,7 +236,7 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
   <input id="ean" class="ean" type="text" inputmode="numeric" autocomplete="off" placeholder="0 28947 79123 4" maxlength="20">
   <div class="row"><button class="primary" id="eanGo" type="button">Vérifier</button><button id="eanClose" type="button">Fermer</button></div>
   <button type="button" id="photoRead">Pas de code-barres ? Lire la pochette en photo</button>
-  <div class="row catrow"><input id="catno" type="text" autocomplete="off" spellcheck="false" placeholder="N° de catalogue (ex. 410 034-2)" aria-label="Numéro de catalogue"><button type="button" id="catGo">Discogs</button></div>
+  <div class="row catrow"><input id="catno" type="text" autocomplete="off" spellcheck="false" placeholder="N° de catalogue ou lien Discogs / MusicBrainz" aria-label="Numéro de catalogue ou lien"><button type="button" id="catGo">Discogs</button></div>
   <p class="hint" id="eanMsg">EAN-13 (Europe, 13 chiffres) ou UPC-A (US, 12 chiffres).</p>
   <div id="demoCodes"></div>
   <div id="eanResult"></div>
@@ -243,13 +245,14 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 <div class="stick" id="stick">
   <label for="q">J'ai déjà ce disque ?</label>
   <input id="q" type="search" placeholder="Artiste, album, compositeur, interprète…" autocomplete="off">
-  <div class="sortbar" id="sortBar"><span id="sortCount"></span><button type="button" class="small" id="ncChip" hidden>Sans pochette ✕</button><button type="button" class="small" id="selBtn">Sélection</button><label for="sortSel">Trier</label><select id="sortSel"><option value="recent">Ajouts récents</option><option value="artist">Artiste</option><option value="title">Titre</option><option value="year">Année</option></select></div>
+  <div class="sortbar" id="sortBar"><span id="sortCount"></span><button type="button" class="small" id="ncChip" hidden>Sans pochette ✕</button><button type="button" class="small" id="selBtn">Sélection</button><label for="sortSel">Trier</label><select id="genreSel" aria-label="Genre"></select><select id="sortSel"><option value="recent">Ajouts récents</option><option value="artist">Artiste</option><option value="title">Titre</option><option value="year">Année</option></select></div>
 </div>
 
 
 
 
 
+<div class="ghint" id="gHint" hidden><span>Ces disques n'ont pas encore de genre.</span><button type="button" class="small" id="gGo2">Les classer automatiquement</button></div>
 <ul class="list" id="list"></ul>
 <nav class="tabs bnav" role="tablist" aria-label="Sections">
   <button role="tab" id="tabCol" aria-selected="true" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg>Collection</button>
@@ -266,6 +269,7 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 <details id="settings"><summary>Réglages : clés IA et Discogs, sauvegarde</summary>
 <p>Ta collection est enregistrée sur ce téléphone. Télécharge une sauvegarde de temps en temps (les photos de pochettes n'y sont pas incluses). « Restaurer un fichier » accepte aussi un fichier d'import de collection : il s'ajoute à ce que tu as déjà.</p>
 <div class="row"><button id="dlB" type="button">Télécharger la sauvegarde</button><label class="filebtn">Restaurer un fichier<input id="upB" type="file" accept="application/json,.json"></label></div>
+<div class="row"><button type="button" id="gGo">Classer les genres automatiquement</button></div><p class="hint" id="gMsg"></p>
 <div class="row"><button type="button" id="trashOpen">Corbeille et anciennes versions</button></div>
 <div class="row"><button type="button" id="enrOpen">Compléter pochettes et infos automatiquement</button></div>
 <label for="dgKey">Jeton Discogs (facultatif, deuxième source + n° de catalogue)</label>
@@ -573,7 +577,7 @@ function openBoxer(ids){let order=ids.filter(byId).sort((a,b)=>byId(a).t.localeC
   draw();openSheet();}
 let LIMIT=60,qT=0,lastView="";
 $("more").addEventListener("click",e=>{if(e.target.closest("#moreBtn")){LIMIT+=120;render();}});
-function render(){const view=tab+"|"+$("q").value;if(view!==lastView){LIMIT=60;lastView=view;}renderRecent();selUi();
+function render(){genreSelUi();const view=tab+"|"+$("q").value;if(view!==lastView){LIMIT=60;lastView=view;}renderRecent();selUi();
   const q=norm($("q").value.trim()),ul=$("list");
   ["Col","Wish","Comp","Perf"].forEach(k=>$("tab"+k).setAttribute("aria-selected",!q&&tab===k.toLowerCase()));
   $("sortBar").hidden=!q&&(tab==="comp"||tab==="perf");
@@ -581,6 +585,7 @@ function render(){const view=tab+"|"+$("q").value;if(view!==lastView){LIMIT=60;l
   if(!q&&tab==="perf"){renderPerformers();return;}
   $("sortBar").hidden=false;$("sortSel").hidden=$("selBtn").hidden=!!q;
   let rows=q?S.col.filter(x=>matches(x,q)).map(x=>[x,"own"]).concat(S.wish.filter(x=>matches(x,q)).map(x=>[x,"wish"])):(tab==="col"?S.col.map(x=>[x,"own"]):S.wish.map(x=>[x,"wish"]));
+  const gf=getGF();if(!q&&gf)rows=rows.filter(([x])=>(genreOf(x)||"?")===gf);$("gHint").hidden=!(!q&&gf==="?"&&(tab==="col"||tab==="wish"));
   if(!q&&noCoverOnly&&tab==="col")rows=rows.filter(([x])=>!hasCover(x));$("ncChip").hidden=!(!q&&noCoverOnly&&tab==="col");
   if(!q){const by=getSort(),idx=new Map(rows.map((r,i)=>[r[0],i])),AK=new Map(),TK=new Map();
     rows.forEach(([x])=>{AK.set(x,norm(x.a).replace(/^(the|les|le|la|l')\s+/,""));TK.set(x,norm(x.t));});const artKey=x=>AK.get(x),tk=x=>TK.get(x);
@@ -591,7 +596,7 @@ function render(){const view=tab+"|"+$("q").value;if(view!==lastView){LIMIT=60;l
   const total=rows.length;if(q)$("sortCount").textContent=total+" résultat"+(total>1?"s":"");rows=rows.slice(0,LIMIT);
   $("more").hidden=total<=LIMIT;$("more").innerHTML=total>LIMIT?`<button type="button" id="moreBtn">Afficher la suite (${total-LIMIT} de plus)</button>`:"";
   ul.innerHTML=rows.length?rows.map(([x,k])=>{const c=CODE[x.id],cu=coverUrl(x);
-    return `<li class="item tap${SEL?(SEL.includes(x.id)?" picked":" pickable"):""}" data-open="${x.id}">${SEL?`<span class="chk" aria-hidden="true">${SEL.includes(x.id)?SEL.indexOf(x.id)+1:""}</span>`:""}${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${x.box?" · Coffret "+discsOf(x).length+" CD":" · "+tracksOf(x).length+" pistes"}</small>${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
+    return `<li class="item tap${SEL?(SEL.includes(x.id)?" picked":" pickable"):""}" data-open="${x.id}">${SEL?`<span class="chk" aria-hidden="true">${SEL.includes(x.id)?SEL.indexOf(x.id)+1:""}</span>`:""}${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${genreOf(x)&&genreOf(x)!=="Classique"?" · "+esc(genreOf(x)):""}${x.box?" · Coffret "+discsOf(x).length+" CD":" · "+tracksOf(x).length+" pistes"}</small>${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
     (k==="own"?`<span class="chip own">Possédé</span>`:`<button class="small" data-buy="${x.id}" type="button">Acheté</button><button class="small" data-del="${x.id}" type="button" aria-label="Retirer des envies">✕</button>`)+`</li>`}).join("")
     :`<li class="empty">${q?"Rien trouvé : tu ne l'as pas.":(tab==="col"?"Collection vide. Touche SCAN pour ajouter ton premier disque.":"Aucune envie pour l'instant.")}</li>`;}
 const surname=c=>{const p=cKey(c).split(" ");return p[p.length-1]||"";};
@@ -616,8 +621,8 @@ const NOT_PERF=/^(various|divers|artiste inconnu|unknown|anonymous|anonyme|vario
 function perfNames(x){const W=WORKS();if(!isClassical(x,W))return [];const comps=new Set();
   tracksOf(x).forEach(t=>{const o=typeof t!=="string"&&W[t.w];if(o&&o.c)comps.add(canonC(o.c));});
   const raw=[firstPerf(x.perf),x.a||""].join(",").replace(/\([^)]*\)?/g," ").split(/\s*(?:,|;|\/|&|\s-\s|-\s|\bet\b|\band\b|\bfeat\.?)\s*/i).map(s=>s.replace(/\s*\(.*?\)\s*$/,"").trim()).filter(s=>s.length>2&&!NOT_PERF.test(s));
-  const out=new Map();raw.forEach(s=>{if(comps.has(canonC(s))||C_SUR[surname(s)]&&canonC(s)!==s)return;const k=norm(s);if(!out.has(k))out.set(k,s);});return [...out.values()].slice(0,MAX_PERF);}
-const GROUP=/orchest|ensemble|quartet|quatuor|quartett|choir|chœur|choeur|chor\b|philharm|symphon|trio|consort|kammer|camerata|academy|akademie|sinfonia|solistes|soloists/i;
+  const out=new Map();raw.forEach(s=>{if(comps.has(canonC(s))||OFFICIAL.has(canonC(s))||C_SUR[surname(s)]&&canonC(s)!==s)return;const k=norm(s);if(!out.has(k))out.set(k,s);});return [...out.values()].slice(0,MAX_PERF);}
+const GROUP=/orchest|ensemble|quartet|quatuor|quartett|quintet|choir|chœur|choeur|chor\b|chorus|chorale|philharm|symphon|trio|consort|concert\b|concerto\b|kammer|camerata|academy|akademie|sinfonia|sinfonietta|solistes|soloists|singers|players|virtuosi|collegium|capp?ella|musica|society|band\b|^(the|les|le|la|l'|il|i|die|der|das|los|las|lo)\s/i;
 const perfSort=n=>GROUP.test(n)?norm(n).replace(/^(the|l'|le|la|les|orchestre|orchestra)\s+/,""):surname(n);
 // "Arthur Rubinstein" → "Rubinstein Arthur", "Herbert von Karajan" → "Karajan Herbert von" (ensembles inchangés)
 function lastFirst(n){if(GROUP.test(n))return n;const t=n.trim().split(/\s+/);if(t.length<2)return n;
@@ -639,6 +644,41 @@ function renderPerformers(){const by={};
 function buy(id){const i=S.wish.findIndex(x=>x.id===id);if(i<0)return;const x=S.wish[i];undoable("« "+x.t+" » passé dans ta collection");x.at=Date.now();S.col.push(S.wish.splice(i,1)[0]);save();render();}
 // Ajout d'un disque : date d'ajout + annulation possible
 function addAlbum(n,wish,code){undoable("« "+n.t+" » ajouté "+(wish?"aux envies":"à ta collection"));n.at=Date.now();(wish?S.wish:S.col).push(n);if(code&&!S.codes[code])S.codes[code]=n.id;}
+// ---------- Genres ----------
+const GENRES=["Classique","Opéra","Jazz","Rock","Pop","Chanson","Électronique","Hip-hop","Soul / Funk","Blues","Musique de film","Folk / World","Reggae","Latin","Metal","Autre"];
+// Genres Discogs / MusicBrainz → nos genres
+function mapGenre(gs,ss){const g=(gs||[]).map(s=>String(s).toLowerCase()),s=(ss||[]).map(x=>String(x).toLowerCase()),all=g.concat(s).join("|");
+  if(/opera/.test(s.join("|"))&&/classical/.test(all))return "Opéra";if(/classical|baroque|romantic|modern classical|contemporary|choral|organ/.test(g.join("|")||all))return "Classique";
+  if(/chanson|variété/.test(all))return "Chanson";if(/jazz/.test(all))return "Jazz";if(/hip ?hop|rap\b|trip hop/.test(all))return /trip hop/.test(all)?"Électronique":"Hip-hop";
+  if(/metal/.test(all))return "Metal";if(/electronic|techno|house|ambient|downtempo|idm/.test(all))return "Électronique";if(/funk|soul|r&b|rhythm & blues|disco/.test(all))return "Soul / Funk";
+  if(/blues/.test(all))return "Blues";if(/stage|screen|soundtrack|score|musical/.test(all))return "Musique de film";if(/reggae|dub|ska/.test(all))return "Reggae";if(/latin|bossa|samba|salsa|tango/.test(all))return "Latin";
+  if(/folk|world|country/.test(all))return "Folk / World";if(/rock|punk|grunge|indie/.test(all))return "Rock";if(/pop/.test(all))return "Pop";return "";}
+const genreOf=x=>x.g||(isClassical(x)?"Classique":"");
+const getGF=()=>{try{return localStorage.getItem("genre-filter")||"";}catch(e){return "";}};
+function genreSelUi(){const all=[...S.col,...S.wish],cnt={};all.forEach(x=>{const g=genreOf(x)||"?";cnt[g]=(cnt[g]||0)+1;});const cur=getGF();
+  $("genreSel").innerHTML=`<option value="">Tous les genres</option>`+GENRES.filter(g=>cnt[g]).map(g=>`<option value="${esc(g)}">${esc(g)} (${cnt[g]})</option>`).join("")+
+    Object.keys(cnt).filter(g=>g!=="?"&&!GENRES.includes(g)).sort().map(g=>`<option value="${esc(g)}">${esc(g)} (${cnt[g]})</option>`).join("")+(cnt["?"]?`<option value="?">Non classés (${cnt["?"]})</option>`:"");
+  $("genreSel").value=cur;if($("genreSel").value!==cur)$("genreSel").value="";}
+$("genreSel").onchange=e=>{try{localStorage.setItem("genre-filter",e.target.value);}catch(err){}render();};
+// Classement automatique : l'IA (si une clé est enregistrée) classe 60 disques par appel ; sinon Discogs, disque par disque
+const GEN={run:false};
+async function guessGenres(){if(GEN.run)return;const todo=[...S.col,...S.wish].filter(x=>!genreOf(x));
+  const out=v=>{$("gMsg").innerHTML=v;const s=$("gHint").querySelector("span");if(s)s.innerHTML=v;},m={set textContent(v){out(esc(v));},set innerHTML(v){out(v);}};
+  if(!todo.length){m.textContent="Tous tes disques ont un genre.";return;}if(!navigator.onLine){m.textContent="Pas de connexion Internet.";return;}
+  const useAI=!!(getKey()&&aiCfg().P),useDg=!useAI&&!!dgKey();if(!useAI&&!useDg){m.innerHTML="Il faut une clé d'IA (Gemini est gratuit) ou un jeton Discogs. <button type=\"button\" class=\"linklike\" data-gokey=\"1\">Réglages</button>";return;}
+  GEN.run=true;let done=0,found=0;undoable("Genres attribués automatiquement");
+  try{if(useAI){for(let i=0;i<todo.length;i+=60){const part=todo.slice(i,i+60);m.textContent=`Classement par l'IA… ${i}/${todo.length}`;
+        const list=part.map((x,j)=>`${j}. ${x.a} — ${x.t}`).join("\n");
+        const txt=await callAI(`Voici une liste de disques (artiste — titre). Pour chacun, donne son genre principal, en choisissant UNIQUEMENT dans cette liste : ${GENRES.join(", ")}. "Chanson" = chanson française ou italienne à texte. Si tu ne connais pas le disque, déduis du nom de l'artiste ; sinon "Autre".\nRéponds avec un JSON seul, de la forme {"0":"Rock","1":"Jazz"}.\n\n${list}`,[]);
+        const a=txt.indexOf("{"),b=txt.lastIndexOf("}");const o=JSON.parse(txt.slice(a,b+1));
+        part.forEach((x,j)=>{const g=o[j]||o[String(j)];if(g&&GENRES.includes(g)){x.g=g;found++;}});done+=part.length;save();render();}}
+    else{for(const x of todo){m.textContent=`Recherche sur Discogs… ${done}/${todo.length}`;const {title,who}=enrichQuery(x);
+        try{const rs=await dgSearch({release_title:title,artist:who[0]||""});const r=rs.find(r=>r.genre&&r.genre.length);const g=r&&mapGenre(r.genre,r.style);if(g){x.g=g;found++;}}catch(e){await sleep(3000);}
+        done++;if(done%10===0){save();render();}}}
+  }catch(e){m.textContent="Interrompu : "+(e.message||"erreur");GEN.run=false;save();render();return;}
+  GEN.run=false;save();render();m.textContent=`Terminé : ${found} genre${found>1?"s":""} attribué${found>1?"s":""} sur ${todo.length} disques. Tu peux corriger dans « Modifier » sur chaque fiche.`;toast(found+" genres attribués");}
+$("gGo").onclick=guessGenres;$("gGo2").onclick=()=>{guessGenres();};
+
 // ---------- Corbeille et anciennes versions ----------
 const TRASH_MAX=150;
 function toTrash(x,kind,extra){S.trash=S.trash||[];const e=Object.assign({k:kind,at:Date.now(),x:JSON.parse(JSON.stringify(x))},extra||{});S.trash.unshift(e);if(S.trash.length>TRASH_MAX)S.trash.length=TRASH_MAX;}
@@ -761,7 +801,7 @@ function catKey(t){const s=norm(t||"").replace(/n[°º]\s*/g,"no ").replace(/\s+
 function splitMvt(title){const m=(title||"").match(MVT);if(m)return [m[1],m[2]];const i=(title||"").indexOf(": ");
   if(i>0&&catKey(title.slice(0,i)))return [title.slice(0,i),title.slice(i+2)];return null;}
 async function mbRelease(rid){
-  const d=await mbGet("release/"+rid+"?inc=artist-credits+labels+recordings+media+recording-level-rels+work-rels+work-level-rels+artist-rels");
+  const d=await mbGet("release/"+rid+"?inc=artist-credits+labels+recordings+media+recording-level-rels+work-rels+work-level-rels+artist-rels+genres+release-groups");
   const newWorks={},perfs=new Set();
   const discs=(d.media||[]).map(m=>({t:m.title||"",tr:(m.tracks||[]).map(tk=>{const rec=tk.recording||{};
     const pr=(rec.relations||[]).find(x=>x.type==="performance"&&x.work);
@@ -773,7 +813,8 @@ async function mbRelease(rid){
       newWorks["mb:"+w.id]={c:cn,t:w.title,cat:""};return {w:"mb:"+w.id,n:tk.title,d:dur};}
     return {n:tk.title,d:dur};})}));
   const lab=(d["label-info"]||[]).find(l=>l.label);
-  const a={id:"mb"+d.id,a:credit(d["artist-credit"])||"Artiste inconnu",t:d.title,l:lab?lab.label.name:"",cat:lab&&lab["catalog-number"]&&lab["catalog-number"]!=="[none]"?lab["catalog-number"]:"",y:(d.date||"").slice(0,4),
+  const mbg=[...(d.genres||[]),...((d["release-group"]||{}).genres||[])].sort((p,q)=>(q.count||0)-(p.count||0)).map(g=>g.name);
+  const a={g:mapGenre(mbg,[]),id:"mb"+d.id,a:credit(d["artist-credit"])||"Artiste inconnu",t:d.title,l:lab?lab.label.name:"",cat:lab&&lab["catalog-number"]&&lab["catalog-number"]!=="[none]"?lab["catalog-number"]:"",y:(d.date||"").slice(0,4),
     img:"https://coverartarchive.org/release/"+d.id+"/front-250",mbid:d.id,newWorks};
   if(perfs.size)a.perf=[...perfs].slice(0,MAX_PERF).join(", ");
   if(discs.length>1){a.discs=discs;a.box=true;}else{a.tr=discs[0]?discs[0].tr:[];if(discs[0]&&discs[0].t)a.discs=discs;}
@@ -802,13 +843,13 @@ document.addEventListener("click",e=>{if(!e.target.closest("[data-gokey]"))retur
 dgInfoUi();if(dgKey()&&dgState().k!==dgKey())dgCheck();
 let lastDg=0;
 async function dgGet(path,params={}){const wait=Math.max(0,1100-(Date.now()-lastDg));if(wait)await new Promise(r=>setTimeout(r,wait));lastDg=Date.now();
-  const q=new URLSearchParams({...params,token:dgKey()});
+  const q=new URLSearchParams(dgKey()?{...params,token:dgKey()}:params);
   const r=await fetch(DG+path+"?"+q.toString(),{headers:{Accept:"application/json"}});
   if(r.status===401)throw new Error("Jeton Discogs refusé : vérifie-le dans les réglages.");
   if(r.status===429)throw new Error("Trop de recherches Discogs d'affilée, attends une minute.");
   if(!r.ok)throw new Error("Discogs a répondu "+r.status+".");return r.json();}
-async function dgSearch(p){const j=await dgGet("database/search",{...p,type:"release",per_page:"8"});
-  const seen=new Set();return (j.results||[]).filter(r=>!seen.has(r.master_id||r.id)&&seen.add(r.master_id||r.id)).slice(0,6);}
+async function dgSearch(p,all){const j=await dgGet("database/search",{...p,type:"release",per_page:all?"20":"8"});
+  if(all)return j.results||[];const seen=new Set();return (j.results||[]).filter(r=>!seen.has(r.master_id||r.id)&&seen.add(r.master_id||r.id)).slice(0,6);}
 const dgName=a=>(a.anv||a.name||"").replace(/\s\(\d+\)$/,"").replace(/\*+$/,"").trim();
 const dgCredit=as=>(as||[]).map(a=>dgName(a)+(a.join&&a.join!==","?" "+a.join+" ":a.join===","?", ":"")).join("").replace(/\s+/g," ").trim();
 const dgDur=s=>{const m=String(s||"").match(/^(?:(\d+):)?(\d+):(\d{2})$/);return m?(+(m[1]||0))*3600+(+m[2])*60+(+m[3]):0;};
@@ -827,11 +868,11 @@ async function dgRelease(id){const d=await dgGet("releases/"+id);
   const ks=Object.keys(discs).sort((a,b)=>a-b),lab=(d.labels||[])[0]||{};
   const img=((d.images||[]).find(i=>i.type==="primary")||(d.images||[])[0]||{});
   const a={id:"dg"+d.id,a:dgCredit(d.artists)||"Artiste inconnu",t:d.title,l:lab.name?lab.name.replace(/\s\(\d+\)$/,""):"",cat:lab.catno&&lab.catno!=="none"?lab.catno:"",
-    y:d.year?String(d.year):"",img:img.uri150||img.uri||"",dgid:d.id,newWorks};
+    y:d.year?String(d.year):"",img:img.uri150||img.uri||"",dgid:d.id,g:mapGenre(d.genres,d.styles),newWorks};
   if(perfs.size)a.perf=[...perfs].slice(0,MAX_PERF).join(", ");
   if(ks.length>1){a.discs=ks.map(k=>({tr:discs[k]}));a.box=true;}else a.tr=ks.length?discs[ks[0]]:[];
   return a;}
-$("catGo").onclick=async()=>{stopCam();const q=$("catno").value.trim(),out=$("eanResult");cur="";
+$("catGo").onclick=async()=>{stopCam();const q=$("catno").value.trim(),out=$("eanResult");cur="";if(isLink(q)){importLink(q);return;}
   if(!q){out.innerHTML=`<p class="hint err">Tape le numéro de catalogue imprimé sur la tranche ou le dos du CD.</p>`;return;}
   if(!dgKey()){out.innerHTML=`<p class="hint err">La recherche par n° de catalogue passe par Discogs. <button type="button" class="linklike" data-gokey="1">Ajouter mon jeton Discogs</button></p>`;return;}
   out.innerHTML=`<p class="hint">Recherche sur Discogs…</p>`;
@@ -1091,11 +1132,11 @@ function showRead(r){const tx=readTarget&&byId(readTarget),out=$("readOut");
 function editTracks(id){const x=byId(id),p=$("detail");if(!x)return;const W=WORKS();
   const cs={};tracksOf(x).forEach(t=>{const o=typeof t!=="string"&&W[t.w];if(o&&o.c)cs[o.c]=(cs[o.c]||0)+1;});
   const mainC=Object.keys(cs).sort((a,b)=>cs[b]-cs[a])[0]||"";
-  p.innerHTML=`<p class="cat">Modifier la fiche</p><h2 class="wh">${esc(x.t)}</h2><label for="eI">Interprètes</label><input id="eI" type="text" value="${esc(x.perf||"")}" placeholder="Soliste, chef, orchestre…"><label for="eN">Note</label><input id="eN" type="text" value="${esc(x.note||"")}" placeholder="Prise de son, état, cadeau de…"><div id="rEd"></div>
+  p.innerHTML=`<p class="cat">Modifier la fiche</p><h2 class="wh">${esc(x.t)}</h2><label for="eI">Interprètes</label><input id="eI" type="text" value="${esc(x.perf||"")}" placeholder="Soliste, chef, orchestre…"><label for="eG">Genre</label><input id="eG" type="text" list="genreList" value="${esc(x.g||(isClassical(x)?"Classique":""))}" placeholder="Rock, Jazz, Classique…"><datalist id="genreList">${GENRES.map(g=>`<option value="${esc(g)}">`).join("")}</datalist><label for="eN">Note</label><input id="eN" type="text" value="${esc(x.note||"")}" placeholder="Prise de son, état, cadeau de…"><div id="rEd"></div>
    <div class="row"><button class="primary" id="edSave" type="button">Enregistrer</button><button type="button" id="edCancel">Annuler</button></div><p class="hint" id="edMsg"></p>`;
   trackEditor($("rEd"),linesFrom(linesFromAlbum(x),mainC),mainC);
   $("edCancel").onclick=()=>openDetail(id);
-  $("edSave").onclick=()=>{undoable("Fiche « "+x.t+" » modifiée");const nt=$("eN").value.trim();if(nt)x.note=nt;else delete x.note;const pf=$("eI").value.trim();if(pf)x.perf=pf;else delete x.perf;const old=JSON.parse(JSON.stringify(x));toTrash(old,"old",{why:"modification"});applyTracks(x,parseLines($("rP").value,$("rC").value.trim()));attachWorks(x,old,$("rC").value.trim());save();render();openDetail(id);};}
+  $("edSave").onclick=()=>{undoable("Fiche « "+x.t+" » modifiée");const gg=$("eG").value.trim();if(gg)x.g=gg;else delete x.g;const nt=$("eN").value.trim();if(nt)x.note=nt;else delete x.note;const pf=$("eI").value.trim();if(pf)x.perf=pf;else delete x.perf;const old=JSON.parse(JSON.stringify(x));toTrash(old,"old",{why:"modification"});applyTracks(x,parseLines($("rP").value,$("rC").value.trim()));attachWorks(x,old,$("rC").value.trim());save();render();openDetail(id);};}
 // ---------- Sauvegarde ----------
 $("nagGo").onclick=()=>$("dlB").click();
 $("enrOpen").onclick=()=>{try{localStorage.removeItem("enr-hide");}catch(e){}$("enr").hidden=false;enrUi();$("enr").scrollIntoView({behavior:"smooth"});};
@@ -1141,7 +1182,7 @@ const hasCover=x=>!!(COV[x.id]||x.img);
 const passOf=x=>x.enrP||(x.enr?1:0);
 const needsEnrich=x=>!hasCover(x)&&x.enr!=="manual"&&passOf(x)===0;
 const needsPass2=x=>!hasCover(x)&&x.enr!=="manual"&&passOf(x)===1;
-const luc=s=>norm(s).replace(/[+\-&|!(){}\[\]^"~*?:\\\/.,;'’]/g," ").replace(/\b(and|the|et|le|la|les|de|of|in|no|op|vol|disc|cd)\b/g," ").replace(/\s+/g," ").trim().split(" ").filter(w=>w.length>1).slice(0,8).join(" ");
+const luc=s=>norm(s).replace(/[+\-&|!(){}\[\]^"~*?:\\\/.,;'’]/g," ").replace(/\b(and|the|et|le|la|les|de|of|in|no|op|vol|disc|cd)\b/g," ").replace(/\s+/g," ").trim().split(" ").filter(w=>w.length>1||/\d/.test(w)).slice(0,8).join(" ");
 const toks=s=>new Set(luc(s).split(" ").filter(Boolean));
 const overlap=(a,b)=>{const A=toks(a),B=toks(b);if(!A.size)return 0;let n=0;A.forEach(w=>{if(B.has(w))n++;});return n/A.size;};
 function imgOk(url){return new Promise(res=>{const i=new Image();const t=setTimeout(()=>res(false),12000);i.onload=()=>{clearTimeout(t);res(i.naturalWidth>10);};i.onerror=()=>{clearTimeout(t);res(false);};i.src=url;});}
@@ -1163,7 +1204,7 @@ async function enrichOne(x,pass){const {title,who}=enrichQuery(x),n=tracksOf(x).
   if(dgKey()){const p=pass===1?{release_title:title,artist:who[0]||"",format:"CD"}:{q:((who[0]||"")+" "+title).trim(),format:"CD"};
     const rs=await dgSearch(p);
     const r=rs.find(r=>overlap(title,(r.title||"").split(" - ").slice(1).join(" - ")||r.title)>=(pass===1?.6:.5)&&(r.cover_image||r.thumb));
-    if(r){x.dgid=r.id;x.auto=x.auto||[];x.img=r.cover_image||r.thumb;if(!x.y&&r.year){x.y=String(r.year);x.auto.push("y");}if(!x.l&&r.label&&r.label[0]){x.l=r.label[0];x.auto.push("l");}return "cover";}}
+    if(r){x.dgid=r.id;x.auto=x.auto||[];x.img=r.cover_image||r.thumb;if(!x.g&&r.genre){const g=mapGenre(r.genre,r.style);if(g){x.g=g;x.auto.push("g");}}if(!x.y&&r.year){x.y=String(r.year);x.auto.push("y");}if(!x.l&&r.label&&r.label[0]){x.l=r.label[0];x.auto.push("l");}return "cover";}}
   return x.mbid?"info":"";}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function enrichAll(pass){if(ENR.run)return;const todo=ALL().filter(pass===1?needsEnrich:needsPass2);if(!todo.length){enrUi();return;}
@@ -1208,7 +1249,7 @@ $("enrX").onclick=()=>{$("enr").hidden=true;try{localStorage.setItem("enr-hide",
 
 
 // ---------- Comparer avant / après, et choisir ce qu'on prend ----------
-const CMP_FIELDS=[["cover","Pochette"],["t","Titre"],["a","Artiste"],["perf","Interprètes"],["l","Label"],["y","Année"],["cat","N° catalogue"],["tracks","Pistes"]];
+const CMP_FIELDS=[["cover","Pochette"],["t","Titre"],["a","Artiste"],["perf","Interprètes"],["g","Genre"],["l","Label"],["y","Année"],["cat","N° catalogue"],["tracks","Pistes"]];
 function cmpVal(o,k,isOld){if(k==="cover")return isOld?coverUrl(o):(o.img||o.coverData||"");if(k==="tracks"){const tr=tracksOf(o);return tr.length?tr.map(t=>norm(tName(t))).join("|"):"";}return o[k]||"";}
 function cmpCell(o,k,isOld){const v=cmpVal(o,k,isOld);if(v===""||v==null)return `<span class="nil">—</span>`;
   if(k==="cover")return `<img src="${esc(v)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'nil',textContent:'—'}))">`;
@@ -1231,7 +1272,7 @@ function openCompare(x,f,src,after){const id=x.id,p=$("detail"),sel={};
   const apply=()=>{undoable("Fiche « "+x.t+" » mise à jour ("+src+")");const old=JSON.parse(JSON.stringify(x));toTrash(old,"old",{why:src});
     (Array.isArray(x.auto)?x.auto:[]).forEach(k=>{if(sel[k]!=="old")delete x[k];});delete x.auto;
     if(f.mbid)x.mbid=f.mbid;if(f.dgid)x.dgid=f.dgid;if(f.rgid)x.rgid=f.rgid;x.enr="manual";
-    ["t","a","perf","l","y","cat"].forEach(k=>{if(sel[k]==="new")x[k]=f[k];});
+    ["t","a","perf","g","l","y","cat"].forEach(k=>{if(sel[k]==="new")x[k]=f[k];});
     if(sel.cover==="new"){if(f.coverData){delete x.img;COV[id]=f.coverData;covPut(id,f.coverData).catch(()=>{});}else{x.img=f.img;if(COV[id])covDel(id);}}
     if(sel.tracks==="new"){if(f.newWorks)Object.assign(S.works,f.newWorks);["tr","discs","box"].forEach(k=>delete x[k]);if(f.discs&&f.discs.length>1){x.discs=JSON.parse(JSON.stringify(f.discs));x.box=true;}else x.tr=JSON.parse(JSON.stringify(f.discs?f.discs[0].tr:(f.tr||[])));attachWorks(x,old);}
     save();render();if(after)after(true);else openDetail(id);};
@@ -1240,15 +1281,16 @@ function openCompare(x,f,src,after){const id=x.id,p=$("detail"),sel={};
 // ---------- Choisir la bonne édition (MusicBrainz + Discogs) ----------
 function openPicker(id){const x=byId(id),p=$("detail");if(!x)return;const {title,who}=enrichQuery(x);
   p.innerHTML=`<p class="cat">Choisir la bonne édition</p><h2 class="wh">${esc(x.t)}</h2>
-   <div class="row catrow"><input id="pkQ" type="search" value="${esc((who[0]?x.a.split(/[;,]/)[0]+" ":"")+title)}" aria-label="Recherche"><button type="button" id="pkGo">Chercher</button></div>
+   <p class="hint">Pas dans la liste ? Colle ici le lien d'une page Discogs ou MusicBrainz.</p><div class="row catrow"><input id="pkQ" type="search" value="${esc((who[0]?x.a.split(/[;,]/)[0]+" ":"")+title)}" aria-label="Recherche"><button type="button" id="pkGo">Chercher</button></div>
    <p class="hint" id="pkMsg"></p><div id="pkOut"></div><div class="row"><button type="button" id="pkBack">Retour à la fiche</button></div>`;
   openSheet();$("pkBack").onclick=()=>openDetail(id);
   const run=async()=>{const q=$("pkQ").value.trim(),out=$("pkOut"),m=$("pkMsg");if(!q)return;if(!navigator.onLine){m.textContent="Pas de connexion Internet.";return;}
     m.textContent="Recherche…";out.innerHTML="";const res=[];
-    try{const s=await mbGet("release/?query="+encodeURIComponent(luc(q)||q)+"&limit=10");(s.releases||[]).forEach(r=>res.push({src:"MusicBrainz",id:r.id,t:r.title,
+    if(isLink(q)){m.textContent="Chargement du lien…";try{const L=await fetchLink(q);m.textContent="";openCompare(x,L.f,L.src);}catch(e){m.textContent=e.message;}return;}
+    try{const s=await mbGet("release/?query="+encodeURIComponent(q.length<4?q:(luc(q)||q))+"&limit=15");(s.releases||[]).forEach(r=>res.push({src:"MusicBrainz",id:r.id,t:r.title,
       sub:[credit(r["artist-credit"]),((r["label-info"]||[]).find(l=>l.label)||{label:{}}).label.name,(r.date||"").slice(0,4),r.country,(r.media||[]).map(m=>m.format).filter(Boolean)[0],r["track-count"]?r["track-count"]+" pistes":""].filter(Boolean).join(" · "),
       img:"https://coverartarchive.org/release/"+r.id+"/front-250"}));}catch(e){m.textContent=e.message;}
-    if(dgKey()){try{(await dgSearch({q,format:"CD"})).forEach(r=>res.push({src:"Discogs",id:r.id,t:r.title,sub:[(r.label||[])[0],r.catno,r.year,r.country,(r.format||[]).slice(0,2).join(", ")].filter(Boolean).join(" · "),img:r.thumb||r.cover_image||""}));}catch(e){}}
+    if(dgKey()){try{(await dgSearch({q,format:"CD"},true)).forEach(r=>res.push({src:"Discogs",id:r.id,t:r.title,sub:[(r.label||[])[0],r.catno,r.year,r.country,(r.format||[]).slice(0,2).join(", ")].filter(Boolean).join(" · "),img:r.thumb||r.cover_image||""}));}catch(e){}}
     m.innerHTML=(res.length?res.length+" éditions trouvées. Touche la bonne :":"Rien trouvé. Modifie la recherche (moins de mots, nom de famille seul…).")+`<br><small>${srcLine()}</small>`;
     out.innerHTML=res.map((r,i)=>`<button type="button" class="pick" data-i="${i}">${r.img?`<img src="${esc(r.img)}" alt="" onerror="this.style.visibility='hidden'">`:""}<span><b>${esc(r.t)}</b><br><small>${esc(r.sub)}</small><br><small class="src">${r.src}</small></span></button>`).join("");
     out.querySelectorAll(".pick").forEach(b=>b.onclick=async()=>{const r=res[+b.dataset.i];m.textContent="Chargement…";
@@ -1302,12 +1344,28 @@ function openTrash(){const p=$("detail"),T=S.trash||[];
     (e.own===false?S.wish:S.col).push(n);(e.codes||[]).forEach(k=>{if(!S.codes[k])S.codes[k]=n.id;});S.trash.splice(i,1);save();render();openDetail(n.id);});}
 $("trashOpen").onclick=()=>openTrash();
 
+
+// ---------- Lien Discogs / MusicBrainz collé ou partagé ----------
+function parseLink(s){s=String(s||"");let m=s.match(/discogs\.com\/(?:[a-z]{2}\/)?(?:[^\s]*?\/)?(release|master)\/(\d+)/i);if(m)return {src:"Discogs",kind:m[1].toLowerCase(),id:m[2]};
+  m=s.match(/musicbrainz\.org\/(release|release-group)\/([0-9a-f-]{36})/i);if(m)return {src:"MusicBrainz",kind:m[1].toLowerCase(),id:m[2]};return null;}
+const isLink=s=>!!parseLink(s);
+async function fetchLink(s){const L=parseLink(s);if(!L)throw new Error("Lien non reconnu : il faut une page de disque Discogs ou MusicBrainz.");
+  if(!navigator.onLine)throw new Error("Pas de connexion Internet.");let f;
+  if(L.src==="Discogs"){let id=L.id;if(L.kind==="master"){const mm=await dgGet("masters/"+id);id=mm.main_release;if(!id)throw new Error("Édition principale introuvable sur Discogs.");}f=await dgRelease(id);}
+  else{let id=L.id;if(L.kind==="release-group"){const r=await mbGet("release?release-group="+id+"&limit=1");id=(r.releases||[])[0]&&r.releases[0].id;if(!id)throw new Error("Aucune édition dans ce groupe MusicBrainz.");}
+    f=await mbRelease(id);if(f.img&&!(await imgOk(f.img)))f.img="";}
+  return {f,src:L.src};}
+async function importLink(s){const out=$("eanResult");$("scanPanel").hidden=false;stopCam();cur="";out.innerHTML=`<p class="hint">Chargement du disque depuis le lien…</p>`;scrollTo({top:0,behavior:"smooth"});
+  try{const {f,src}=await fetchLink(s);showFound(out,f,src,"");}catch(e){out.innerHTML=`<p class="hint err">${esc(e.message)}</p>`;}}
+
 // ---------- Démarrage ----------
 try{tidyWorks();localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
 if(DEMO.works)Object.values(DEMO.works).forEach(o=>{if(o.c)o.c=canonC(o.c);});
 $("sheetX").onclick=()=>closeSheet();
 $("overlay").addEventListener("click",e=>{if(e.target.id==="overlay")closeSheet();});
 renderStats();render();trashUi();
+(()=>{const u=new URL(location.href);if(u.searchParams.has("share")){const s=[u.searchParams.get("url"),u.searchParams.get("text"),u.searchParams.get("title")].filter(Boolean).join(" ");
+  history.replaceState(null,"",location.pathname);if(isLink(s))setTimeout(()=>importLink(s),300);else setTimeout(()=>toast("Ce partage ne contient pas de lien Discogs ou MusicBrainz."),300);}})();
 covAll().then(o=>{Object.assign(COV,o);render();let hide=false;try{hide=!!localStorage.getItem("enr-hide");}catch(e){}if(!hide)enrUi();});
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
