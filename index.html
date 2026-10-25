@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Collezione CD</title>
-<meta name="theme-color" content="#0E6E6A">
+<meta name="theme-color" content="#0a246a">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: one narrow column like a shop counter — scan bar on top, search, then the bins (Collection / Envies) */
 :root{
@@ -245,15 +245,105 @@ b.warn{color:#e0a030;font-weight:600}
 .code.prob{opacity:.65;border-style:dashed}
 .chk2{display:flex;align-items:flex-start;gap:10px;text-transform:none;letter-spacing:0;font-size:.88rem;color:var(--ink);font-weight:400;padding:4px 2px}.chk2 input{width:20px;height:20px;flex:none;margin-top:1px}
 .invl .chip{cursor:pointer}#invQ{margin-top:8px}.verdict small{color:var(--muted);font-size:.82rem}
+.enr .big{font-size:1rem}.enrLinks{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin:8px 0 4px}
+.rvl .item{align-items:center}.rvc{width:64px;height:64px;object-fit:cover;border-radius:6px;flex:none}.tact.col{flex-direction:column}
+.logd{list-style:none;padding:12px 2px 4px;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.logl .item{gap:10px;padding:8px 2px;align-items:flex-start}.lt{flex:none;font-family:var(--mono);font-size:.78rem;color:var(--muted);padding-top:2px}.logl .meta span{font-size:.9rem}
+
+/* ===================== Thème « Platinum » : entre Mac OS 9 et Windows 98 ===================== */
+:root{--desk:#d4d4d4;--face:#e6e6e6;--hi:#ffffff;--sh:#8c8c8c;--dk:#404040;--win:#ffffff;
+  --bg:#ffffff;--surface:#e6e6e6;--ink:#111111;--muted:#545454;--line:#bdbdbd;
+  --accent:#1c5fbf;--accent-ink:#ffffff;--own:#1d6b2f;--own-bg:#ddefdd;--wish:#7a4a00;--wish-bg:#fbeccd;--err:#b3261e;
+  --t1:#0a246a;--t2:#2a6fd6;--stripe:rgba(255,255,255,.45);
+  --body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
+  --display:"Pixelify Sans",-apple-system,"Segoe UI",Tahoma,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--desk:#232323;--face:#363636;--hi:#575757;--sh:#151515;--dk:#000000;--win:#1a1a1a;
+  --bg:#1a1a1a;--surface:#363636;--ink:#ececec;--muted:#a8a8a8;--line:#474747;--accent:#5b9cff;--accent-ink:#ffffff;
+  --own:#86d897;--own-bg:#1d3323;--wish:#eab965;--wish-bg:#3a2d16;--err:#ff8a80;--stripe:rgba(255,255,255,.025);color-scheme:dark}}
+:root[data-theme="dark"]{--desk:#232323;--face:#363636;--hi:#575757;--sh:#151515;--dk:#000000;--win:#1a1a1a;--bg:#1a1a1a;--surface:#363636;--ink:#ececec;--muted:#a8a8a8;--line:#474747;
+  --accent:#5b9cff;--own:#86d897;--own-bg:#1d3323;--wish:#eab965;--wish-bg:#3a2d16;--err:#ff8a80;--stripe:rgba(255,255,255,.025);color-scheme:dark}
+body{background-color:var(--desk);background-image:repeating-linear-gradient(0deg,var(--stripe) 0 1px,transparent 1px 3px);font-family:var(--body);font-size:16px}
+.wrap{gap:14px}
+/* titres */
+header h1{font-family:var(--display);font-weight:700;font-size:2rem;letter-spacing:0}
+.detail h2,h2.wh,.setHead h2,.compo h3,.card h3{font-family:var(--body);font-weight:700;letter-spacing:-.01em}
+/* boutons en relief */
+button,.filebtn{background:var(--face);color:var(--ink);border:1px solid var(--dk);border-radius:4px;box-shadow:inset 1px 1px var(--hi),inset -1px -1px var(--sh)}
+button:active,.filebtn:active{box-shadow:inset 1px 1px var(--sh),inset -1px -1px var(--hi);transform:translateY(1px)}
+button:disabled{color:var(--muted);opacity:.7}
+.primary,button.primary{background:linear-gradient(#5ea4ff,#1c5fbf);color:#fff;border-color:#0b3a80;border-radius:6px;box-shadow:inset 0 1px rgba(255,255,255,.55),0 1px 0 rgba(0,0,0,.15);text-shadow:0 -1px 0 rgba(0,0,0,.25)}
+.primary:active{background:linear-gradient(#1c5fbf,#3f86ec)}
+button.danger,.setItem.danger{color:var(--err)}
+/* champs creusés */
+input[type=text],input[type=search],input[type=password],input[type=url],select,textarea{background:var(--win);color:var(--ink);border:1px solid;border-color:var(--sh) var(--hi) var(--hi) var(--sh);border-radius:3px;box-shadow:inset 1px 1px 0 rgba(0,0,0,.18)}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+label{color:var(--muted)}
+/* fenêtres : barre de titre bleue façon Windows 98, coins arrondis façon Mac */
+.win,.todoCard,.panel,.card,.verdict,.ghint,.invbar,.autobox{background:var(--face);border:1px solid var(--dk);border-radius:6px;box-shadow:inset 1px 1px var(--hi),inset -1px -1px var(--sh),2px 3px 0 rgba(0,0,0,.14)}
+.wtitle{background:linear-gradient(90deg,var(--t1),var(--t2));color:#fff;font-family:var(--display);font-weight:500;font-size:.95rem;letter-spacing:.02em;padding:4px 10px;border-radius:5px 5px 0 0;margin:1px 1px 0;display:flex;align-items:center;gap:8px}
+.wtitle::before{content:"";width:10px;height:10px;border:1px solid rgba(255,255,255,.8);border-radius:2px;background:rgba(255,255,255,.15);flex:none}
+.wbody{padding:12px;display:flex;flex-direction:column;gap:8px}.wbody p{margin:0}
+.win{padding:0;overflow:hidden}.todoCard{padding:0;overflow:hidden}.todoCard p{font-size:.92rem}
+.panel{border-radius:6px}
+.card{border-radius:6px}.card h3{font-size:1rem}
+.verdict{color:var(--ink)}.verdict.own{background:var(--own-bg)}.verdict.wish{background:var(--wish-bg)}.verdict strong{font-family:var(--body);font-weight:700;font-size:1.1rem}
+.verdict.own strong{color:var(--own)}.verdict.wish strong{color:var(--wish)}
+/* liste = fenêtre blanche creusée */
+#list{background:var(--win);border:1px solid;border-color:var(--sh) var(--hi) var(--hi) var(--sh);border-radius:4px;box-shadow:inset 1px 1px 0 rgba(0,0,0,.15);padding:0 10px}
+#list.toolsMode{background:none;border:0;box-shadow:none;padding:0}
+.item{border-bottom:1px dotted var(--line)}
+.item.picked{background:var(--t1);color:#fff}.item.picked small{color:#cfd8ff}
+.cover,.rc img,.rc .disc,.rvc{border:1px solid;border-color:var(--sh) var(--hi) var(--hi) var(--sh);border-radius:2px}
+.chip{border-radius:3px;border:1px solid currentColor;background:transparent!important;font-size:.66rem}
+.count{background:var(--win);border:1px solid;border-color:var(--sh) var(--hi) var(--hi) var(--sh);border-radius:2px}
+/* barre de recherche fixe = barre d'outils */
+.stick{background:var(--face);border-bottom:1px solid var(--dk);box-shadow:inset 0 1px var(--hi),0 2px 0 rgba(0,0,0,.08)}
+/* contrôle segmenté façon Mac */
+.seg{border:1px solid var(--dk);border-radius:6px;padding:0;overflow:hidden;background:var(--face);box-shadow:inset 1px 1px var(--hi)}
+.seg button{border:0;border-radius:0;box-shadow:none;border-right:1px solid var(--sh);color:var(--ink);padding:7px 14px}.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:linear-gradient(#5ea4ff,#1c5fbf);color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,.25)}
+.subseg{list-style:none;padding:10px 0 4px;border:0}
+/* barre des tâches en bas */
+.bnav{background:var(--face);border-top:1px solid var(--hi);box-shadow:0 -1px 0 var(--sh),0 -2px 0 var(--dk);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+.bnav button[role=tab]{background:none;border:1px solid transparent;box-shadow:none;border-radius:4px;color:var(--muted);position:relative}
+.bnav button[aria-selected=true]{color:var(--ink);background:var(--win);border-color:var(--dk);box-shadow:inset 1px 1px var(--sh),inset -1px -1px var(--hi)}
+.bnav .navscan{background:radial-gradient(circle at 50% 30%,#bfe0ff 0,#5ea4ff 35%,#1c5fbf 75%,#0b3a80 100%);border:2px solid var(--face);color:#fff;box-shadow:0 0 0 1px var(--dk),0 4px 10px rgba(0,0,0,.3),inset 0 2px 6px rgba(255,255,255,.6)}
+.bnav .badge{top:0;right:14%}
+/* fiches = fenêtres */
+.overlay{background:rgba(0,0,30,.35)}
+.sheet{background:var(--face);border:1px solid var(--dk);border-bottom:0;border-radius:8px 8px 0 0;box-shadow:inset 1px 1px var(--hi);padding-top:44px}
+.sheet::before{content:"Collezione CD";position:absolute;left:1px;right:1px;top:1px;height:30px;line-height:30px;padding-left:12px;background:linear-gradient(90deg,var(--t1),var(--t2));color:#fff;font-family:var(--display);font-weight:500;font-size:.9rem;border-radius:7px 7px 0 0}
+.sheet .x{top:5px;right:6px;width:24px;height:22px;border-radius:2px;font-size:.8rem;line-height:1;padding:0;z-index:2}
+.settings{background:var(--desk)}
+.setHead{background:linear-gradient(90deg,var(--t1),var(--t2));border-bottom:1px solid var(--dk)}.setHead h2{color:#fff;font-family:var(--display);font-weight:500}
+.setHead .x{width:30px;height:28px;border-radius:2px;padding:0}
+.setItem{background:var(--win);border:1px solid;border-color:var(--hi) var(--dk) var(--dk) var(--hi);box-shadow:inset -1px -1px var(--sh);border-radius:4px}
+.sleeve{border:2px solid;border-color:var(--sh) var(--hi) var(--hi) var(--sh);border-radius:2px;background:var(--win)}
+.sleeve.nocov{height:64px}
+details.more{border:1px solid var(--line);border-radius:6px;background:var(--win);padding:0}
+details.more>summary{cursor:pointer;padding:10px 12px;font-weight:600;color:var(--ink);list-style:none}details.more>summary::-webkit-details-marker{display:none}
+details.more[open]>summary{border-bottom:1px dotted var(--line)}
+.mgrp{display:flex;flex-direction:column;gap:6px;padding:10px 12px}.mlab{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.acts button{font-weight:600}
+.autobox{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;font-size:.88rem}.autobox span{flex:1 1 160px}
+/* info-bulle jaune façon Windows */
+.toast{background:#ffffe1;color:#000;border:1px solid #000;border-radius:3px;box-shadow:2px 2px 0 rgba(0,0,0,.35)}.toast button{color:#0a246a;background:none;border:0;box-shadow:none;text-decoration:underline}
+.nag{border:1px solid var(--dk);border-radius:4px;box-shadow:inset 1px 1px var(--hi)}
+.hb{border-radius:4px}
+.toolbox{display:flex;flex-direction:column;gap:14px}.toolsli{list-style:none;padding:0;border:0}.toolbox .x2{display:none}
+.toolbox .enr{background:none;border:0;box-shadow:none;padding:0;margin:0}
+.toolbox #tbTodo{background:var(--win);border:1px solid;border-color:var(--sh) var(--hi) var(--hi) var(--sh);border-radius:3px;padding:0 10px}
+.tr{border-bottom:1px dotted var(--line)}button.wk{background:var(--face)}
 </style>
 </head>
 <body>
 <div class="wrap">
-<header><div class="htop"><h1>Collezione CD</h1><div class="hbtns"><button type="button" class="hb" id="todoBtn" aria-label="À compléter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M4 12h10M4 18h7"/><path d="M16 17l2 2 4-4"/></svg><span class="badge" id="todoN" hidden></span></button><button type="button" class="hb" id="setBtn" aria-label="Réglages"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div></div><p class="demo" id="demoTag" hidden></p><p id="stats"></p><p class="sync" id="sync"></p><div class="nag" id="nag" hidden><span id="nagTxt"></span><button type="button" id="nagGo" class="small">Sauvegarder</button></div></header>
+<header><div class="htop"><h1>Collezione CD</h1><div class="hbtns"><button type="button" class="hb" id="setBtn" aria-label="Réglages"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div></div><p class="demo" id="demoTag" hidden></p><p id="stats"></p><p class="sync" id="sync"></p><div class="nag" id="nag" hidden><span id="nagTxt"></span><button type="button" id="nagGo" class="small">Sauvegarder</button></div></header>
 
-<button class="scan" id="scanBtn" type="button"><span class="bars" aria-hidden="true"><i style="width:3px"></i><i style="width:1px"></i><i style="width:2px"></i><i style="width:1px"></i><i style="width:3px"></i><i style="width:1px"></i></span>SCAN</button>
+<button class="scan" id="scanBtn" type="button" hidden><span class="bars" aria-hidden="true"><i style="width:3px"></i><i style="width:1px"></i><i style="width:2px"></i><i style="width:1px"></i><i style="width:3px"></i><i style="width:1px"></i></span>SCAN</button>
 
-<section class="enr" id="enr" hidden><button type="button" class="x2" id="enrX" aria-label="Masquer">✕</button><p id="enrTxt"></p><button type="button" class="primary" id="enrGo">Lancer la recherche</button></section>
+
+<section class="todoCard" id="todoCard" hidden></section>
 <section class="recent" id="recent" hidden><h2>Derniers ajouts</h2><div class="rrow" id="recentRow"></div></section>
 
 <section class="panel" id="scanPanel" hidden>
@@ -286,9 +376,25 @@ b.warn{color:#e0a030;font-weight:600}
   <button role="tab" id="tabCol" aria-selected="true" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg>Collection</button>
   <button role="tab" id="tabWish" aria-selected="false" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>Envies</button>
   <button type="button" id="navScan" class="navscan" aria-label="Scanner un disque"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6v12M7 6v12M10 6v12M13 6v12M16 6v12M20 6v12"/></svg></button>
-  <button role="tab" id="tabComp" aria-selected="false" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>Compositeurs</button>
-  <button role="tab" id="tabPerf" aria-selected="false" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/></svg>Interprètes</button>
+  <button role="tab" id="tabComp" aria-selected="false" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>Classique</button>
+  <button role="tab" id="tabTools" aria-selected="false" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M4 12h10M4 18h7"/><path d="M16 17l2 2 4-4"/></svg>Outils<span class="badge" id="todoN" hidden></span></button>
 </nav>
+<div hidden id="tbHolder"><div class="toolbox" id="toolbox">
+<section class="win"><div class="wtitle">À faire</div><div class="wbody"><ul class="list" id="tbTodo"></ul></div></section>
+<section class="win"><div class="wtitle">Pochettes et infos</div><div class="wbody"><section class="enr" id="enr"><button type="button" class="x2" id="enrX" aria-label="Masquer">✕</button><p id="enrTxt"></p><button type="button" class="primary" id="enrGo">Lancer la recherche</button></section></div></section>
+<section class="win"><div class="wtitle">Codes-barres</div><div class="wbody">
+<button type="button" class="setItem" id="invOpen"><b>Inventaire</b><small>Scanne tes CD pour que l'app les reconnaisse, même sans réseau</small></button>
+<button type="button" class="setItem" id="cbGo"><b>Récupérer les codes probables</b><small>Pour les disques dont l'édition a déjà été trouvée</small></button><p class="hint" id="cbMsg"></p>
+</div></section>
+<section class="win"><div class="wtitle">Organisation</div><div class="wbody">
+<button type="button" class="setItem" id="gGo"><b>Classer les genres</b><small>Automatiquement, par l'IA ou Discogs</small></button><p class="hint" id="gMsg"></p>
+<button type="button" class="setItem" id="tbGroup"><b>Regrouper en coffrets</b><small id="tbGroupN">Suggestions automatiques</small></button>
+</div></section>
+<section class="win"><div class="wtitle">Historique</div><div class="wbody">
+<button type="button" class="setItem" id="logOpen"><b>Journal des activités</b><small>Tout ce qui a été fait, par toi ou automatiquement</small></button>
+<button type="button" class="setItem" id="trashOpen"><b>Corbeille et anciennes versions</b><small>Disques supprimés, fiches avant modification</small></button>
+</div></section>
+</div></div>
 <div class="lightbox" id="lightbox" hidden></div>
 <div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
 <div class="selbar" id="selBar" hidden><span id="selTxt"></span><button type="button" class="primary" id="selBox" disabled>Regrouper en coffret</button><button type="button" id="selCancel" aria-label="Annuler la sélection">✕</button></div>
@@ -297,13 +403,8 @@ b.warn{color:#e0a030;font-weight:600}
 <section class="settings" id="settings" hidden role="dialog" aria-modal="true" aria-label="Réglages">
 <div class="setHead"><h2>Réglages</h2><button type="button" id="setX" class="x" aria-label="Fermer">✕</button></div>
 <div class="setBody">
-<section class="card"><h3>Ma collection</h3>
-<button type="button" class="setItem" id="todoOpen2"><b>À compléter</b><small>Pochettes, genres, années… manquants</small></button>
-<button type="button" class="setItem" id="invOpen"><b>Inventaire des codes-barres</b><small>Scanne tes CD pour que l'app les reconnaisse, même sans réseau</small></button>
+<section class="card"><h3>Codes-barres</h3>
 <label class="chk2"><input type="checkbox" id="autoCodes"> Garder les codes-barres trouvés automatiquement (marqués « probables »)</label>
-<button type="button" class="setItem" id="enrOpen"><b>Chercher les pochettes et infos</b><small>Recherche automatique sur MusicBrainz et Discogs</small></button>
-<button type="button" class="setItem" id="gGo"><b>Classer les genres</b><small>Automatiquement, par l'IA ou Discogs</small></button><p class="hint" id="gMsg"></p>
-<button type="button" class="setItem" id="trashOpen"><b>Corbeille et anciennes versions</b><small>Disques supprimés, fiches avant modification</small></button>
 </section>
 <section class="card"><h3>Sauvegarde</h3>
 <p>Ta collection est enregistrée sur ce téléphone. Télécharge une sauvegarde de temps en temps (les photos de pochettes n'y sont pas incluses). « Restaurer un fichier » accepte aussi un fichier d'import de collection : il s'ajoute à ce que tu as déjà.</p>
@@ -577,7 +678,7 @@ function versions0(){const v={},W=WORKS();[[S.col,true],[S.wish,false]].forEach(
   d.tr.forEach(t=>{if(typeof t==="string"||!t.w)return;const id=workId(t.w,W),k=id+"|"+(d.rec||"");if(seen.has(k))return;seen.add(k);
     if(!v[id]){v[id]=[];v[id].rep=t.w;}v[id].push({x,di,d,own});});});}));return v;}
 function renderStats(){const cds=S.col.reduce((n,x)=>n+discsOf(x).length,0);
-  $("stats").textContent=S.col.length+" titres ("+cds+" CD) · "+S.wish.length+" envies · "+Object.keys(versions()).length+" œuvres classiques";
+  const nw=Object.keys(versions()).length;$("stats").textContent=S.col.length+" disque"+(S.col.length>1?"s":"")+(cds>S.col.length?" ("+cds+" CD)":"")+" · "+S.wish.length+" envie"+(S.wish.length>1?"s":"")+" · "+nw+" œuvre"+(nw>1?"s":"")+" classique"+(nw>1?"s":"");
   $("demoTag").hidden=!S.demo;}
 
 // ---------- Listes ----------
@@ -632,12 +733,16 @@ function openBoxer(ids){let order=ids.filter(byId).sort((a,b)=>byId(a).t.localeC
   draw();openSheet();}
 let LIMIT=60,qT=0,lastView="";
 $("more").addEventListener("click",e=>{if(e.target.closest("#moreBtn")){LIMIT+=120;render();}});
-function render(){genreSelUi();todoUi();const view=tab+"|"+$("q").value;if(view!==lastView){LIMIT=60;lastView=view;}renderRecent();selUi();
+function render(){$("list").classList.remove("toolsMode");genreSelUi();todoUi();const view=tab+"|"+$("q").value;if(view!==lastView){LIMIT=60;lastView=view;}renderRecent();selUi();
   const q=norm($("q").value.trim()),ul=$("list");
-  ["Col","Wish","Comp","Perf"].forEach(k=>$("tab"+k).setAttribute("aria-selected",!q&&tab===k.toLowerCase()));
-  $("sortBar").hidden=!q&&(tab==="comp"||tab==="perf");
-  if(!q&&tab==="comp"){renderComposers();return;}
-  if(!q&&tab==="perf"){renderPerformers();return;}
+  if(TB.parentNode!==$("tbHolder"))$("tbHolder").appendChild(TB);
+  ["Col","Wish","Comp","Tools"].forEach(k=>$("tab"+k).setAttribute("aria-selected",!q&&(tab===k.toLowerCase()||(k==="Comp"&&tab==="perf"))));
+  homeTodo();
+  $("sortBar").hidden=!q&&(tab==="comp"||tab==="perf"||tab==="tools");
+  if(!q&&tab==="tools"){renderTools();return;}
+  if(!q&&(tab==="comp"||tab==="perf")){if(tab==="comp")renderComposers();else renderPerformers();
+    $("list").insertAdjacentHTML("afterbegin",`<li class="subseg"><div class="seg"><button type="button" data-cl="comp" aria-pressed="${tab==="comp"}">Compositeurs</button><button type="button" data-cl="perf" aria-pressed="${tab==="perf"}">Interprètes</button></div></li>`);
+    $("list").querySelectorAll("[data-cl]").forEach(bt=>bt.onclick=()=>{classic=bt.dataset.cl;try{localStorage.setItem("classic",classic);}catch(e){}tab=classic;render();});return;}
   $("sortBar").hidden=false;$("sortSel").hidden=$("selBtn").hidden=!!q;
   let rows=q?S.col.filter(x=>matches(x,q)).map(x=>[x,"own"]).concat(S.wish.filter(x=>matches(x,q)).map(x=>[x,"wish"])):(tab==="col"?S.col.map(x=>[x,"own"]):S.wish.map(x=>[x,"wish"]));
   const gf=getGF();if(!q&&gf)rows=rows.filter(([x])=>(genreOf(x)||"?")===gf);$("gHint").hidden=!(!q&&gf==="?"&&(tab==="col"||tab==="wish"));
@@ -652,7 +757,7 @@ function render(){genreSelUi();todoUi();const view=tab+"|"+$("q").value;if(view!
   $("more").hidden=total<=LIMIT;$("more").innerHTML=total>LIMIT?`<button type="button" id="moreBtn">Afficher la suite (${total-LIMIT} de plus)</button>`:"";
   ul.innerHTML=rows.length?rows.map(([x,k])=>{const c=CODE[x.id],cu=coverUrl(x);
     return `<li class="item tap${SEL?(SEL.includes(x.id)?" picked":" pickable"):""}" data-open="${x.id}">${SEL?`<span class="chk" aria-hidden="true">${SEL.includes(x.id)?SEL.indexOf(x.id)+1:""}</span>`:""}${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${genreOf(x)&&genreOf(x)!=="Classique"?" · "+esc(genreOf(x)):""}${x.box?" · Coffret "+discsOf(x).length+" CD":" · "+tracksOf(x).length+" pistes"}</small>${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
-    (k==="own"?`<span class="chip own">Possédé</span>`:`<button class="small" data-buy="${x.id}" type="button">Acheté</button><button class="small" data-del="${x.id}" type="button" aria-label="Retirer des envies">✕</button>`)+`</li>`}).join("")
+    (k==="own"?(q?`<span class="chip own">Possédé</span>`:""):`<button class="small" data-buy="${x.id}" type="button">Acheté</button><button class="small" data-del="${x.id}" type="button" aria-label="Retirer des envies">✕</button>`)+`</li>`}).join("")
     :`<li class="empty">${q?"Rien trouvé : tu ne l'as pas.":(tab==="col"?"Collection vide. Touche SCAN pour ajouter ton premier disque.":"Aucune envie pour l'instant.")}</li>`;}
 const surname=c=>{const p=cKey(c).split(" ");return p[p.length-1]||"";};
 const OPENED=new Set();
@@ -750,7 +855,9 @@ function trashUi(){const n=(S.trash||[]).length,b=$("trashOpen").querySelector("
 function nag(){trashUi();const n=S.chg||0;$("nag").hidden=n<10;$("nagTxt").textContent=n+" modifications depuis ta dernière sauvegarde.";}
 // ---------- Annuler ----------
 let UNDO=null,toastT=0;
-function undoable(label){UNDO={s:JSON.stringify(S),label};S.chg=(S.chg||0)+1;setTimeout(()=>{if(UNDO)toast(UNDO.label,"Annuler",()=>{const u=UNDO;UNDO=null;if(!u)return;S=JSON.parse(u.s);save();render();if(sheetOpen)closeSheet();toast("Annulé");});},0);}
+// Journal des activités (les 600 dernières)
+function logA(msg,id,kind){S.log=S.log||[];S.log.unshift({at:Date.now(),m:msg,id:id||"",k:kind||"user"});if(S.log.length>600)S.log.length=600;}
+function undoable(label,id){UNDO={s:JSON.stringify(S),label};logA(label,id);S.chg=(S.chg||0)+1;setTimeout(()=>{if(UNDO)toast(UNDO.label,"Annuler",()=>{const u=UNDO;UNDO=null;if(!u)return;S=JSON.parse(u.s);logA("Annulé : "+u.label,"","undo");save();render();if(sheetOpen)closeSheet();toast("Annulé");});},0);}
 function toast(msg,btn,fn){const t=$("toast");t.innerHTML=`<span>${esc(msg)}</span>${btn?`<button type="button">${esc(btn)}</button>`:""}`;t.hidden=false;
   if(btn)t.querySelector("button").onclick=()=>{t.hidden=true;fn();};clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true;},btn?7000:2500);}
 $("list").addEventListener("click",e=>{
@@ -760,8 +867,9 @@ $("list").addEventListener("click",e=>{
   if(b.dataset.buy)buy(b.dataset.buy);
   if(b.dataset.del)setStatus(b.dataset.del,"del");});
 $("q").addEventListener("input",()=>{clearTimeout(qT);qT=setTimeout(render,120);});
+const TB=$("toolbox");let classic=(()=>{try{return localStorage.getItem("classic")||"comp";}catch(e){return "comp";}})();
 const goTab=t=>{if($("q").value){$("q").value="";}tab=t;render();const top=$("stick").offsetTop;if(scrollY>top)scrollTo({top:top-4});};
-$("tabCol").onclick=()=>goTab("col");$("tabWish").onclick=()=>goTab("wish");$("tabComp").onclick=()=>goTab("comp");$("tabPerf").onclick=()=>goTab("perf");
+$("tabCol").onclick=()=>goTab("col");$("tabWish").onclick=()=>goTab("wish");$("tabComp").onclick=()=>goTab(classic);$("tabTools").onclick=()=>goTab("tools");
 $("navScan").onclick=()=>{scrollTo({top:0,behavior:"smooth"});if($("scanPanel").hidden)$("scanBtn").click();};
 
 // ---------- Caméra ----------
@@ -904,7 +1012,7 @@ async function dgCheck(){const k=dgKey();if(!k){dgInfoUi();return;}if(!navigator
 $("dgKey").addEventListener("input",e=>{try{localStorage.setItem("discogs-token",e.target.value.trim());}catch(err){}dgInfoUi();if(typeof enrUi==="function"&&!$("enr").hidden)enrUi();clearTimeout(dgT);dgT=setTimeout(dgCheck,900);});
 // statut des sources, affiché là où il compte
 function srcLine(){const k=dgKey(),s=dgState();return `Sources : MusicBrainz ✓ · Discogs ${!k?`<button type="button" class="linklike" data-gokey="1">non configuré (ajouter le jeton)</button>`:s.k===k&&s.ok===false?`<button type="button" class="linklike err" data-gokey="1">jeton refusé</button>`:"✓"+(s.ok&&s.k===k?" ("+esc(s.user)+")":"")}`;}
-document.addEventListener("click",e=>{if(!e.target.closest("[data-gokey]"))return;closeSheet();openSettings();$("dgKey").scrollIntoView({behavior:"smooth",block:"center"});setTimeout(()=>$("dgKey").focus(),400);});
+document.addEventListener("click",e=>{if(!e.target.closest("[data-gokey]"))return;const was=sheetOpen;closeSheet();setTimeout(()=>{openSettings();setTimeout(()=>{$("dgKey").scrollIntoView({behavior:"smooth",block:"center"});$("dgKey").focus();},300);},was?150:0);return;$("dgKey").scrollIntoView({behavior:"smooth",block:"center"});setTimeout(()=>$("dgKey").focus(),400);});
 dgInfoUi();if(dgKey()&&dgState().k!==dgKey())dgCheck();
 let lastDg=0;
 async function dgGet(path,params={}){const wait=Math.max(0,1100-(Date.now()-lastDg));if(wait)await new Promise(r=>setTimeout(r,wait));lastDg=Date.now();
@@ -976,23 +1084,31 @@ function openDetail(id){const x=byId(id);if(!x)return;const p=$("detail"),cu=cov
    <div class="seg" role="group" aria-label="État"><button type="button" data-st="own" aria-pressed="${own}">Possédé</button><button type="button" data-st="wish" aria-pressed="${!own}">Envie</button></div>
    ${own?`<div class="copiesRow"><span>Exemplaires</span><button type="button" class="small" data-cp="-1" aria-label="Un de moins">−</button><b>${x.copies||1}</b><button type="button" class="small" data-cp="1" aria-label="Un de plus">+</button></div>`:""}
    ${(()=>{const cs=codesOf(id),ps=Object.keys(S.pcodes||{}).filter(k=>S.pcodes[k]===id);return cs.length||ps.length?`<p>${cs.map(k=>`<span class="code">${fmtEan(k)}</span>`).join(" ")}${ps.map(k=>`<span class="code prob" title="Code probable">${fmtEan(k)} ?</span>`).join(" ")}</p>`:"";})()}${x.cat?`<p class="hint">N° de catalogue : ${esc(x.cat)}</p>`:""}${x.note?`<p class="note">${esc(x.note)}</p>`:""}${x.at?`<p class="hint">Ajouté le ${new Date(x.at).toLocaleDateString("fr-FR")}</p>`:""}
-   <div class="row"><button type="button" id="coverBtn">${hasCover(x)?"Changer la pochette":"Ajouter une pochette"}</button><button type="button" id="detClose">Fermer</button></div>
+   <div class="row acts"><button type="button" class="primary" id="detEdit">Modifier</button><button type="button" id="coverBtn">${hasCover(x)?"Pochette…":"Ajouter une pochette"}</button></div>
    <div class="photos" id="phRow">${(COV["ph:"+id]||[]).map((d,i)=>`<button type="button" class="ph" data-ph="${i}" aria-label="Photo ${i+1}"><img src="${d}" alt=""></button>`).join("")}<button type="button" class="ph add" id="phAdd" aria-label="Ajouter une photo">＋<small>Photo</small></button></div>
-   <div class="row"><button type="button" class="small" id="detEdit">Modifier</button><button type="button" class="small" id="detRead">Relire en photo (IA)</button><button type="button" class="small" id="detDel">Supprimer</button>${discsOf(x).length>1?`<button type="button" class="small" id="detSplit">Dissocier</button>`:""}</div>
-   <p class="hint" id="covMsg"></p>${x.mbid?`<p class="hint"><a href="https://musicbrainz.org/release/${x.mbid}" target="_blank" rel="noopener">Voir sur MusicBrainz</a> · <button type="button" class="small" id="mbRefresh">Actualiser</button></p>`:""}${x.dgid?`<p class="hint"><a href="https://www.discogs.com/release/${x.dgid}" target="_blank" rel="noopener">Voir sur Discogs</a>${x.cat?" · "+esc(x.cat):""}</p>`:""}<div class="srch"><span>Chercher :</span>${(()=>{const q=encodeURIComponent((x.a!=="Artiste inconnu"?x.a.split(/[;,]/)[0]+" ":"")+x.t.replace(/\s:\s/," "));
-     return `<a href="https://www.discogs.com/search/?q=${q}&type=release" target="_blank" rel="noopener">Discogs</a><a href="https://musicbrainz.org/search?query=${q}&type=release" target="_blank" rel="noopener">MusicBrainz</a><a href="https://www.google.com/search?q=${q}+CD" target="_blank" rel="noopener">Google</a>`;})()}</div>
-   <button type="button" id="pickEd" class="pickEd">Choisir la bonne édition</button>
-   ${x.auto?`<p class="hint">Trouvé automatiquement. <button type="button" class="small" id="notThis">Pas le bon disque</button></p>`:""}</div></div>${tracks}`;
+   ${x.auto&&x.enr!=="manual"?`<div class="autobox"><span>Pochette et infos trouvées automatiquement.</span><button type="button" class="small primary" id="okThis">C'est bon</button><button type="button" class="small" id="notThis">Pas lui</button></div>`:""}
+   <p class="hint" id="covMsg"></p>
+   <details class="more"><summary>⋯ Plus d'actions</summary>
+    <div class="mgrp"><span class="mlab">Compléter</span>
+     <button type="button" class="setItem" id="pickEd"><b>Choisir la bonne édition</b><small>MusicBrainz, Discogs ou un lien collé</small></button>
+     ${x.mbid?`<button type="button" class="setItem" id="mbRefresh"><b>Actualiser depuis MusicBrainz</b><small>Comparer avec la fiche en ligne</small></button>`:""}
+     <button type="button" class="setItem" id="detRead"><b>Relire la pochette en photo (IA)</b><small>Recto et verso</small></button>
+     <div class="srch"><span>Voir en ligne :</span>${(()=>{const q=encodeURIComponent((x.a!=="Artiste inconnu"?x.a.split(/[;,]/)[0]+" ":"")+x.t.replace(/\s:\s/," "));
+       return (x.mbid?`<a href="https://musicbrainz.org/release/${x.mbid}" target="_blank" rel="noopener">Fiche MusicBrainz</a>`:"")+(x.dgid?`<a href="https://www.discogs.com/release/${x.dgid}" target="_blank" rel="noopener">Fiche Discogs</a>`:"")+
+       `<a href="https://www.discogs.com/search/?q=${q}&type=release" target="_blank" rel="noopener">Chercher sur Discogs</a><a href="https://musicbrainz.org/search?query=${q}&type=release" target="_blank" rel="noopener">MusicBrainz</a><a href="https://www.google.com/search?q=${q}+CD" target="_blank" rel="noopener">Google</a>`;})()}</div></div>
+    ${discsOf(x).length>1?`<div class="mgrp"><span class="mlab">Organiser</span><button type="button" class="setItem" id="detSplit"><b>Dissocier le coffret</b><small>Séparer un ou plusieurs CD</small></button></div>`:""}
+    <div class="mgrp"><span class="mlab">Supprimer</span><button type="button" class="setItem danger" id="detDel"><b>Mettre à la corbeille</b><small>Récupérable depuis Outils → Corbeille</small></button></div>
+   </details></div></div>${tracks}`;
   openSheet();
-  $("detClose").onclick=()=>closeSheet();
   $("detEdit").onclick=()=>editTracks(id);
   $("phAdd").onclick=async()=>{const r=await shoot("verso");if(!r)return;await phAdd(id,r.full);openDetail(id);};
   p.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>viewPhoto(id,+b.dataset.ph));$("pickEd").onclick=()=>openPicker(id);
+  if($("okThis"))$("okThis").onclick=()=>{delete x.auto;x.enr="manual";logA("Pochette validée : "+x.t,x.id);save();render();openDetail(id);};
   if($("notThis"))$("notThis").onclick=()=>{undoable("Correspondance retirée");(Array.isArray(x.auto)?x.auto:[]).forEach(k=>delete x[k]);["mbid","dgid","rgid","img","auto"].forEach(k=>delete x[k]);x.enr="none";x.enrP=2;save();render();openDetail(id);};$("detRead").onclick=()=>openReader(id);
   $("detDel").onclick=()=>{setStatus(id,"del");closeSheet();};if($("detSplit"))$("detSplit").onclick=()=>openSplit(id);
   p.querySelectorAll("[data-cp]").forEach(b=>b.onclick=()=>{const n=Math.max(1,(x.copies||1)+ +b.dataset.cp);if(n===(x.copies||1))return;undoable("Exemplaires de « "+x.t+" » : "+n);if(n>1)x.copies=n;else delete x.copies;save();render();openDetail(id);});
   p.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{setStatus(id,b.dataset.st);openDetail(id);});
-  if($("mbRefresh"))$("mbRefresh").onclick=async()=>{$("covMsg").textContent="Chargement depuis MusicBrainz…";
+  if($("mbRefresh"))$("mbRefresh").onclick=async()=>{$("covMsg").textContent="Chargement depuis MusicBrainz…";$("covMsg").scrollIntoView({block:"center"});
     try{const f=await mbRelease(x.mbid);if(f.img&&!(await imgOk(f.img)))f.img="";openCompare(x,f,"MusicBrainz");}catch(err){$("covMsg").textContent=err.message;}};
   p.querySelectorAll("[data-work]").forEach(n=>n.onclick=()=>openWork(n.dataset.work));
   $("coverBtn").onclick=()=>openCoverMenu(id);
@@ -1206,7 +1322,7 @@ function editTracks(id){const x=byId(id),p=$("detail");if(!x)return;const W=WORK
     const kk=$("eK").value.trim();if(kk)x.cat=kk;else delete x.cat;const gg=$("eG").value.trim();if(gg)x.g=gg;else delete x.g;const nt=$("eN").value.trim();if(nt)x.note=nt;else delete x.note;const pf=$("eI").value.trim();if(pf)x.perf=pf;else delete x.perf;const old=JSON.parse(JSON.stringify(x));toTrash(old,"old",{why:"modification"});applyTracks(x,parseLines($("rP").value,$("rC").value.trim()));attachWorks(x,old,$("rC").value.trim());save();render();openDetail(id);};}
 // ---------- Sauvegarde ----------
 $("nagGo").onclick=()=>$("dlB").click();
-$("enrOpen").onclick=()=>{closeSettings();try{localStorage.removeItem("enr-hide");}catch(e){}$("enr").hidden=false;enrUi();$("enr").scrollIntoView({behavior:"smooth"});};
+if($("enrOpen"))$("enrOpen").onclick=()=>{closeSettings();try{localStorage.removeItem("enr-hide");}catch(e){}$("enr").hidden=false;enrUi();$("enr").scrollIntoView({behavior:"smooth"});};
 $("dlB").onclick=()=>{S.chg=0;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}nag();const blob=new Blob([JSON.stringify(S,null,1)],{type:"application/json"});const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);a.download="collezione-cd-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();$("bMsg").textContent="Sauvegarde téléchargée.";};
 $("upB").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(o&&o.collezione_import){const r=importList(o.albums||[]);$("bMsg").textContent=r.added+" disques importés"+(r.skipped?", "+r.skipped+" déjà présents (ignorés)":"")+".";e.target.value="";return;}if(!Array.isArray(o.col))throw 0;adopt(o);save();render();$("bMsg").textContent="Sauvegarde restaurée.";}catch(err){$("bMsg").textContent="Ce fichier n'est pas une sauvegarde de Collezione CD.";}};
@@ -1281,13 +1397,13 @@ async function enrichAll(pass){if(ENR.run)return;const todo=ALL().filter(pass===
   enrUi();
   for(const x of todo){if(!ENR.run)break;
     // Serveur surchargé ou réseau capricieux : on attend et on réessaie le même disque (jusqu'à 3 fois)
-    let ok=false;for(let k=0;k<4&&ENR.run;k++){try{const r=await enrichOne(x,pass);x.enr=r||"none";x.enrP=pass;if(r==="cover")ENR.found++;ok=true;break;}
+    let ok=false;for(let k=0;k<4&&ENR.run;k++){try{const r=await enrichOne(x,pass);x.enr=r||"none";x.enrP=pass;if(r==="cover"){ENR.found++;logA("Pochette trouvée automatiquement ("+(x.dgid&&!x.mbid?"Discogs":"MusicBrainz")+") : "+x.t,x.id,"auto");}ok=true;break;}
       catch(e){if(!navigator.onLine){ENR.run=false;enrUi("Connexion perdue : relance quand tu seras connecté, ça reprendra où ça s'est arrêté.");break;}
         if(/jeton|Jeton/.test(e.message))break;await sleep([3000,8000,15000][k]||15000);}}
     if(!ok)ENR.err++;
     ENR.done++;if(ENR.done%5===0){save();render();}enrUi();}
   const wasRun=ENR.run;ENR.run=false;try{ENR.lock&&ENR.lock.release();}catch(e){}
-  const last={pass,found:ENR.found,done:ENR.done,total:ENR.total,err:ENR.err,at:Date.now(),paused:!wasRun};try{localStorage.setItem("enr-last",JSON.stringify(last));}catch(e){}
+  const last={pass,found:ENR.found,done:ENR.done,total:ENR.total,err:ENR.err,at:Date.now(),paused:!wasRun};logA((pass===2?"Recherche élargie":"Recherche des pochettes")+" : "+ENR.done+" disques cherchés, "+ENR.found+" pochettes trouvées","","auto");try{localStorage.setItem("enr-last",JSON.stringify(last));}catch(e){}
   save();render();enrUi();
   // Résultat signalé même si tu ne regardes pas l'écran : vibration + notification + bandeau
   const msg=(wasRun?"Recherche terminée":"Recherche en pause")+" : "+ENR.found+" pochette"+(ENR.found>1?"s":"")+" trouvée"+(ENR.found>1?"s":"")+" sur "+ENR.done+" disque"+(ENR.done>1?"s":"")+" cherché"+(ENR.done>1?"s":"")+".";
@@ -1295,20 +1411,34 @@ async function enrichAll(pass){if(ENR.run)return;const todo=ALL().filter(pass===
     try{if(window.Notification&&Notification.permission==="granted"){const reg=await navigator.serviceWorker?.getRegistration();const opt={body:msg+" "+ALL().filter(hasCover).length+"/"+ALL().length+" disques ont une pochette.",icon:"icon-192.png",tag:"enr"};
       if(reg)reg.showNotification("Collezione CD",opt);else new Notification("Collezione CD",opt);}}catch(e){}}}
 let noCoverOnly=false;
-function enrUi(msg){const box=$("enr"),all=ALL(),tot=all.length,withC=all.filter(hasCover).length,p1=all.filter(needsEnrich).length,p2=all.filter(needsPass2).length,miss=tot-withC;
-  box.hidden=!tot;
-  const stat=`<b>${withC}/${tot}</b> disques ont une pochette.`;
-  const see=miss?` <button type="button" class="linklike" id="enrSee">${miss>1?"Voir les "+miss+" disques sans pochette":"Voir le disque sans pochette"}</button>`:"";
-  $("enrTxt").innerHTML=ENR.run?`${ENR.pass===2?"Recherche élargie":"Recherche des pochettes"}… <b>${ENR.done}/${ENR.total}</b> · ${ENR.found} trouvée${ENR.found>1?"s":""} ce tour<br><small>${stat} Garde l'app ouverte (l'écran reste allumé). Environ ${Math.max(1,Math.ceil((ENR.total-ENR.done)*1.8/60))} min restantes.</small>`
-    :(msg?esc(msg)+"<br>":"")+(p1?`${stat} <b>${p1} disque${p1>1?"s":""} jamais cherché${p1>1?"s":""}</b> sur MusicBrainz${dgKey()?" et Discogs":""} (≈ ${Math.max(1,Math.ceil(p1*1.8/60))} min).`
-    :p2?`${stat} Pour les ${p2} restants, une <b>recherche élargie</b> est possible : titre seul, autres éditions${dgKey()?", Discogs plus large":""}. Plus de risques de confusion : vérifie ensuite.${dgKey()?"":" Ajoute d'abord ton jeton Discogs : il trouve beaucoup de vieux pressages."}`
-    :miss?`${stat} Les recherches automatiques sont terminées. Pour les autres : « Choisir la bonne édition » ou « Photographier la pochette » dans leur fiche.`:`Toute ta collection a une pochette.`)+see;
-  let last=null;try{last=JSON.parse(localStorage.getItem("enr-last")||"null");}catch(e){}
-  if(!ENR.run&&last)$("enrTxt").insertAdjacentHTML("afterbegin",`<span class="lastres">${last.paused?"Recherche en pause":"Dernière recherche"+(last.pass===2?" élargie":"")} (${new Date(last.at).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}) : <b>${last.found}/${last.done}</b> trouvée${last.found>1?"s":""}${last.err?` · ${last.err} erreur${last.err>1?"s":""} réseau (seront retentées)`:""}</span><br>`);
-  $("enrTxt").insertAdjacentHTML("beforeend",`<br><small class="srcl">${srcLine()}</small>`);
+const toReview=()=>ALL().filter(x=>x.auto&&x.enr!=="manual"&&hasCover(x));
+function enrUi(msg){const box=$("enr"),all=ALL(),tot=all.length,withC=all.filter(hasCover).length,p1=all.filter(needsEnrich).length,p2=all.filter(needsPass2).length,miss=tot-withC,rv=toReview().length;
+  box.hidden=!tot;let last=null;try{last=JSON.parse(localStorage.getItem("enr-last")||"null");}catch(e){}
+  const dt=t=>new Date(t).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+  let h="";
+  if(ENR.run)h=`<b>${ENR.pass===2?"Recherche élargie":"Recherche des pochettes"} en cours</b> : ${ENR.done} disques cherchés sur ${ENR.total}, ${ENR.found} pochette${ENR.found>1?"s":""} trouvée${ENR.found>1?"s":""}.<br><small>Garde l'app ouverte (l'écran reste allumé). Environ ${Math.max(1,Math.ceil((ENR.total-ENR.done)*1.8/60))} min.</small>`;
+  else{h=(msg?esc(msg)+"<br>":"")+`<span class="big"><b>${withC}</b> disques sur ${tot} ont une pochette · <b>${miss}</b> sans.</span>`;
+    if(last)h+=`<br><small>${last.paused?"Recherche en pause":"Dernière recherche"+(last.pass===2?" élargie":"")} (${dt(last.at)}) : ${last.done} disque${last.done>1?"s":""} cherché${last.done>1?"s":""}, ${last.found} pochette${last.found>1?"s":""} trouvée${last.found>1?"s":""}${last.err?`, ${last.err} erreur${last.err>1?"s":""} réseau`:""}.</small>`;
+    h+=p1?`<br>Étape 1 : <b>${p1}</b> disque${p1>1?"s":""} pas encore cherché${p1>1?"s":""}.`:p2?`<br>Étape 2 possible : une <b>recherche élargie</b> pour ${p2>1?"les "+p2+" disques":"le disque"} sans pochette (titre seul, autres éditions). Plus de risque d'erreur : tu valideras ensuite.`:miss?`<br>Recherches automatiques terminées. ${miss>1?"Les "+miss+" restants se font":"Le dernier se fait"} à la main (fiche → Changer la pochette).`:"";}
+  h+=`<div class="enrLinks">${rv?`<button type="button" class="linklike" id="enrRev">Vérifier les ${rv} pochette${rv>1?"s":""} trouvée${rv>1?"s":""} automatiquement</button>`:""}${miss?`<button type="button" class="linklike" id="enrSee">${miss>1?"Voir les "+miss+" disques sans pochette":"Voir le disque sans pochette"}</button>`:""}</div><small class="srcl">${srcLine()}</small>`;
+  $("enrTxt").innerHTML=h;
   $("enrGo").textContent=ENR.run?"Pause":p1?"Lancer la recherche":"Lancer la recherche élargie";
   $("enrGo").hidden=!ENR.run&&!p1&&!p2;
+  if($("enrRev"))$("enrRev").onclick=openReview;
   if($("enrSee"))$("enrSee").onclick=()=>{TODOF="cover";$("q").value="";tab="col";render();$("sortBar").scrollIntoView({behavior:"smooth"});};}
+// ---------- Vérifier les pochettes trouvées automatiquement ----------
+function openReview(){closeSettings();const p=$("detail"),L=toReview();
+  p.innerHTML=`<p class="cat">À vérifier</p><h2 class="wh">${L.length} pochette${L.length>1?"s":""} trouvée${L.length>1?"s":""} automatiquement</h2>
+   <p class="hint">Garde ce qui est juste. « Pas lui » retire la pochette et les infos ajoutées (année, label, n° de catalogue) et remet le disque dans « À compléter ».</p>
+   ${L.length?`<div class="row"><button type="button" class="primary" id="rvAll">Tout garder</button></div>`:""}
+   <ul class="list rvl">${L.map(x=>`<li class="item" data-rv="${x.id}"><img class="rvc" src="${esc(coverUrl(x))}" alt="" onerror="this.style.visibility='hidden'"><div class="meta"><b>${esc(x.t)}</b><small>${esc(x.a)}</small><small>${[x.l,x.y,x.cat].filter(Boolean).map(esc).join(" · ")}</small></div>
+     <span class="tact col"><button type="button" class="small primary" data-keep="${x.id}">Garder</button><button type="button" class="small" data-drop="${x.id}">Pas lui</button></span></li>`).join("")||`<li class="empty">Rien à vérifier ✓</li>`}</ul>
+   <div class="row"><button type="button" id="rvClose">Fermer</button></div>`;
+  openSheet();$("rvClose").onclick=()=>closeSheet();
+  const keep=x=>{delete x.auto;x.enr="manual";},drop=x=>{(Array.isArray(x.auto)?x.auto:[]).forEach(k=>delete x[k]);["mbid","dgid","rgid","img","auto"].forEach(k=>delete x[k]);x.enr="none";x.enrP=2;};
+  if($("rvAll"))$("rvAll").onclick=()=>{undoable(L.length+" pochettes automatiques validées");L.forEach(keep);save();render();openReview();};
+  p.querySelectorAll("[data-keep]").forEach(bt=>bt.onclick=()=>{const x=byId(bt.dataset.keep);keep(x);logA("Pochette validée : "+x.t,x.id);save();render();bt.closest("li").remove();});
+  p.querySelectorAll("[data-drop]").forEach(bt=>bt.onclick=()=>{const x=byId(bt.dataset.drop);undoable("Pochette automatique retirée : "+x.t,x.id);drop(x);save();render();bt.closest("li").remove();});}
 $("enrGo").onclick=()=>{if(ENR.run){ENR.run=false;enrUi("En pause. Relance quand tu veux, ça reprend où ça s'est arrêté.");return;}
   enrichAll(ALL().some(needsEnrich)?1:2);};
 $("enrX").onclick=()=>{$("enr").hidden=true;try{localStorage.setItem("enr-hide","1");}catch(e){}};
@@ -1427,7 +1557,7 @@ async function importLink(s){const out=$("eanResult");$("scanPanel").hidden=fals
 
 
 // ---------- Réglages (panneau plein écran) ----------
-const APPV="34";
+const APPV="36";
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -1435,19 +1565,19 @@ $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
 const TODOS=[["code","Sans code-barres",x=>!codesOf(x.id).length],["cover","Pochette manquante",x=>!hasCover(x)],["genre","Genre manquant",x=>!genreOf(x)],["year","Année manquante",x=>!x.y],["label","Label manquant",x=>!x.l],
   ["tracks","Pistes manquantes",x=>!tracksOf(x).length],["auto","Trouvés automatiquement, à vérifier",x=>!!x.auto&&x.enr!=="manual"]];
 let TODOF="";
-function todoUi(){const all=[...S.col,...S.wish],n=all.filter(x=>!hasCover(x)||!genreOf(x)).length;$("todoN").hidden=!n;$("todoN").textContent=n>99?"99+":n;}
-function openTodo(){closeSettings();const p=$("detail"),all=[...S.col,...S.wish];
+function todoUi(){const all=[...S.col,...S.wish],n=all.filter(x=>!hasCover(x)||!genreOf(x)||(x.auto&&x.enr!=="manual"&&hasCover(x))).length;$("todoN").hidden=!n;$("todoN").textContent=n>99?"99+":n;}
+function openTodo(){closeSettings();closeSheet();goTab("tools");return;const p=$("detail"),all=[...S.col,...S.wish];
   p.innerHTML=`<p class="cat">À compléter</p><h2 class="wh">Ce qui manque dans ta collection</h2><p class="hint">Touche une ligne pour voir les disques concernés, puis traite-les un par un depuis leur fiche.</p>
    <ul class="list">${TODOS.map(([k,lab,f])=>{const n=all.filter(f).length;return `<li class="item tap${n?"":" done"}" data-todo="${k}"><div class="meta"><b>${lab}</b><small>${n?n+" disque"+(n>1?"s":""):"Rien à faire ✓"}</small></div>${n?`<span class="count">${n}</span>`:""}</li>`;}).join("")}</ul>
    ${(()=>{const n=groupSuggestions().length;return `<ul class="list"><li class="item tap${n?"":" done"}" id="tdGroup"><div class="meta"><b>À regrouper en coffret</b><small>${n?n+" suggestion"+(n>1?"s":""):"Rien à regrouper ✓"}</small></div>${n?`<span class="count">${n}</span>`:""}</li></ul>`;})()}
    <div class="row"><button type="button" id="tdInv">Inventaire des codes-barres</button></div>
    <div class="row"><button type="button" id="tdEnr">Chercher pochettes et infos</button><button type="button" id="tdGen">Classer les genres</button></div><p class="hint" id="tdMsg"></p>`;
-  openSheet();p.querySelectorAll("[data-todo]").forEach(li=>li.onclick=()=>{if(li.classList.contains("done"))return;TODOF=li.dataset.todo;$("q").value="";tab="col";closeSheet();render();setTimeout(()=>$("stick").scrollIntoView({behavior:"smooth"}),50);});
+  openSheet();p.querySelectorAll("[data-todo]").forEach(li=>li.onclick=()=>{if(li.classList.contains("done"))return;if(li.dataset.todo==="auto"){openReview();return;}TODOF=li.dataset.todo;$("q").value="";tab="col";closeSheet();render();setTimeout(()=>$("stick").scrollIntoView({behavior:"smooth"}),50);});
   if($("tdGroup"))$("tdGroup").onclick=()=>{if(!$("tdGroup").classList.contains("done"))openGroupSugg();};
   $("tdInv").onclick=startInventory;
-  $("tdEnr").onclick=()=>{closeSheet();$("enr").hidden=false;try{localStorage.removeItem("enr-hide");}catch(e){}enrUi();$("enr").scrollIntoView({behavior:"smooth"});};
+
   $("tdGen").onclick=()=>{guessGenres();$("tdMsg").textContent="Classement lancé…";};}
-$("todoBtn").onclick=openTodo;$("todoOpen2").onclick=openTodo;
+
 // ---------- Changer la pochette : photo, galerie, recherche en ligne, mes photos ----------
 function openCoverMenu(id){const x=byId(id),p=$("detail"),phs=COV["ph:"+id]||[];
   p.innerHTML=`<p class="cat">Pochette</p><h2 class="wh">${esc(x.t)}</h2><div class="menu">
@@ -1540,6 +1670,52 @@ async function invHandle(c){const out=$("eanResult"),id=S.codes[c];
 $("invStop").onclick=stopInventory;$("invOpen").onclick=startInventory;
 $("autoCodes").checked=autoCodes();$("autoCodes").onchange=e=>{try{localStorage.setItem("auto-codes",e.target.checked?"1":"0");}catch(err){}};
 
+
+// ---------- Codes-barres probables en masse (depuis MusicBrainz / Discogs) ----------
+const CB={run:false};
+async function fetchCodesAll(){if(CB.run){CB.run=false;return;}const m=$("cbMsg");
+  const todo=ALL().filter(x=>(x.mbid||x.dgid)&&!codesOf(x.id).length&&!Object.keys(S.pcodes||{}).some(k=>S.pcodes[k]===x.id));
+  if(!todo.length){m.textContent="Aucun disque à traiter : il faut d'abord que la recherche des pochettes ait trouvé l'édition (MusicBrainz ou Discogs).";return;}
+  if(!navigator.onLine){m.textContent="Pas de connexion Internet.";return;}
+  CB.run=true;$("cbGo").querySelector("b").textContent="Arrêter";let n=0,f=0;try{CB.lock=await navigator.wakeLock?.request("screen");}catch(e){}
+  for(const x of todo){if(!CB.run)break;m.textContent=`Récupération… ${n}/${todo.length} · ${f} code${f>1?"s":""} trouvé${f>1?"s":""}. Garde l'app ouverte.`;
+    try{let bc=[];if(x.mbid){const d=await mbGet("release/"+x.mbid);if(d.barcode)bc=[d.barcode];}
+      if(!bc.length&&x.dgid&&dgKey()){const d=await dgGet("releases/"+x.dgid);bc=(d.identifiers||[]).filter(i=>/barcode/i.test(i.type)).map(i=>i.value);}
+      const before=Object.keys(S.pcodes||{}).length;bc.forEach(c=>addPCode(c,x.id));if(Object.keys(S.pcodes||{}).length>before)f++;}catch(e){await sleep(3000);}
+    n++;if(n%10===0)save();}
+  CB.run=false;try{CB.lock&&CB.lock.release();}catch(e){}$("cbGo").querySelector("b").textContent="Récupérer les codes probables maintenant";
+  logA("Codes-barres probables récupérés : "+f+" sur "+n+" disques","","auto");save();render();
+  m.textContent=`Terminé : ${f} code${f>1?"s":""} probable${f>1?"s":""} ajouté${f>1?"s":""} sur ${n} disques. Les disques sans édition trouvée n'ont pas de code : utilise l'inventaire.`;toast(f+" codes probables ajoutés");}
+$("cbGo").onclick=fetchCodesAll;
+// ---------- Journal des activités ----------
+function openLog(filter){closeSettings();const p=$("detail"),L=(S.log||[]).filter(e=>!filter||(filter==="auto"?e.k==="auto":e.k!=="auto"));
+  const day=t=>new Date(t).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});let cur="";
+  p.innerHTML=`<p class="cat">Journal des activités</p><h2 class="wh">${(S.log||[]).length} action${(S.log||[]).length>1?"s":""}</h2>
+   <div class="seg"><button type="button" data-lf="" aria-pressed="${!filter}">Tout</button><button type="button" data-lf="user" aria-pressed="${filter==="user"}">Mes actions</button><button type="button" data-lf="auto" aria-pressed="${filter==="auto"}">Automatique</button></div>
+   <ul class="list logl">${L.slice(0,300).map(e=>{const d=day(e.at),h=d!==cur?`<li class="logd">${d}</li>`:"";cur=d;
+     return h+`<li class="item${e.id&&byId(e.id)?" tap":""}" ${e.id&&byId(e.id)?`data-open="${e.id}"`:""}><span class="lt">${new Date(e.at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}</span><div class="meta"><span>${esc(e.m)}</span></div>${e.k==="auto"?`<span class="chip">auto</span>`:""}</li>`;}).join("")||`<li class="empty">Rien pour l'instant.</li>`}</ul>
+   <div class="row"><button type="button" id="lgClose">Fermer</button></div>`;
+  openSheet();$("lgClose").onclick=()=>closeSheet();p.querySelectorAll("[data-lf]").forEach(bt=>bt.onclick=()=>openLog(bt.dataset.lf));
+  p.querySelectorAll("[data-open]").forEach(li=>li.onclick=()=>openDetail(li.dataset.open));}
+$("logOpen").onclick=()=>openLog("");
+
+
+// ---------- Onglet Outils ----------
+function todoCounts(){const all=[...S.col,...S.wish];return TODOS.map(([k,lab,f])=>[k,lab,all.filter(f).length]);}
+function renderTools(){$("list").classList.add("toolsMode");$("list").innerHTML=`<li class="toolsli" id="toolsLi"></li>`;$("toolsLi").appendChild(TB);
+  const g=groupSuggestions().length;
+  $("tbTodo").innerHTML=todoCounts().map(([k,lab,n])=>`<li class="item tap${n?"":" done"}" data-todo="${k}"><div class="meta"><b>${lab}</b><small>${n?n+" disque"+(n>1?"s":""):"Rien à faire ✓"}</small></div>${n?`<span class="count">${n}</span>`:""}</li>`).join("")+
+    `<li class="item tap${g?"":" done"}" data-todo="group"><div class="meta"><b>À regrouper en coffret</b><small>${g?g+" suggestion"+(g>1?"s":""):"Rien à regrouper ✓"}</small></div>${g?`<span class="count">${g}</span>`:""}</li>`;
+  $("tbGroupN").textContent=g?g+" suggestion"+(g>1?"s":"")+" en attente":"Rien à regrouper pour l'instant";
+  $("tbTodo").querySelectorAll("[data-todo]").forEach(li=>li.onclick=()=>{if(li.classList.contains("done"))return;const k=li.dataset.todo;
+    if(k==="group"){openGroupSugg();return;}if(k==="auto"){openReview();return;}TODOF=k;$("q").value="";tab="col";render();setTimeout(()=>$("stick").scrollIntoView({behavior:"smooth"}),50);});
+  try{enrUi();}catch(e){}}
+function homeTodo(){const c=$("todoCard");if(!c)return;const t=todoCounts().filter(([k,,n])=>n&&k!=="label"),g=groupSuggestions().length;
+  const parts=t.map(([k,lab,n])=>({cover:"pochette",genre:"genre",code:"code-barres",year:"année",tracks:"liste de pistes",auto:"à vérifier"}[k]?`<b>${n}</b> ${({cover:"sans pochette",genre:"sans genre",code:"sans code-barres",year:"sans année",tracks:"sans pistes",auto:"à vérifier"})[k]}`:"")).filter(Boolean);
+  if(g)parts.push(`<b>${g}</b> à regrouper`);c.hidden=!parts.length||tab==="tools";
+  c.innerHTML=`<div class="wtitle">À faire</div><div class="wbody"><p>${parts.join(" · ")}</p><button type="button" class="small" id="tcGo">Ouvrir les outils</button></div>`;$("tcGo").onclick=()=>goTab("tools");}
+$("tbGroup").onclick=()=>openGroupSugg();
+
 // ---------- Démarrage ----------
 try{tidyWorks();localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
 if(DEMO.works)Object.values(DEMO.works).forEach(o=>{if(o.c)o.c=canonC(o.c);});
@@ -1548,7 +1724,7 @@ $("overlay").addEventListener("click",e=>{if(e.target.id==="overlay")closeSheet(
 renderStats();render();trashUi();
 (()=>{const u=new URL(location.href);if(u.searchParams.has("share")){const s=[u.searchParams.get("url"),u.searchParams.get("text"),u.searchParams.get("title")].filter(Boolean).join(" ");
   history.replaceState(null,"",location.pathname);if(isLink(s))setTimeout(()=>importLink(s),300);else setTimeout(()=>toast("Ce partage ne contient pas de lien Discogs ou MusicBrainz."),300);}})();
-covAll().then(o=>{Object.assign(COV,o);render();let hide=false;try{hide=!!localStorage.getItem("enr-hide");}catch(e){}if(!hide)enrUi();});
+covAll().then(o=>{Object.assign(COV,o);render();enrUi();});
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
