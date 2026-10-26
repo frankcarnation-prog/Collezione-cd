@@ -746,7 +746,6 @@ function sleeve(x){const seed=[...x.t].reduce((s,c)=>s+c.charCodeAt(0),0),r=40+s
 const coverUrl=x=>COV[x.id]||x.img||(x.c1?sleeve(x):"");
 // Une œuvre étalée sur plusieurs CD d'un même coffret = 1 version (sauf enregistrements différents, indiqués par "rec")
 // Même compositeur + même numéro de catalogue = même œuvre, quelle que soit la langue du titre
-function workId(w,W){W=W||WORKS();const o=W[w];if(!o||!o.c)return w;const ck=catKey(o.t);return ck?"id:"+norm(canonC(o.c))+"|"+ck:w;}
 // Disque classique ? (sinon les « œuvres » MusicBrainz des chansons pop ne comptent pas)
 const OFFICIAL=new Set(COMPOSERS.map(c=>c[0]));
 // Intitulés de section (pas des œuvres) : "Bonus Tracks", "Live", "Face A"…
@@ -757,9 +756,11 @@ let _V=null,_Vk="";
 function versions(){const vk=DATAV+"|"+S.col.length+"|"+S.wish.length+"|"+_Wn+"|"+(S.works===_Wref);if(_V&&_Vk===vk)return _V;const v=versions0();_V=v;_Vk=DATAV+"|"+S.col.length+"|"+S.wish.length+"|"+_Wn+"|"+(S.works===_Wref);return v;}
 function versions0(){const v={},W=WORKS();[[S.col,true],[S.wish,false]].forEach(([arr,own])=>arr.forEach(x=>{if(!isClassical(x,W))return;const seen=new Set();discsOf(x).forEach((d,di)=>{
   d.tr.forEach(t=>{if(typeof t==="string"||!t.w)return;const id=workId(t.w,W),k=id+"|"+(d.rec||"");if(seen.has(k))return;seen.add(k);
-    if(!v[id]){v[id]=[];v[id].rep=t.w;}v[id].push({x,di,d,own});});});}));return v;}
+    if(!v[id]){v[id]=[];v[id].rep=t.w;}else if(repScore(W[t.w])>repScore(W[v[id].rep]))v[id].rep=t.w;v[id].push({x,di,d,own});});});}));return v;}
+// Display title for a group: prefer one with a catalogue number, then a reasonably long one (not a bare "Symphony No. 5")
+function repScore(o){const t=(o&&o.t)||"";return (catKey(t)?1000:0)+Math.min(t.length,80)-(t.length>80?t.length-80:0);}
 function renderStats(){const cds=S.col.reduce((n,x)=>n+discsOf(x).length,0);
-  const nw=Object.keys(versions()).length;$("stats").textContent=S.col.length+" album"+(S.col.length!==1?"s":"")+(cds>S.col.length?" ("+cds+" CDs)":"")+" · "+S.wish.length+" on wishlist · "+nw+" classical work"+(nw!==1?"s":"");
+  $("stats").textContent=S.col.length+" album"+(S.col.length!==1?"s":"")+(cds>S.col.length?" ("+cds+" CDs)":"")+" · "+S.wish.length+" on wishlist";
   $("demoTag").hidden=!S.demo;}
 
 // ---------- Listes ----------
@@ -1047,10 +1048,66 @@ async function mbLookup(code){
   return mbRelease(rel.id);}
 const MVT=/^(.*?):\s+((?:[IVXLC]+|\d+|No\.?\s*\d+|N°\s*\d+)[.\s:-].*)$/;
 // Numéro de catalogue d'une œuvre : "op. 9 n° 2" → op9-2, "BWV 565" → bwv565, "K. 331" → k331…
+// ---------- Work identity ----------
+// Two works are the same piece when they share a composer and either a catalogue number (Op., BWV, K., D., Hob., RV…),
+// or a form + number (Symphony No. 5) or form + key (Nocturne in E-flat major), whatever the language,
+// or, failing that, the same words in any order.
+const CAT_OP=/\bop(?:p|us)?\.?\s*(?:posth\.?\s*)?(\d+[a-z]?)(?:\s*,?\s*(?:no|nr|n)\.?\s*(\d+)|\s*[-\/](\d+)\b)?/;
+const CAT_ID=/\b(bwv|buxwv|hwv|rv|kv|k|d|hob|wwv|sz|kk|wq|trv|s|l|p|woo|anh)\.?\s*((?:[ivx]+|[a-z])\s*[:.]?\s*)?(\d+[a-z]?)\b/;
 function catKey(t){const s=norm(t||"").replace(/n[°º]\s*/g,"no ").replace(/\s+/g," ");
-  let m=s.match(/\bop(?:us)?\.?\s*(\d+[a-z]?)(?:\s*,?\s*(?:no|nr|n)\.?\s*(\d+)|\s*[-\/](\d+)\b)?/);if(m)return "op"+m[1]+(m[2]||m[3]?"-"+(m[2]||m[3]):"");
-  m=s.match(/\b(bwv|buxwv|hwv|rv|kv|k|d|hob|wwv|sz|kk|wq|trv|s|l|p)\.?\s*((?:[ivx]+|[a-z])\s*[:.]?\s*)?(\d+[a-z]?)\b/);
+  let m=s.match(CAT_OP);if(m)return "op"+m[1]+(m[2]||m[3]?"-"+(m[2]||m[3]):"");
+  m=s.match(CAT_ID);
   if(m)return (m[1]==="kv"?"k":m[1])+(m[2]?m[2].replace(/[\s:.]/g,""):"")+m[3];return "";}
+const FORM_RX=[["symphony",/\b(symphon\w*|sinfon\w*|symfon\w*)/],["concerto",/\b(concert[oi]s?|konzert\w*|concierto\w*)\b/],["sonata",/\bsonat(?!in)\w*/],
+  ["quartet",/\b(quartets?|quatuors?|quartett\w*|cuarteto\w*)\b/],["quintet",/\b(quintets?|quintettes?|quintett\w*|quinteto\w*)\b/],["trio",/\btrios?\b/],
+  ["suite",/\bsuites?\b/],["partita",/\bpartitas?\b/],["prelude",/\b(preludes?|praeludi\w*|preludio\w*)\b/],["fugue",/\b(fugues?|fugas?|fugen)\b/],
+  ["nocturne",/\b(nocturn\w*|nottur\w*)\b/],["etude",/\b(etudes?|studies|study|studi[eo]?|estudios?)\b/],["mazurka",/\bma[zs]urk\w*/],
+  ["waltz",/\b(waltz\w*|valses?|walzer|valzer|vals)\b/],["polonaise",/\b(polonaises?|polacca|polonesa|polonaisen)\b/],["ballade",/\b(ballades?|ballads?|ballata|balada)\b/],
+  ["scherzo",/\bscherz\w*/],["impromptu",/\bimpromptu\w*/],["rhapsody",/\b(rhapsod\w*|rapsod\w*)\b/],["fantasia",/\b(fantas\w*|fantais\w*)\b/],
+  ["variations",/\b(variations?|variazion\w*|variacion\w*|variationen)\b/],["overture",/\b(overtures?|ouvertures?|ouverturen)\b/],["serenade",/\b(serenad\w*|serenata\w*)\b/],
+  ["toccata",/\btoccat\w*/],["intermezzo",/\bintermezz\w*/],["romance",/\b(romances?|romanze\w*|romanza)\b/],["mass",/\b(mass|messe|messa|missa)\b/],
+  ["requiem",/\brequiem\b/],["cantata",/\bcantat\w*/],["capriccio",/\bcapric\w*/],["divertimento",/\bdivertiment\w*/]];
+const INSTR_RX=[["piano",/\b(piano|pianoforte|fortepiano|klavier|clavier)\b/],["violin",/\b(violin|violon|violino|geige)\b/],["viola",/\bviola\b/],
+  ["cello",/\b(cello|violoncel\w*)\b/],["flute",/\b(flute|flauto|flote)\b/],["clarinet",/\b(clarinet\w*|clarinette|klarinette)\b/],["oboe",/\boboe\b/],
+  ["horn",/\bhorn\b/],["organ",/\b(organ|orgue|orgel|organo)\b/],["harpsichord",/\b(harpsichord|clavecin|cembalo|clavicembalo)\b/],
+  ["guitar",/\b(guitar\w*|guitare|chitarra|gitarre)\b/],["string",/\b(string|strings|streich|cordes|archi|cuerdas)\b/],["trumpet",/\b(trumpet|trompette|tromba)\b/],
+  ["bassoon",/\b(bassoon|basson|fagott)\b/]];
+const KEYBOARD_SONATA=new Set(["ludwig van beethoven","wolfgang amadeus mozart","joseph haydn","franz schubert","domenico scarlatti","frederic chopin","franz liszt","robert schumann","muzio clementi","alexander scriabin","sergei prokofiev","sergei rachmaninoff"].map(norm));
+const ROM_NOTE={ut:"c",do:"c",re:"d",mi:"e",fa:"f",sol:"g",la:"a",si:"b"};
+function parseKey(t){let m,n,a,md;
+  if(m=t.match(/\b(?:in|en)\s+(ut|do|re|mi|fa|sol|la|si)[\s-]*(diese|diesis|sostenido|bemol|bemolle)?[\s-]*(majeur|mineur|maggiore|minore|mayor|menor)\b/)){
+    n=ROM_NOTE[m[1]];a=m[2]?(/^b/.test(m[2])?"b":"#"):"";md=/^(maj|may)/.test(m[3])?"M":"m";return n+a+md;}
+  if(m=t.match(/\b([a-h])(is|es|s)?[\s-]*(dur|moll)\b/)){n=m[1];a=m[2]==="is"?"#":m[2]?"b":"";
+    if(n==="h"){n="b";a="";}else if(n==="b"&&!m[2])a="b";return n+a+(m[3]==="dur"?"M":"m");}
+  if(m=t.match(/\b([a-g])[\s-]*(sharp|flat|#|b)?[\s-]*(major|minor)\b/)){a=m[2]?(m[2]==="#"||m[2]==="sharp"?"#":"b"):"";return m[1]+a+(m[3]==="major"?"M":"m");}
+  return "";}
+const _wd={};
+function workDesc(comp,title){const ck=comp+"|"+title;if(_wd[ck])return _wd[ck];
+  const cat=catKey(title);
+  let t=norm(title||"").replace(/n[°º]\s*/g,"no ").replace(/#\s*(\d)/g,"no $1").replace(/\bnr\.?\s*(?=\d)/g,"no ").replace(/\bnum(?:ero|ber)?\.?\s*(?=\d)/g,"no ").replace(/\bn\.\s*(?=\d)/g,"no ")
+    .replace(/(\bop(?:p|us)?\.?\s*(?:posth\.?\s*)?\d+[a-z]?)\s*[-\/]\s*(\d+)\b/g,"$1 no $2");
+  t=t.replace(/["“”«»][^"“”«»]*["“”«»]/g," ").replace(/\([^)]*\)/g," ").replace(/\[[^\]]*\]/g," ").replace(/\bop(?:p|us)?\.?\s*(?:posth\.?\s*)?\d+[a-z]?/g," ").replace(new RegExp(CAT_ID.source,"g")," ");
+  const form=(FORM_RX.find(([,r])=>r.test(t))||[])[0]||"";
+  let num=(t.match(/\bno\.?\s*(\d{1,3})\b/)||[])[1]||"";
+  if(!num&&form){const m=t.match(/\b(?:symphon|sinfon|symfon|concert|konzert|concierto|sonat|quartet|quatuor|quartett|quintet|trio|suite|partita)\w*\s+(\d{1,3})\b/);if(m)num=m[1];else{const m2=t.match(/\b(\d{1,3})\.?\s*(?:symphon|sinfon|symfon|sonat|quartet|quatuor|quartett|quintet|trio|suite|partita|concert|konzert)/);if(m2)num=m2[1];}}
+  let ins=INSTR_RX.filter(([,r])=>r.test(t)).map(a=>a[0]);if(ins.length>1)ins=ins.filter(i=>i!=="piano");
+  if(form==="sonata"&&!ins.length&&KEYBOARD_SONATA.has(comp))ins=["piano"];
+  const key=parseKey(t),desc=form&&(num||key)?form+"/"+ins.join("+")+"/"+(num||key):"";
+  const stop=/\b(the|an|le|la|les|des|de|du|il|lo|gli|der|die|das|ein|eine|von|in|en|for|pour|per|fur|and|et|und|no|nos|op|opus)\b/g;
+  const slug=norm(title||"").replace(new RegExp(CAT_OP.source,"g")," ").replace(new RegExp(CAT_ID.source,"g")," ").replace(/[^a-z0-9]+/g," ").replace(stop," ").trim().split(/\s+/).filter(Boolean).sort().join(" ");
+  return _wd[ck]={cat,desc,slug};}
+const WIDX=new WeakMap();
+function buildWorkIndex(W){const P=new Map(),find=a=>{let r=a;while(P.get(r)!==r&&P.has(r))r=P.get(r);let c=a;while(c!==r){const n=P.get(c);P.set(c,r);c=n;}return r;},
+  uni=(a,b)=>{if(!P.has(a))P.set(a,a);if(!P.has(b))P.set(b,b);const x=find(a),y=find(b);if(x!==y)P.set(x,y);};
+  const info=[],cats=new Map();
+  for(const w in W){const o=W[w];if(!o||!o.c)continue;const comp=norm(canonC(o.c)),d=workDesc(comp,o.t);
+    const e={w,cat:d.cat?"c:"+comp+"|"+d.cat:"",weak:[d.desc?"d:"+comp+"|"+d.desc:"",d.slug?"s:"+comp+"|"+d.slug:""].filter(Boolean)};info.push(e);
+    if(e.cat)e.weak.forEach(k=>{if(!cats.has(k))cats.set(k,new Set());cats.get(k).add(e.cat.replace(/-\d+$/,""));});}
+  // a weak key (form+number, same words) only links a work that has a catalogue number when it points to a single catalogue number
+  info.forEach(e=>{const n="w:"+e.w;uni(n,n);if(e.cat)uni(n,e.cat);e.weak.forEach(k=>{if(!e.cat||cats.get(k).size<2)uni(n,k);});});
+  const groups=new Map();info.forEach(e=>{const r=find("w:"+e.w);if(!groups.has(r))groups.set(r,{cat:"",weak:"",ws:[]});const g=groups.get(r);g.ws.push(e.w);if(e.cat&&(!g.cat||e.cat<g.cat))g.cat=e.cat;});
+  const out=new Map();groups.forEach(g=>{const id=g.cat?"id:"+g.cat.slice(2):"g:"+g.ws.slice().sort()[0];g.ws.forEach(w=>out.set(w,id));});return out;}
+function workId(w,W){W=W||WORKS();const o=W[w];if(!o||!o.c)return w;let ix=WIDX.get(W);if(!ix){ix=buildWorkIndex(W);WIDX.set(W,ix);}return ix.get(w)||w;}
 // "Œuvre, op. 43: Variation II: …" → [œuvre, mouvement]
 function splitMvt(title){const m=(title||"").match(MVT);if(m)return [m[1],m[2]];const i=(title||"").indexOf(": ");
   if(i>0&&catKey(title.slice(0,i)))return [title.slice(0,i),title.slice(i+2)];return null;}
@@ -1676,7 +1733,7 @@ async function importLink(s){const out=$("eanResult");$("scanPanel").hidden=fals
 
 
 // ---------- Réglages (panneau plein écran) ----------
-const APPV="0.46.0";$("hVer").textContent="v"+APPV;
+const APPV="0.47.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
