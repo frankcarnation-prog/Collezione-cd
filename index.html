@@ -251,6 +251,7 @@ b.warn{color:#e0a030;font-weight:600}
 .logl .item{gap:10px;padding:8px 2px;align-items:flex-start}.lt{flex:none;font-family:var(--mono);font-size:.78rem;color:var(--muted);padding-top:2px}.logl .meta span{font-size:.9rem}
 
 /* ===================== Thème « Platinum » : entre Mac OS 9 et Windows 98 ===================== */
+.subH{margin:16px 0 4px;font-size:.95rem}
 .rptOv{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}.rptOv[hidden]{display:none}
 .rpt{background:var(--surface,#fff);color:var(--ink,#111);border:1px solid var(--line,#ccc);border-radius:10px;max-width:460px;width:100%;max-height:85vh;overflow:auto;padding:16px 18px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
 .rptHd{display:flex;align-items:center;gap:10px;margin-bottom:8px}.rptHd h3{margin:0;font-size:1.05rem}
@@ -761,9 +762,16 @@ function classicalWork(w,o){if(o&&/^dg:/.test(w)&&!o.c&&!catKey(o.t))return fals
 function isClassical(x,W){W=W||WORKS();return tracksOf(x).some(t=>typeof t!=="string"&&t.w&&classicalWork(t.w,W[t.w]));}
 let _V=null,_Vk="";
 function versions(){const vk=DATAV+"|"+S.col.length+"|"+S.wish.length+"|"+_Wn+"|"+(S.works===_Wref);if(_V&&_Vk===vk)return _V;const v=versions0();_V=v;_Vk=DATAV+"|"+S.col.length+"|"+S.wish.length+"|"+_Wn+"|"+(S.works===_Wref);return v;}
-function versions0(){const v={},W=WORKS();[[S.col,true],[S.wish,false]].forEach(([arr,own])=>arr.forEach(x=>{if(!isClassical(x,W))return;const seen=new Set();discsOf(x).forEach((d,di)=>{
-  d.tr.forEach(t=>{if(typeof t==="string"||!t.w)return;const id=workId(t.w,W),k=id+"|"+(d.rec||"");if(seen.has(k))return;seen.add(k);
-    if(!v[id]){v[id]=[];v[id].rep=t.w;}else if(repScore(W[t.w])>repScore(W[v[id].rep]))v[id].rep=t.w;v[id].push({x,di,d,own});});});}));return v;}
+let _Pc={};
+function versions0(){const v={},P={},W=WORKS();[[S.col,true],[S.wish,false]].forEach(([arr,own])=>arr.forEach(x=>{if(!isClassical(x,W))return;const seen=new Set(),pseen=new Set();discsOf(x).forEach((d,di)=>{
+  d.tr.forEach(t=>{if(typeof t==="string"||!t.w)return;
+    const pc=trackPiece(t.w,W,t);if(pc){const pk=pc.id+"|"+di;if(!pseen.has(pk)){pseen.add(pk);const e=P[pc.id]||(P[pc.id]={label:pc.label,num:pc.num,cyc:new Set(),vs:[]});e.cyc.add(t.w);e.vs.push({x,di,d,own,tn:t.n,piece:true});}}
+    const id=workId(t.w,W),k=id+"|"+(d.rec||"");if(seen.has(k))return;seen.add(k);
+    if(!v[id]){v[id]=[];v[id].rep=t.w;}else if(repScore(W[t.w])>repScore(W[v[id].rep]))v[id].rep=t.w;v[id].push({x,di,d,own});});});}));
+  Object.keys(P).forEach(id=>{if(v[id])P[id].vs.forEach(e=>v[id].push(e));});_Pc=P;return v;}
+function pieces(){versions();return _Pc;}
+const pieceN=id=>{const v=versions(),P=_Pc;return v[id]?v[id].length:(P[id]?P[id].vs.length:0);};
+const verRows=vs=>vs.map(e=>`<li class="item tap" data-open="${e.x.id}"><img class="cover" src="${coverUrl(e.x)}" alt=""><div class="meta"><b>${esc(firstPerf(e.x.perf)||e.x.a)}</b><small>${esc(e.d.rec||e.x.rec||e.x.y||"")}${e.d.t?" · "+esc(e.d.t):""}</small><small>${esc(e.x.t)}${e.x.box?" · CD "+(e.di+1):""}</small>${e.tn?`<small>Track: ${esc(e.tn)}</small>`:""}</div><span class="chip ${e.own?"own":"wish"}">${e.own?"Owned":"Wishlist"}</span></li>`).join("");
 // Display title for a group: prefer one with a catalogue number, then a reasonably long one (not a bare "Symphony No. 5")
 function repScore(o){const t=(o&&o.t)||"";return (catKey(t)?1000:0)+Math.min(t.length,80)-(t.length>80?t.length-80:0);}
 function renderStats(){const cds=S.col.reduce((n,x)=>n+discsOf(x).length,0);
@@ -1069,7 +1077,7 @@ const MVT=/^(.*?):\s+((?:[IVXLC]+|\d+|No\.?\s*\d+|N°\s*\d+)[.\s:-].*)$/;
 // Two works are the same piece when they share a composer and either a catalogue number (Op., BWV, K., D., Hob., RV…),
 // or a form + number (Symphony No. 5) or form + key (Nocturne in E-flat major), whatever the language,
 // or, failing that, the same words in any order.
-const CAT_OP=/\bop(?:p|us)?\.?\s*(?:posth\.?\s*)?(\d+[a-z]?)(?:\s*,?\s*(?:no|nr|n)\.?\s*(\d+)|\s*[-\/](\d+)\b)?/;
+const CAT_OP=/\bop(?:p|us)?\.?\s*(?:posth\.?\s*)?(\d+[a-z]?)(?:\s*[,:;]?\s*(?:no|nr|n)\.?\s*(\d+)|\s*[-\/](\d+)\b)?/;
 const CAT_ID=/\b(bwv|buxwv|hwv|rv|kv|k|d|hob|wwv|sz|kk|wq|trv|s|l|p|woo|anh)\.?\s*((?:[ivx]+|[a-z])\s*[:.]?\s*)?(\d+[a-z]?)\b/;
 function catKey(t){const s=norm(t||"").replace(/n[°º]\s*/g,"no ").replace(/\s+/g," ");
   let m=s.match(CAT_OP);if(m)return "op"+m[1]+(m[2]||m[3]?"-"+(m[2]||m[3]):"");
@@ -1118,7 +1126,8 @@ function buildWorkIndex(W){const P=new Map(),find=a=>{let r=a;while(P.get(r)!==r
   uni=(a,b)=>{if(!P.has(a))P.set(a,a);if(!P.has(b))P.set(b,b);const x=find(a),y=find(b);if(x!==y)P.set(x,y);};
   const info=[],cats=new Map();
   for(const w in W){const o=W[w];if(!o||!o.c)continue;const comp=norm(canonC(o.c)),d=(S.wsp&&S.wsp[w])?{cat:"",desc:"",slug:""}:workDesc(comp,o.t);
-    const e={w,cat:d.cat?"c:"+comp+"|"+d.cat:"",weak:[d.desc?"d:"+comp+"|"+d.desc:"",d.slug?"s:"+comp+"|"+d.slug:""].filter(Boolean)};info.push(e);
+    const cc=d.cat||catKey(o.cat||"");
+    const e={w,cat:cc?"c:"+comp+"|"+cc:"",weak:[d.desc?"d:"+comp+"|"+d.desc:"",d.slug?"s:"+comp+"|"+d.slug:""].filter(Boolean)};info.push(e);
     if(e.cat)e.weak.forEach(k=>{if(!cats.has(k))cats.set(k,new Set());cats.get(k).add(e.cat.replace(/-\d+$/,""));});}
   // a weak key (form+number, same words) only links a work that has a catalogue number when it points to a single catalogue number
   info.forEach(e=>{const n="w:"+e.w;uni(n,n);if(e.cat)uni(n,e.cat);e.weak.forEach(k=>{if(!e.cat||cats.get(k).size<2)uni(n,k);});});
@@ -1127,6 +1136,22 @@ function buildWorkIndex(W){const P=new Map(),find=a=>{let r=a;while(P.get(r)!==r
   const groups=new Map();info.forEach(e=>{const r=find("w:"+e.w);if(!groups.has(r))groups.set(r,{cat:"",weak:"",ws:[]});const g=groups.get(r);g.ws.push(e.w);if(e.cat&&(!g.cat||e.cat<g.cat))g.cat=e.cat;});
   const out=new Map();groups.forEach(g=>{const id=g.cat?"id:"+g.cat.slice(2):"g:"+g.ws.slice().sort()[0];g.ws.forEach(w=>out.set(w,id));});
   out.members=new Map();out.forEach((id,w)=>{if(!out.members.has(id))out.members.set(id,[]);out.members.get(id).push(w);});return out;}
+// Pieces inside a cycle: "Prelude No. 15 in D-flat major" in a work "24 Preludes, Op. 28" is the piece Op. 28 No. 15,
+// the same piece as a stand-alone "Prélude op. 28 n° 15 « La goutte d'eau »" on another album.
+const CYCLE_FORMS=new Set(["prelude","etude","nocturne","mazurka","waltz","polonaise","impromptu","intermezzo","fugue","ballade"]);
+function fmtCat(c){let m=c.match(/^op(\d+[a-z]?)(?:-(\d+))?$/);if(m)return "Op. "+m[1]+(m[2]?" No. "+m[2]:"");m=c.match(/^([a-z]+?)(\d.*)$/);return m?m[1].toUpperCase()+" "+m[2]:c;}
+function trackPiece(w,W,t){const o=W[w];if(!o||!o.c||!t||typeof t==="string")return null;
+  const wc=catKey(o.t)||catKey(o.cat||"");if(!wc||wc.includes("-"))return null;
+  const nm=(t.n||"").trim();if(!nm)return null;
+  const s=norm(nm).replace(/n[°º]\s*/g,"no ").replace(/#\s*(\d)/g,"no $1").replace(/\bnr\.?\s*(?=\d)/g,"no ");
+  const ci=s.lastIndexOf(": "),body=ci>=0&&ci<s.length-3?s.slice(ci+2):s,head=body.slice(0,48);
+  const hf=FORM_RX.find(([,r])=>{const m=r.exec(head);return m&&m.index<=12;}),wf=(FORM_RX.find(([,r])=>r.test(norm(o.t)))||[])[0];
+  let num=(head.match(/\bno\.?\s*(\d{1,3})\b/)||[])[1];
+  if(!num&&hf){const m=head.match(new RegExp(hf[1].source+"\\s+(\\d{1,3})\\b"));if(m)num=m[m.length-1];}
+  const form=hf?hf[0]:(/^no\.?\s*\d/.test(head)?wf:"");
+  if(!num||!form||!CYCLE_FORMS.has(form)||(wf&&wf!==form&&hf))return null;
+  const own=catKey(nm),oc=own&&own.includes("-")?own:wc+"-"+num;
+  return {id:"id:"+norm(canonC(o.c))+"|"+oc,label:(ci>=0&&ci<nm.length-3?nm.slice(nm.lastIndexOf(": ")+2):nm)+(/\bop(?:us)?\.?\s*\d|\b(?:bwv|k|d|hob)\.?\s*\d/i.test(nm)?"":" ("+fmtCat(oc)+")"),num:+num,wc};}
 function groupMembers(w){const W=WORKS(),id=workId(w,W),ix=WIDX.get(W);return (ix&&ix.members&&ix.members.get(id))||[w];}
 function workId(w,W){W=W||WORKS();const o=W[w];if(!o||!o.c)return w;let ix=WIDX.get(W);if(!ix){ix=buildWorkIndex(W);WIDX.set(W,ix);}return ix.get(w)||w;}
 // "Œuvre, op. 43: Variation II: …" → [œuvre, mouvement]
@@ -1222,13 +1247,23 @@ $("catno").addEventListener("keydown",e=>{if(e.key==="Enter")$("catGo").click();
 
 // ---------- Fiches ----------
 function openWork(w){const o=WORKS()[w],vs=versions()[workId(w)]||[],p=$("detail");if(!o)return;CUR=()=>openWork(w);
+  const mem=new Set(groupMembers(w)),P=pieces(),pids=Object.keys(P).filter(id=>[...P[id].cyc].some(k=>mem.has(k))).sort((a,b)=>P[a].num-P[b].num);
+  const PC=pids.length?`<h3 class="subH">Pieces in this work (${pids.length})</h3><ul class="list pcs">${pids.map(id=>`<li class="item tap" data-piece="${esc(id)}"><div class="meta"><b>${esc(P[id].label)}</b><small>${pieceN(id)} version${pieceN(id)!==1?"s":""} in your collection and wishlist</small></div><span class="count">${pieceN(id)}</span></li>`).join("")}</ul>`:"";
   p.innerHTML=`<p class="cat">${esc(canonC(o.c))}</p><h2 class="wh">${esc(wLabel(w))}</h2><p class="hint">${vs.length} version${vs.length!==1?"s":""} in your collection and wishlist</p>
-   <ul class="list">${vs.map(e=>`<li class="item tap" data-open="${e.x.id}"><img class="cover" src="${coverUrl(e.x)}" alt=""><div class="meta"><b>${esc(firstPerf(e.x.perf)||e.x.a)}</b><small>${esc(e.d.rec||e.x.rec||e.x.y||"")}${e.d.t?" · "+esc(e.d.t):""}</small><small>${esc(e.x.t)}${e.x.box?" · CD "+(e.di+1):""}</small></div><span class="chip ${e.own?"own":"wish"}">${e.own?"Owned":"Wishlist"}</span></li>`).join("")}</ul>
+   <ul class="list">${verRows(vs)}</ul>${PC}
    <details class="more"><summary>⋯ Fix grouping</summary><div class="mgrp"><button type="button" class="setItem" id="wMerge"><b>Merge with another work…</b><small>Group it with other versions of the same piece</small></button>${groupMembers(w).length>1||(S.wl&&S.wl[w])?`<button type="button" class="setItem" id="wSplit"><b>Split from this group</b><small>Make it a separate work</small></button>`:""}</div></details>
    <div class="${BACK.length?"pair":"row"}">${BACK.length?`<button type="button" id="detBack">← Back</button>`:""}<button type="button" id="detClose">Close</button></div>`;
   openSheet();$("wMerge").onclick=()=>subView(()=>openMerge(w));
   if($("wSplit"))$("wSplit").onclick=()=>{S.wsp=S.wsp||{};S.wsp[w]=1;if(S.wl)delete S.wl[w];save();toast("Work split from its group");render();openWork(w);};
   $("detClose").onclick=()=>closeSheet();if($("detBack"))$("detBack").onclick=goBack;
+  p.querySelectorAll("[data-open]").forEach(n=>n.onclick=()=>subView(()=>openDetail(n.dataset.open)));
+  p.querySelectorAll("[data-piece]").forEach(n=>n.onclick=()=>subView(()=>openPiece(n.dataset.piece)));}
+function openPiece(id){const v=versions(),P=_Pc;if(v[id]){openWork(v[id].rep);return;}const e=P[id],p=$("detail");if(!e)return;CUR=()=>openPiece(id);
+  const comp=id.slice(3).split("|")[0];
+  p.innerHTML=`<p class="cat">${esc(canonC(comp)||comp)}</p><h2 class="wh">${esc(e.label)}</h2><p class="hint">${e.vs.length} version${e.vs.length!==1?"s":""} in your collection and wishlist</p>
+   <ul class="list">${verRows(e.vs)}</ul>
+   <div class="${BACK.length?"pair":"row"}">${BACK.length?`<button type="button" id="detBack">← Back</button>`:""}<button type="button" id="detClose">Close</button></div>`;
+  openSheet();$("detClose").onclick=()=>closeSheet();if($("detBack"))$("detBack").onclick=goBack;
   p.querySelectorAll("[data-open]").forEach(n=>n.onclick=()=>subView(()=>openDetail(n.dataset.open)));}
 function openMerge(w){const W=WORKS(),o=W[w],V=versions(),gid=workId(w,W),comp=norm(canonC(o.c)),p=$("detail");CUR=()=>openMerge(w);
   const opts=Object.keys(V).filter(id=>id!==gid&&W[V[id].rep]&&norm(canonC(W[V[id].rep].c))===comp).map(id=>({t:V[id].rep,n:V[id].length})).sort((a,b)=>wLabel(a.t).localeCompare(wLabel(b.t)));
@@ -1784,7 +1819,7 @@ async function importLink(s){const out=$("eanResult");$("scanPanel").hidden=fals
 
 
 // ---------- Réglages (panneau plein écran) ----------
-const APPV="0.49.0";$("hVer").textContent="v"+APPV;
+const APPV="0.50.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
