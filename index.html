@@ -252,7 +252,9 @@ b.warn{color:#e0a030;font-weight:600}
 
 /* ===================== Thème « Platinum » : entre Mac OS 9 et Windows 98 ===================== */
 .subH{margin:16px 0 4px;font-size:.95rem}
-.mvHint{list-style:none;padding:8px 2px}.mvHint button{margin-left:6px}
+.mvHint{list-style:none;padding:8px 2px}
+.rptDot{flex:none;width:10px;height:10px;border-radius:50%;background:#1565c0;margin:0 4px}.rptDot.ok{background:#1a7f37}.rptDot.err{background:#b3261e}.rptDot.warn{background:#b26a00}
+.gsug .list{margin:6px 0}.gsug .list .item{padding:6px 0}.mvHint button{margin-left:6px}
 .rptOv{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}.rptOv[hidden]{display:none}
 .rpt{background:var(--surface,#fff);color:var(--ink,#111);border:1px solid var(--line,#ccc);border-radius:10px;max-width:460px;width:100%;max-height:85vh;overflow:auto;padding:16px 18px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
 .rptHd{display:flex;align-items:center;gap:10px;margin-bottom:8px}.rptHd h3{margin:0;font-size:1.05rem}
@@ -465,13 +467,14 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 <button type="button" class="setItem" id="tbGroup"><b>Group into box sets</b><small id="tbGroupN">Automatic suggestions</small></button>
 </div></section>
 <section class="win" id="tw-hist"><div class="wtitle">History</div><div class="wbody">
+<button type="button" class="setItem" id="rptsOpen"><b>Reports</b><small>Full results of past operations, with links to the albums concerned</small></button>
 <button type="button" class="setItem" id="logOpen"><b>Activity log</b><small>All actions, manual and automatic</small></button>
 <button type="button" class="setItem" id="trashOpen"><b>Trash and old versions</b><small>Deleted albums and previous entry versions</small></button>
 </div></section>
 </div></div>
 <div class="lightbox" id="lightbox" hidden></div>
 <div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
-<div class="rptOv" id="rpt" hidden><div class="rpt" role="alertdialog" aria-modal="true" aria-labelledby="rptT" aria-describedby="rptB"><div class="rptHd"><span class="rptI" id="rptI" aria-hidden="true"></span><h3 id="rptT"></h3></div><p id="rptB"></p><ul id="rptL"></ul><p class="hint" id="rptH"></p><div class="row"><button type="button" class="primary" id="rptOk">OK</button></div></div></div>
+<div class="rptOv" id="rpt" hidden><div class="rpt" role="alertdialog" aria-modal="true" aria-labelledby="rptT" aria-describedby="rptB"><div class="rptHd"><span class="rptI" id="rptI" aria-hidden="true"></span><h3 id="rptT"></h3></div><p id="rptB"></p><ul id="rptL"></ul><p class="hint" id="rptH"></p><div class="row"><button type="button" id="rptFull" hidden>View full report</button><button type="button" class="primary" id="rptOk">OK</button></div></div></div>
 <div class="selbar" id="selBar" hidden><span id="selTxt"></span><button type="button" class="primary" id="selBox" disabled>Group into box set</button><button type="button" id="selCancel" aria-label="Cancel selection">✕</button></div>
 <p class="empty" id="more" hidden></p>
 
@@ -894,7 +897,7 @@ function renderComposers(){const v=versions(),W=WORKS(),byC={};
       ids.sort((a,b)=>W[v[a].rep].t.localeCompare(W[v[b].rep].t,"fr",{numeric:true})).map(id=>{const vs=v[id],w=vs.rep,own=vs.filter(e=>e.own).length;
         return `<li class="item tap" data-work="${esc(w)}"><div class="meta"><b>${esc(wLabel(w))}</b><small>${own} version${own!==1?"s":""} owned${vs.length>own?" · "+(vs.length-own)+" on wishlist":""}</small></div><span class="count">${vs.length}</span></li>`;}).join("")+`</ul>`;
     return fold("c:"+c,c,ids.length+" work"+(ids.length!==1?"s":"")+(cycTxt?" · "+Object.keys(cyc).length+" cycle"+(Object.keys(cyc).length>1?"s":""):""),inner);}).join("")||`<li class="empty">No classical works found yet.</li>`;}
-  if($("mvGo2"))$("mvGo2").onclick=linkMovements;
+  if($("mvGo2"))$("mvGo2").onclick=openMvConfirm;
 
 // ---------- Interprètes (surtout pour le classique) ----------
 const MAX_PERF=3;
@@ -984,10 +987,19 @@ function toast(msg,btn,fn){const t=$("toast");t.innerHTML=`<span>${esc(msg)}</sp
   if(btn)t.querySelector("button").onclick=()=>{t.hidden=true;fn();};clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true;},btn?7000:2500);}
 // Result dialog: tells the user whether an operation worked, with details, or why it failed and what to do
 let _rptCb=null;
-function report(kind,title,msg,list,hint,onClose){const o=$("rpt");o.firstElementChild.className="rpt "+kind;$("rptI").textContent={ok:"✓",err:"✕",warn:"!",info:"i"}[kind]||"i";
+// Every report is kept (last 50) in Tools → History → Reports, with all its details
+const RPT_KEY="album-ledger-reports",RPT_MAX=12;
+function reportsAll(){try{return JSON.parse(localStorage.getItem(RPT_KEY)||"[]");}catch(e){return [];}}
+function reportSave(r){try{const a=reportsAll();a.unshift(r);localStorage.setItem(RPT_KEY,JSON.stringify(a.slice(0,50)));}catch(e){}}
+const rItem=it=>typeof it==="string"?{t:it}:it;
+function report(kind,title,msg,list,hint,onClose){const o=$("rpt"),items=(list||[]).map(rItem);reportSave({at:Date.now(),kind,title,msg:msg||"",items,hint:hint||""});
+  o.firstElementChild.className="rpt "+kind;$("rptI").textContent={ok:"✓",err:"✕",warn:"!",info:"i"}[kind]||"i";
   $("rptT").textContent=title;$("rptB").textContent=msg||"";$("rptB").hidden=!msg;
-  $("rptL").innerHTML=(list||[]).map(x=>`<li>${esc(x)}</li>`).join("");$("rptL").hidden=!(list&&list.length);
+  $("rptL").innerHTML=items.slice(0,RPT_MAX).map(it=>`<li>${it.id&&byId(it.id)?`<button type="button" class="linklike" data-ropen="${esc(it.id)}">${esc(it.t)}</button>`:esc(it.t)}</li>`).join("")+(items.length>RPT_MAX?`<li>…and ${items.length-RPT_MAX} more (see the full report)</li>`:"");
+  $("rptL").hidden=!items.length;$("rptFull").hidden=items.length<=RPT_MAX;
   $("rptH").textContent=hint||"";$("rptH").hidden=!hint;_rptCb=onClose||null;o.hidden=false;$("rptOk").focus();}
+$("rptL").addEventListener("click",e=>{const b=e.target.closest("[data-ropen]");if(!b)return;reportClose();openDetail(b.dataset.ropen);});
+$("rptFull").onclick=()=>{reportClose();openReport(0);};
 function reportClose(){const o=$("rpt");if(o.hidden)return;o.hidden=true;const f=_rptCb;_rptCb=null;if(f)f();}
 $("rptOk").onclick=reportClose;$("rpt").addEventListener("click",e=>{if(e.target===$("rpt"))reportClose();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("rpt").hidden){e.stopPropagation();reportClose();}},true);
@@ -1817,6 +1829,23 @@ function viewPhoto(id,i){const a=COV["ph:"+id]||[],lb=$("lightbox");if(!a[i])ret
     COV[id]=small;await covPut(id,small);await phSet(id,b);lb.hidden=true;render();openDetail(id);toast("Cover changed");};}
 
 
+// One album as a tappable row (cover, title, artist, year); tapping opens its entry
+function albumRow(x,sub){const cu=coverUrl(x),n=discsOf(x).length;return `<li class="item tap" data-open="${esc(x.id)}">${cu?`<img class="cover" src="${cu}" alt="" onerror="this.remove()">`:`<span class="disc"></span>`}<div class="meta"><b>${esc(x.t)}</b><small>${esc([x.a,x.y,x.l].filter(Boolean).join(" · "))}${n>1?" · "+n+" CDs":tracksOf(x).length?" · "+tracksOf(x).length+" tracks":""}</small>${sub?`<small>${esc(sub)}</small>`:""}</div><span class="go" aria-hidden="true">›</span></li>`;}
+const bindOpen=p=>p.querySelectorAll("[data-open]").forEach(n=>n.onclick=e=>{e.stopPropagation();subView(()=>openDetail(n.dataset.open));});
+const fmtWhen=t=>new Date(t).toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+function openReports(){closeSettings();const p=$("detail"),R=reportsAll();CUR=()=>openReports();
+  p.innerHTML=`<p class="cat">Reports</p><h2 class="wh">${R.length} report${R.length!==1?"s":""}</h2><p class="hint">Results of operations (backup, restore, import, MusicBrainz linking…), with every detail. The last 50 are kept on this device.</p>
+   <ul class="list">${R.map((r,i)=>`<li class="item tap" data-ri="${i}"><span class="rptDot ${esc(r.kind)}" aria-hidden="true"></span><div class="meta"><b>${esc(r.title)}</b><small>${fmtWhen(r.at)}${r.items.length?" · "+r.items.length+" detail"+(r.items.length!==1?"s":""):""}</small>${r.msg?`<small>${esc(r.msg)}</small>`:""}</div><span class="go" aria-hidden="true">›</span></li>`).join("")||`<li class="empty">No reports yet.</li>`}</ul>
+   <div class="row">${R.length?`<button type="button" id="rpClear">Clear reports</button>`:""}<button type="button" id="rpClose">Close</button></div>`;
+  openSheet();$("rpClose").onclick=()=>closeSheet();if($("rpClear"))$("rpClear").onclick=()=>{try{localStorage.removeItem(RPT_KEY);}catch(e){}openReports();};
+  p.querySelectorAll("[data-ri]").forEach(n=>n.onclick=()=>subView(()=>openReport(+n.dataset.ri)));}
+function openReport(i){const r=reportsAll()[i],p=$("detail");if(!r)return;CUR=()=>openReport(i);
+  const rows=r.items.map(it=>{const x=it.id&&byId(it.id);return x?albumRow(x,it.why||it.t):`<li class="item"><div class="meta"><span>${esc(it.t)}</span></div></li>`;}).join("");
+  p.innerHTML=`<p class="cat">Report · ${fmtWhen(r.at)}</p><h2 class="wh">${esc(r.title)}</h2>${r.msg?`<p>${esc(r.msg)}</p>`:""}${r.hint?`<p class="hint">${esc(r.hint)}</p>`:""}
+   ${rows?`<ul class="list">${rows}</ul>`:""}
+   <div class="${BACK.length?"pair":"row"}">${BACK.length?`<button type="button" id="detBack">← Back</button>`:""}<button type="button" id="detClose">Close</button></div>`;
+  openSheet();$("detClose").onclick=()=>closeSheet();if($("detBack"))$("detBack").onclick=goBack;bindOpen(p);}
+$("rptsOpen").onclick=()=>openReports();
 function openTrash(){const p=$("detail"),T=S.trash||[];
   const lab=e=>e.k==="del"?"Deleted":e.k==="box"?"Grouped into “"+esc(e.into||"a box set")+"”":"Old version"+(e.why?" (before "+esc(e.why)+")":"");
   p.innerHTML=`<p class="cat">Trash and old versions</p><h2 class="wh">${T.length} item${T.length!==1?"s":""}</h2>
@@ -1849,7 +1878,7 @@ async function importLink(s){const out=$("eanResult");$("scanPanel").hidden=fals
 
 
 // ---------- Réglages (panneau plein écran) ----------
-const APPV="0.51.1";$("hVer").textContent="v"+APPV;
+const APPV="0.52.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -1911,13 +1940,13 @@ function groupSuggestions(){const by={},ign=new Set(S.noGroup||[]);
   [...S.col,...S.wish].forEach(x=>{const k=groupKey(x);if(k)(by[k]=by[k]||[]).push(x);});
   return Object.entries(by).filter(([k,xs])=>xs.length>1&&!ign.has(k)).map(([k,xs])=>({k,xs:xs.sort((a,b)=>a.t.localeCompare(b.t,"fr",{numeric:true}))}))
     .sort((a,b)=>b.xs.length-a.xs.length);}
-function openGroupSugg(){const p=$("detail"),G=groupSuggestions();
+function openGroupSugg(){const p=$("detail"),G=groupSuggestions();CUR=()=>openGroupSugg();
   p.innerHTML=`<p class="cat">To group</p><h2 class="wh">${G.length} suggestion${G.length!==1?"s":""}</h2><p class="hint">Albums by the same artist with titles differing only by a number (CD 1, Vol. 2, [Disc 3]…). Review before grouping: a series is not always a box set.</p>
    <ul class="list">${G.map((g,i)=>`<li class="item gsug"><div class="meta"><b>${esc(commonTitle(g.xs.map(x=>x.t)))}</b><small>${esc(g.xs[0].a)} · ${g.xs.length} albums${new Set(g.xs.map(x=>tNorm(x.t))).size<g.xs.length?" · <b class=\"warn\">identical titles: duplicate?</b>":""}</small>
-     <details class="glist"><summary>Show the ${g.xs.length} titles</summary>${g.xs.map(x=>esc(x.t)).join("<br>")}</details>
+     <ul class="list">${g.xs.map(x=>albumRow(x)).join("")}</ul>
      <div class="pair"><button type="button" class="primary" data-g="${i}">Group</button><button type="button" data-gi="${i}">Ignore</button></div></div></li>`).join("")||`<li class="empty">No suggestions.</li>`}</ul>
    <div class="row"><button type="button" id="gsBack">Back</button></div>`;
-  openSheet();$("gsBack").onclick=openTodo;
+  openSheet();$("gsBack").onclick=openTodo;bindOpen(p);
   p.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>openBoxer(G[+b.dataset.g].xs.map(x=>x.id)));
   p.querySelectorAll("[data-gi]").forEach(b=>b.onclick=()=>{S.noGroup=(S.noGroup||[]).concat([G[+b.dataset.gi].k]);save();openGroupSugg();});}
 // ---------- Dissocier un coffret ----------
@@ -1985,30 +2014,45 @@ async function fetchCodesAll(){if(CB.run){CB.run=false;return;}const m=$("cbMsg"
 $("cbGo").onclick=fetchCodesAll;
 // ---------- Movements and pieces from MusicBrainz (for albums added before 0.51) ----------
 const MV={run:false};
-const mvTodo=()=>ALL().filter(x=>!x.mvT&&(x.mbid||codesOf(x.id).length)&&isClassical(x)&&tracksOf(x).some(t=>typeof t!=="string"&&t.w&&!t.mw));
+const mvTodo=()=>ALL().filter(x=>!(x.mvT>=2)&&(x.mbid||codesOf(x.id).length)&&isClassical(x)&&tracksOf(x).some(t=>typeof t!=="string"&&t.w&&!t.mw));
 function mvUi(){const n=mvTodo().length,s=$("mvN");if(s&&!MV.run)s.textContent=n?n+" classical album"+(n!==1?"s":"")+" to link (edition or barcode known)":"All albums with a known edition are linked ✓";}
 async function linkMovements(){if(MV.run){MV.run=false;return;}const todo=mvTodo(),m=$("mvMsg");
   if(!todo.length){report("info","Nothing to link","Every classical album with a known edition or barcode is already linked to MusicBrainz.",[],"Albums without a matched edition can be identified first with “Choose the right edition” in their entry.");return;}
   if(!navigator.onLine){report("err","No Internet connection","MusicBrainz cannot be reached.",[],"Connect to the Internet and try again.");return;}
-  MV.run=true;$("mvGo").querySelector("b").textContent="Stop";let n=0,ok=0,nt=0;const miss=[];try{MV.lock=await navigator.wakeLock?.request("screen");}catch(e){}
+  MV.run=true;$("mvGo").querySelector("b").textContent="Stop";let n=0,ok=0,nt=0;const fail=[],done=[];try{MV.lock=await navigator.wakeLock?.request("screen");}catch(e){}
   for(const x of todo){if(!MV.run)break;const txt=`Linking… ${n}/${todo.length} albums · ${nt} tracks identified. Keep the app open (about 1 album per second).`;m.textContent=txt;if($("mvGo2"))$("mvGo2").textContent="Linking "+n+"/"+todo.length+"… (stop)";
     try{let rid=x.mbid;const ds=discsOf(x);
       if(!rid){for(const c of codesOf(x.id)){const r=await mbGet("release/?query=barcode:"+c+"&limit=5");const f=(r.releases||[]).find(o=>o.barcode===c&&+o["track-count"]===tracksOf(x).length);if(f){rid=f.id;break;}}}
-      if(!rid){miss.push(x.t+": edition not found from its barcode");x.mvT=1;n++;continue;}
-      const d=await mbGet("release/"+rid+"?inc=recordings+recording-level-rels+work-rels+work-level-rels"),md=(d.media||[]).filter(o=>(o.tracks||[]).length);
-      if(md.length!==ds.length||md.some((o,i)=>o.tracks.length!==ds[i].tr.length)){miss.push(x.t+": track list differs from MusicBrainz ("+md.map(o=>o.tracks.length).join("+")+" vs "+ds.map(o=>o.tr.length).join("+")+")");x.mvT=1;n++;continue;}
-      let k=0;md.forEach((o,i)=>o.tracks.forEach((tk,j)=>{const t=ds[i].tr[j];if(typeof t==="string"||!t.w)return;const pr=((tk.recording||{}).relations||[]).find(r=>r.type==="performance"&&r.work);if(!pr)return;
+      if(!rid){fail.push({t:x.t+": edition not found from its barcode",id:x.id,why:"Edition not found on MusicBrainz from its barcode"});x.mvT=2;n++;continue;}
+      const d=await mbGet("release/"+rid+"?inc=recordings+recording-level-rels+work-rels+work-level-rels");
+      // match tracks: same total → by position (CD split may differ); otherwise by title and duration, in order
+      const loc=ds.flatMap(o=>o.tr),rem=(d.media||[]).flatMap(o=>o.tracks||[]);let pairs=[];
+      if(loc.length===rem.length)pairs=loc.map((t,q)=>[t,rem[q]]);
+      else{let from=0;loc.forEach(t=>{if(typeof t==="string")return;const ld=t.d||0;
+        for(let q=from;q<rem.length;q++){const tk=rem[q],rd=tk.length?Math.round(tk.length/1000):0,ttl=(tk.title||"")+" "+((tk.recording||{}).title||""),ov=overlap(t.n||"",ttl),dd=ld&&rd?Math.abs(ld-rd):99;
+          if((dd<=3&&ov>=.3)||(ov>=.7&&dd<=10)||(ov>=.85&&dd===99)){pairs.push([t,tk]);from=q+1;break;}}});}
+      const need=loc.filter(t=>typeof t!=="string"&&t.w).length;
+      if(!pairs.length||pairs.length<need*.5){fail.push({t:x.t+": tracks do not match MusicBrainz ("+loc.length+" here, "+rem.length+" there; "+pairs.length+" matched)",id:x.id,why:"Tracks do not match MusicBrainz ("+loc.length+" here, "+rem.length+" there)"});x.mvT=2;n++;continue;}
+      let k=0;pairs.forEach(([t,tk])=>{if(typeof t==="string"||!t.w)return;const pr=((tk.recording||{}).relations||[]).find(r=>r.type==="performance"&&r.work);if(!pr)return;
         t.mw=pr.work.id;const par=(pr.work.relations||[]).find(r=>r.type==="parts"&&r.direction==="backward"&&r.work);if(par&&par["ordering-key"])t.mo=+par["ordering-key"];
-        const wo=S.works[t.w],alone=ds[i].tr.filter(u=>u.w===t.w).length===1;
-        if(wo&&!wo.mb){if(par&&!alone)wo.mb=par.work.id;else if(alone&&!/^mb[pw]:/.test(t.w)&&!mvtNum(t.n))wo.mb=pr.work.id;}k++;}));
-      if(!x.mbid)x.mbid=rid;x.mvT=1;if(k){ok++;nt+=k;}else miss.push(x.t+": no work information on MusicBrainz");
-    }catch(e){miss.push(x.t+": "+(e.message||"error"));await sleep(2000);}
+        const wo=S.works[t.w],alone=loc.filter(u=>typeof u!=="string"&&u.w===t.w).length===1;
+        if(wo&&!wo.mb){if(par&&!alone)wo.mb=par.work.id;else if(alone&&!/^mb[pw]:/.test(t.w)&&!mvtNum(t.n))wo.mb=pr.work.id;}k++;});
+      if(!x.mbid)x.mbid=rid;x.mvT=2;
+      if(k){ok++;nt+=k;done.push({t:x.t+": "+k+" of "+need+" tracks identified",id:x.id,why:k+" of "+need+" tracks identified"+(loc.length!==rem.length?" (track lists differ; matched by title and duration)":"")});}
+      else fail.push({t:x.t+": no work information on MusicBrainz",id:x.id,why:"No work information on MusicBrainz for this edition"});
+    }catch(e){fail.push({t:x.t+": "+(e.message||"error"),id:x.id,why:e.message||"Error"});await sleep(2000);}
     n++;if(n%10===0)save();}
   const stopped=!MV.run;MV.run=false;try{MV.lock&&MV.lock.release();}catch(e){}$("mvGo").querySelector("b").textContent="Recognise movements and pieces";
   logA("Movements linked to MusicBrainz: "+nt+" tracks in "+ok+" albums","","auto");save();render();mvUi();m.textContent=`${ok} album${ok!==1?"s":""} linked, ${nt} tracks identified.`;
-  report(ok?(miss.length?"warn":"ok"):"err",stopped&&n<todo.length?"Linking stopped":"Linking complete",`${ok} of ${n} album${n!==1?"s":""} linked; ${nt} tracks now identified by their MusicBrainz work (movement, prelude, etc.).`,
-    miss.slice(0,12).concat(miss.length>12?["…and "+(miss.length-12)+" more"]:[]),miss.length?"Albums not linked keep the automatic recognition from their titles. For these, check the edition with “Choose the right edition”, then run this again.":"Open a work in the Classical tab to see each movement and its versions.");}
-$("mvGo").onclick=linkMovements;
+  report(ok?(fail.length?"warn":"ok"):"err",stopped&&n<todo.length?"Linking stopped":"Linking complete",`${ok} of ${n} album${n!==1?"s":""} linked; ${nt} tracks now identified by their MusicBrainz work (movement, prelude, etc.). ${fail.length} not linked.`,
+    fail.concat(done),fail.length?"Not linked albums are listed first; tap one to open it. They keep the automatic recognition from their titles. Check their edition with “Choose the right edition”, then run this again.":"Open a work in the Classical tab to see each movement and its versions.");}
+function openMvConfirm(){if(MV.run){MV.run=false;return;}const todo=mvTodo(),p=$("detail");if(!todo.length){linkMovements();return;}CUR=()=>openMvConfirm();
+  p.innerHTML=`<p class="cat">Classical music</p><h2 class="wh">Recognise movements and pieces</h2>
+   <p>${todo.length} album${todo.length!==1?"s":""} will be looked up on MusicBrainz (about ${Math.max(1,Math.round(todo.length*1.3/60))} min; keep the app open). Each track gets the identifier of the movement or piece it plays. Titles and track names are not changed.</p>
+   <details class="more"><summary>Show the ${todo.length} album${todo.length!==1?"s":""}</summary><ul class="list">${todo.map(x=>albumRow(x)).join("")}</ul></details>
+   <div class="pair"><button type="button" class="primary" id="mvStart">Start</button><button type="button" id="mvCancel">Cancel</button></div>`;
+  openSheet();bindOpen(p);$("mvCancel").onclick=()=>closeSheet();$("mvStart").onclick=()=>{closeSheet();linkMovements();};}
+$("mvGo").onclick=openMvConfirm;
 // ---------- Journal des activités ----------
 function openLog(filter){closeSettings();const p=$("detail"),L=(S.log||[]).filter(e=>!filter||(filter==="auto"?e.k==="auto":e.k!=="auto"));
   const day=t=>new Date(t).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});let cur="";
