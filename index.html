@@ -103,6 +103,7 @@ body.locked{overflow:hidden}
 .tr .t{overflow-wrap:anywhere}
 .tr.sub .t{padding-left:.6em}
 button.wk{display:flex;justify-content:space-between;align-items:baseline;gap:8px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px 0 4px;font-weight:600;font-size:.85rem;color:var(--ink)}
+button.wkv{display:inline;background:none;border:0;box-shadow:none;padding:0 0 0 6px;min-height:0;font-family:var(--mono);font-weight:400;font-size:.72rem;color:var(--accent);white-space:nowrap;cursor:pointer}
 button.wk span{font-family:var(--mono);font-weight:400;font-size:.72rem;color:var(--accent);white-space:nowrap}
 .discH{margin:14px 0 2px}
 .shots{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -346,7 +347,7 @@ details.more[open]>summary{border-bottom:1px dotted var(--line)}
 .toolbox{display:flex;flex-direction:column;gap:14px}.toolsli{list-style:none;padding:0;border:0}.toolbox .x2{display:none}
 .toolbox .enr{background:none;border:0;box-shadow:none;padding:0;margin:0}
 .toolbox #tbTodo{background:var(--win);border:1px solid;border-color:var(--sh) var(--hi) var(--hi) var(--sh);border-radius:3px;padding:0 10px}
-.tr{border-bottom:1px dotted var(--line)}button.wk{background:var(--face)}
+.tr{border-bottom:1px dotted var(--line)}button.wk{background:var(--face)}button.wkv{background:none!important;border:0!important;box-shadow:none!important;color:var(--accent)!important;text-shadow:none!important}
 /* ---- cohérence : 3 tailles de boutons seulement ----
    .primary / .wide : pleine largeur, 46 px de haut (actions de fenêtre)
    .small           : dans une ligne de liste ou un compteur
@@ -740,7 +741,10 @@ const fmtD=s=>s?Math.floor(s/60)+":"+String(Math.round(s%60)).padStart(2,"0"):""
 let sheetOpen=false;
 let BACK=[],CUR=null;
 function backUi(){const b=$("sheetBack");if(b)b.hidden=!BACK.length;}
-function subView(fn){if(sheetOpen&&CUR){BACK.push(CUR);history.pushState({sheet:1,sub:1},"");}fn();backUi();$("sheet").scrollTop=0;}
+// Going back restores the previous view as it was: open lists and scroll position
+function subView(fn){if(sheetOpen&&CUR){const f=CUR,sc=$("sheet").scrollTop,op=[...$("detail").querySelectorAll("details")].map(d=>d.open);
+    BACK.push(()=>{f();const ds=$("detail").querySelectorAll("details");op.forEach((o,i)=>{if(ds[i])ds[i].open=o;});$("sheet").scrollTop=sc;requestAnimationFrame(()=>{$("sheet").scrollTop=sc;});});
+    history.pushState({sheet:1,sub:1},"");}fn();backUi();$("sheet").scrollTop=0;}
 function goBack(){if(BACK.length)history.back();else closeSheet();}
 function openSheet(){const o=$("overlay");if(!sheetOpen){history.pushState({sheet:1},"");sheetOpen=true;BACK=[];}o.hidden=false;document.body.classList.add("locked");$("sheet").scrollTop=0;}
 function closeSheet(fromPop){if(!sheetOpen)return;const n=BACK.length;sheetOpen=false;BACK=[];CUR=null;backUi();$("overlay").hidden=true;if($("settings").hidden)document.body.classList.remove("locked");if(!fromPop)history.go(-(n+1));else if(n)history.go(-n);}
@@ -1319,8 +1323,13 @@ function openMerge(w){const W=WORKS(),o=W[w],V=versions(),gid=workId(w,W),comp=n
 function openDetail(id){const x=byId(id);if(!x)return;CUR=()=>openDetail(id);const p=$("detail"),cu=coverUrl(x),own=!isWish(id),c=codeOf(id),W=WORKS(),V=versions(),cls=isClassical(x,W);
   const multi=discsOf(x).length>1;
   let num=0;
+  const tWk=t=>t&&typeof t!=="string"?t.w:null,multiC=new Set(tracksOf(x).map(t=>{const o=cls&&tWk(t)&&W[t.w];return o&&o.c?canonC(o.c):"";}).filter(Boolean)).size>1;
   const tracks=tracksOf(x).length?discsOf(x).map((d,di)=>{num=0;let h=(multi||d.rec||d.t)?`<p class="discH">${multi?"CD "+(di+1)+(d.t?" · "+esc(d.t):""):(d.t?esc(d.t):"")}${d.rec&&!multi?esc(d.rec):""}</p>${multi&&d.rec?`<p class="hint">${esc(d.rec)}</p>`:""}`:"";
-      let cw=null;h+=`<div class="trk">`;d.tr.forEach(t=>{const w=typeof t==="string"?null:t.w,o=cls&&w&&W[w];num++;
+      let cw=null;h+=`<div class="trk">`;d.tr.forEach((t,ti)=>{const w=typeof t==="string"?null:t.w,o=cls&&w&&W[w];num++;
+        // a work made of this single track (e.g. one nocturne): one line, with the versions link, instead of a heading repeating the title
+        const wkw=w&&tWk(d.tr[ti-1])!==w&&tWk(d.tr[ti+1])!==w,same=o&&wkw&&(tNorm(tName(t)).includes(tNorm(o.t))||tNorm(o.t).includes(tNorm(tName(t))));
+        if(same){const n=(V[workId(w,W)]||[]).length,cn=multiC?esc(canonC(o.c))+" — ":"";let nm=tName(t);const bonus=BONUS.test(nm)||!!t.b;if(bonus)nm=nm.replace(new RegExp(BONUS.source,"ig")," ").replace(/\s+/g," ").trim();
+          h+=`<div class="tr one"><span class="n">${num}</span><span class="t">${cn}${esc(nm)}${bonus?` <span class="bonus">bonus</span>`:""} <button type="button" class="wkv" data-work="${esc(w)}">${n} version${n>1?"s":""}</button></span><span class="d">${fmtD(t.d)}</span></div>`;cw=null;return;}
         if(w!==cw){if(o){const n=(V[workId(w,W)]||[]).length;h+=`<button type="button" class="wk" data-work="${esc(w)}">${o.c?esc(canonC(o.c))+" — ":""}${esc(wLabel(w))}<span>${n} version${n>1?"s":""}</span></button>`;}cw=w;}
         let nm=tName(t);const bonus=BONUS.test(nm)||(typeof t!=="string"&&!!t.b);if(bonus)nm=nm.replace(new RegExp(BONUS.source,"ig")," ").replace(/\s+/g," ").trim();if(o&&nm.toLowerCase().startsWith(o.t.toLowerCase()+":"))nm=nm.slice(o.t.length+1).trim();
         h+=`<div class="tr${o?" sub":""}"><span class="n">${num}</span><span class="t">${esc(nm)}${bonus?` <span class="bonus">bonus</span>`:""}</span><span class="d">${fmtD(t.d)}</span></div>`;});
@@ -1878,7 +1887,7 @@ async function importLink(s){const out=$("eanResult");$("scanPanel").hidden=fals
 
 
 // ---------- Réglages (panneau plein écran) ----------
-const APPV="0.52.0";$("hVer").textContent="v"+APPV;
+const APPV="0.52.1";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
