@@ -374,6 +374,27 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 .sheet .back{position:absolute;top:5px;left:6px;width:30px;height:22px;border-radius:2px;font-size:.85rem;line-height:1;padding:0;z-index:2}
 .sheet .back[hidden]{display:none}
 .sheet:has(.back:not([hidden]))::before{padding-left:44px}
+
+/* printable export */
+#printArea{display:none}
+@media print{
+  @page{size:A4;margin:12mm}
+  html,body,body.locked{overflow:visible!important;height:auto!important;position:static!important;background:#fff!important;background-image:none!important;color:#000!important;padding:0!important;margin:0!important}
+  body>*:not(#printArea){display:none!important}
+  #printArea{display:block!important;font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;font-size:9pt;line-height:1.3}
+  #printArea .ph1{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5pt solid #000;padding-bottom:2mm;margin-bottom:5mm}
+  #printArea h1{font-size:15pt;margin:0;font-family:inherit}
+  #printArea .ph1 span{font-size:8.5pt;color:#444}
+  #printArea .pgrid{columns:2;column-gap:9mm}
+  #printArea .pe{display:flex;gap:3mm;margin:0 0 4mm;break-inside:avoid}
+  #printArea .pc{width:20mm;height:20mm;flex:none;background:#e6e6e6;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printArea .pc img{width:100%;height:100%;object-fit:cover;display:block}
+  #printArea .pt{min-width:0}
+  #printArea .pt b{display:block;font-size:9.5pt;line-height:1.2}
+  #printArea .pa{display:block;color:#222}
+  #printArea .pp{display:block;font-size:8pt;font-style:italic;color:#333}
+  #printArea .pm{display:block;font-size:8pt;color:#555}
+}
 </style>
 </head>
 <body>
@@ -450,8 +471,13 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 <label class="chk2"><input type="checkbox" id="autoCodes"> Keep automatically found barcodes (marked “likely”)</label>
 </section>
 <section class="card"><h3>Backup</h3>
-<p>Your collection is stored on this device. Download a backup regularly (cover photos are not included). “Restore a file” also accepts a collection import file, which is merged with your existing data.</p>
+<p>Your collection is stored on this device. Download a backup regularly; your own cover photos are included. “Restore a file” also accepts a collection import file, which is merged with your existing data.</p>
 <div class="row"><button id="dlB" type="button">Download backup</button><label class="filebtn">Restore a file<input id="upB" type="file" accept="application/json,.json"></label></div>
+</section>
+<section class="card"><h3>Export</h3>
+<p>Printable list with cover, title, artist, year, performers, label and total duration (no track lists). In the print dialog, choose “Save as PDF”.</p>
+<div class="seg" id="exSeg" role="group" aria-label="Albums to export"><button type="button" data-ex="col" aria-pressed="true">Collection</button><button type="button" data-ex="wish" aria-pressed="false">Wishlist</button><button type="button" data-ex="all" aria-pressed="false">Both</button></div>
+<div class="row"><button class="primary" id="exGo" type="button">Export PDF</button></div><p class="hint" id="exMsg"></p>
 </section>
 <section class="card"><h3>Discogs</h3>
 <label for="dgKey">Personal token (free)</label>
@@ -490,6 +516,7 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 </div>
 <div class="overlay" id="overlay" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Details"><button type="button" class="back" id="sheetBack" aria-label="Back" hidden>←</button><button type="button" class="x" id="sheetX" aria-label="Close">✕</button><div id="detail"></div></div></div>
 
+<div id="printArea" aria-hidden="true"></div>
 <script>const DEMO={"works":{},"albums":[]}
 ;
 const KEY="collezione-cd-v1";
@@ -525,6 +552,7 @@ function save(){DATAV++;_W=null;tidyWorks();_W=null;setTimeout(nag,0);try{localS
 const COV={};
 function idb(){return new Promise((res,rej)=>{const r=indexedDB.open("collezione-cd",1);r.onupgradeneeded=()=>r.result.createObjectStore("covers");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 async function covPut(id,data){const d=await idb();return new Promise((res,rej)=>{const t=d.transaction("covers","readwrite");t.objectStore("covers").put(data,id);t.oncomplete=res;t.onerror=()=>rej(t.error);});}
+async function covPutMany(o){const d=await idb();return new Promise((res,rej)=>{const t=d.transaction("covers","readwrite"),st=t.objectStore("covers");for(const k in o)st.put(o[k],k);t.oncomplete=res;t.onerror=()=>rej(t.error);});}
 async function covAll(){try{const d=await idb();return await new Promise(res=>{const out={},t=d.transaction("covers"),st=t.objectStore("covers"),rq=st.openCursor();rq.onsuccess=()=>{const c=rq.result;if(c){out[c.key]=c.value;c.continue();}else res(out);};rq.onerror=()=>res(out);});}catch(e){return {};}}
 async function covDel(id){delete COV[id];try{const d=await idb();d.transaction("covers","readwrite").objectStore("covers").delete(id);}catch(e){}}
 async function covClear(){try{const d=await idb();d.transaction("covers","readwrite").objectStore("covers").clear();}catch(e){}for(const k in COV)delete COV[k];}
@@ -1391,9 +1419,30 @@ function editTracks(id){const x=byId(id),p=$("detail");if(!x)return;const W=WORK
 // ---------- Sauvegarde ----------
 $("nagGo").onclick=()=>$("dlB").click();
 if($("enrOpen"))$("enrOpen").onclick=()=>{closeSettings();try{localStorage.removeItem("enr-hide");}catch(e){}$("enr").hidden=false;enrUi();$("enr").scrollIntoView({behavior:"smooth"});};
-$("dlB").onclick=()=>{S.chg=0;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}nag();const blob=new Blob([JSON.stringify(S,null,1)],{type:"application/json"});const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);a.download="album-ledger-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();$("bMsg").textContent="Backup downloaded.";};
-$("upB").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(o&&o.collezione_import){const r=importList(o.albums||[]);$("bMsg").textContent=r.added+" albums imported"+(r.skipped?", "+r.skipped+" already present (skipped)":"")+".";e.target.value="";return;}if(!Array.isArray(o.col))throw 0;adopt(o);save();render();$("bMsg").textContent="Backup restored.";}catch(err){$("bMsg").textContent="This file isn't an Album Ledger backup.";}};
+$("dlB").onclick=async()=>{S.chg=0;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}nag();const cv=Object.assign({},await covAll(),COV),withPh=Object.keys(cv).length>0,out=withPh?Object.assign({},S,{covers:cv}):S;const blob=new Blob([JSON.stringify(out,null,withPh?0:1)],{type:"application/json"});const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download="album-ledger-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();$("bMsg").textContent="Backup downloaded"+(withPh?" (with photos, "+(blob.size/1048576).toFixed(1)+" MB)":"")+".";};
+$("upB").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(o&&o.collezione_import){const r=importList(o.albums||[]);$("bMsg").textContent=r.added+" albums imported"+(r.skipped?", "+r.skipped+" already present (skipped)":"")+".";e.target.value="";return;}if(!Array.isArray(o.col))throw 0;const cv=o.covers&&typeof o.covers==="object"?o.covers:null;delete o.covers;adopt(o);if(cv){await covClear();await covPutMany(cv);Object.assign(COV,cv);}save();render();$("bMsg").textContent="Backup restored"+(cv?" with photos":"")+".";}catch(err){$("bMsg").textContent="This file isn't an Album Ledger backup.";}};
+// ---------- Export: printable list (PDF through the print dialog) ----------
+let EXS="col";
+document.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>{EXS=b.dataset.ex;document.querySelectorAll("[data-ex]").forEach(o=>o.setAttribute("aria-pressed",o===b));});
+const fmtTotal=sec=>{if(!sec)return "";let m=Math.round(sec/60);const h=Math.floor(m/60);m%=60;return h?h+" h "+String(m).padStart(2,"0")+" min":m+" min";};
+$("exGo").onclick=async()=>{const m=$("exMsg");
+  const rows=(EXS!=="wish"?S.col.map(x=>[x,"own"]):[]).concat(EXS!=="col"?S.wish.map(x=>[x,"wish"]):[]);
+  if(!rows.length){m.textContent="Nothing to export.";return;}
+  const key=x=>norm(x.a).replace(/^(the|les|le|la|l')\s+/,"");
+  rows.sort((p,q)=>key(p[0]).localeCompare(key(q[0]),"fr")||norm(p[0].t).localeCompare(norm(q[0].t),"fr",{numeric:true}));
+  m.textContent="Preparing…";
+  const W=WORKS(),title=EXS==="col"?"Collection":EXS==="wish"?"Wishlist":"Collection and wishlist";
+  const items=rows.map(([x,st])=>{const cu=coverUrl(x),tot=fmtTotal(tracksOf(x).reduce((a,t)=>a+(typeof t==="string"?0:+t.d||0),0)),
+    g=x.g||(isClassical(x,W)?"Classical":""),
+    meta=[x.y,g,x.l,x.cat,x.box?"Box set · "+discsOf(x).length+" CDs":"",x.copies>1?"×"+x.copies+" copies":"",tot,EXS==="all"&&st==="wish"?"Wishlist":""].filter(Boolean).map(esc).join(" · ");
+    return `<div class="pe"><div class="pc">${cu?`<img src="${esc(cu)}" alt="">`:""}</div><div class="pt"><b>${esc(x.t)}</b><span class="pa">${esc(x.a)}</span>${x.perf?`<span class="pp">${esc(x.perf)}</span>`:""}<span class="pm">${meta}</span></div></div>`;}).join("");
+  const pa=$("printArea");
+  pa.innerHTML=`<div class="ph1"><h1>Album Ledger · ${title}</h1><span>${rows.length} album${rows.length!==1?"s":""} · ${new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})}</span></div><div class="pgrid">${items}</div>`;
+  const imgs=[...pa.querySelectorAll("img")];
+  await Promise.race([Promise.all(imgs.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r;}))),new Promise(r=>setTimeout(r,12000))]);
+  m.textContent="";window.addEventListener("afterprint",()=>{pa.innerHTML="";},{once:true});
+  setTimeout(()=>window.print(),100);};
 $("wipe").onclick=()=>{$("wipeConfirm").hidden=false;};$("wipeNo").onclick=()=>{$("wipeConfirm").hidden=true;};
 $("wipeYes").onclick=async()=>{S=emptyState();await covClear();save();render();$("wipeConfirm").hidden=true;closeSheet();$("bMsg").textContent="Collection erased.";};
 
@@ -1625,7 +1674,7 @@ async function importLink(s){const out=$("eanResult");$("scanPanel").hidden=fals
 
 
 // ---------- Réglages (panneau plein écran) ----------
-const APPV="0.44.0";$("hVer").textContent="v"+APPV;
+const APPV="0.45.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
