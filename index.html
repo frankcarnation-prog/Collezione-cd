@@ -1806,7 +1806,7 @@ function enrUi(msg){const box=$("enr"),all=ALL(),tot=all.length,withC=all.filter
   $("enrGo").textContent=ENR.run?"Pause":p1?"Start search":"Start broad search";
   $("enrGo").hidden=!ENR.run&&!p1&&!p2;
   if($("enrRev"))$("enrRev").onclick=openReview;
-  if($("enrSee"))$("enrSee").onclick=()=>{TODOF="cover";$("q").value="";tab="col";render();$("sortBar").scrollIntoView({behavior:"smooth"});};}
+  if($("enrSee"))$("enrSee").onclick=()=>subView(()=>gapList("cover"));}
 // ---------- Vérifier les pochettes trouvées automatiquement ----------
 function openReview(){closeSettings();const p=$("detail"),L=toReview();
   p.innerHTML=`<p class="cat">To review</p><h2 class="wh">${L.length} cover${L.length!==1?"s":""} found automatically</h2>
@@ -2175,7 +2175,7 @@ function cmpUi(){const all=ALL(),n=all.length,miss=k=>all.filter(x=>gapsOf(x).in
   const gaps=cmpList("gaps").length;
   $("cmpTxt").innerHTML=!n?"Your library is empty. Import a collection or scan an album first.":gaps?`<b>${gaps}</b> of ${n} albums are missing some information.`:`All ${n} albums are complete ✓`;
   $("cmpList").innerHTML=rows.map(([k,l,c])=>`<li class="item tap${c?"":" done"}" data-cg="${k}"><div class="meta"><b>${l}</b></div><span class="count">${c||"✓"}</span></li>`).join("")+(mv?`<li class="item done"><div class="meta"><b>Classical albums to link</b></div><span class="count">${mv}</span></li>`:"");
-  $("cmpList").querySelectorAll("[data-cg]").forEach(li=>li.onclick=()=>{if(li.classList.contains("done"))return;TODOF=li.dataset.cg;$("q").value="";tab="col";render();setTimeout(()=>$("stick").scrollIntoView({behavior:"smooth"}),50);});
+  $("cmpList").querySelectorAll("[data-cg]").forEach(li=>li.onclick=()=>{if(li.classList.contains("done"))return;subView(()=>gapList(li.dataset.cg));});
   $("cmpScope").value=cmpScope();$("cmpGo").disabled=!n&&!CMP.run;if(!CMP.run)$("cmpGo").textContent="Complete automatically";}
 $("cmpScope").onchange=e=>{try{localStorage.setItem("cmp-scope",e.target.value);}catch(x){}};
 $("cmpGo").onclick=()=>{if(CMP.run){CMP.run=false;return;}const l=cmpList(cmpScope());if(!l.length){report("info","Nothing to complete",cmpScope()==="import"?"No imported album has missing information.":"Every album already has its cover, track list, genre and format.",[],"Choose “My whole library” to check every album again.");return;}completeStart(l);};
@@ -2224,7 +2224,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("selGo").onclick=()=>{goTab("col");SEL=[];render();};$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.58.0";$("hVer").textContent="v"+APPV;
+const APPV="0.58.1";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2431,7 +2431,13 @@ $("logOpen").onclick=()=>openLog("");
 
 // ---------- Onglet Outils ----------
 function todoCounts(){const all=[...S.col,...S.wish];return TODOS.map(([k,lab,f])=>[k,lab,all.filter(f).length]);}
-function seeFilter(k){TODOF=k;$("q").value="";tab="col";render();setTimeout(()=>$("stick").scrollIntoView({behavior:"smooth"}),50);}
+// List of the albums concerned, shown in place (no jump to another tab)
+function gapList(k){const t=TODOS.find(x=>x[0]===k);if(!t)return;const l=ALL().filter(t[2]),p=$("detail");CUR=()=>gapList(k);
+  const fixable=["cover","tracks","genre","format","code"].includes(k);
+  p.innerHTML=`<p class="cat">Library</p><h2 class="wh">${esc(t[1])} · ${l.length} album${l.length!==1?"s":""}</h2>${l.length?`<ul class="list">${l.slice(0,300).map(x=>albumRow(x,isWish(x.id)?"Wishlist":"")).join("")}</ul>${l.length>300?`<p class="hint">${l.length-300} more not shown.</p>`:""}`:`<p class="empty">Nothing missing ✓</p>`}
+   <div class="pair">${l.length&&fixable?`<button type="button" class="primary" id="gpFix">Complete these automatically</button>`:""}<button type="button" id="gpNo">Close</button></div>`;
+  openSheet();bindOpen(p);$("gpNo").onclick=()=>closeSheet();if($("gpFix"))$("gpFix").onclick=()=>{closeSheet();setTimeout(()=>completeStart(l),350);};}
+function seeFilter(k){gapList(k);}
 $("seeNoCode").onclick=()=>seeFilter("code");$("seeNoGenre").onclick=()=>seeFilter("genre");
 function renderToolsCounts(){try{cmpUi();}catch(e){}try{const n=fmtTodo().length;$("fmtN").textContent=n?n+" album"+(n!==1?"s":"")+" without a format (CD, vinyl…)":"All albums have a format";}catch(e){}try{mvUi();}catch(e){}const all=ALL(),noc=all.filter(x=>!codesOf(x.id).length),pc=noc.filter(hasPCode).length,ed=noc.filter(x=>!hasPCode(x)&&(x.mbid||x.dgid)).length,q=cbTodo().length;
   $("twCodeTxt").innerHTML=noc.length?`<b>${noc.length}</b> album${noc.length!==1?"s":""} without a confirmed barcode (<b>${pc}</b> with a likely barcode, to be confirmed on first scan).`:"All your albums have a confirmed barcode ✓";
@@ -2454,7 +2460,7 @@ function homeTodo(){const c=$("todoCard");if(!c)return;const g=groupSuggestions(
   const rows=todoCounts().filter(([k,,n])=>n).map(([k,lab,n])=>({k,lab,n}));if(g)rows.push({k:"group",lab:"To group into box sets",n:g});
   const tot=rows.reduce((s,r)=>s+r.n,0);c.hidden=!rows.length||tab!=="col";$("todoTot").textContent=rows.length?rows.length+" item"+(rows.length!==1?"s":""):"";
   $("todoList").innerHTML=rows.map(r=>`<li class="item tap" data-td="${r.k}"><div class="meta"><b>${r.lab}</b><small>${r.k==="group"?r.n+" suggestion"+(r.n!==1?"s":""):r.n+" album"+(r.n!==1?"s":"")}</small></div><span class="count">${r.n}</span><span class="go" aria-hidden="true">›</span></li>`).join("");
-  $("todoList").querySelectorAll("[data-td]").forEach(li=>li.onclick=()=>{const k=li.dataset.td;if(k==="tracks"){TODOF=k;render();$("stick").scrollIntoView({behavior:"smooth"});return;}goTools(TODO_SEC[k]||"tw-cover",k);});}
+  $("todoList").querySelectorAll("[data-td]").forEach(li=>li.onclick=()=>{const k=li.dataset.td;goTools(TODO_SEC[k]||"tw-cmp",k);});}
 (()=>{const c=$("todoCard");try{c.open=localStorage.getItem("todo-open")==="1";}catch(e){}c.addEventListener("toggle",()=>{try{localStorage.setItem("todo-open",c.open?"1":"0");}catch(e){}});})();
 $("tbGroup").onclick=()=>openGroupSugg();
 
