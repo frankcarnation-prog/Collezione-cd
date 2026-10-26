@@ -252,6 +252,7 @@ b.warn{color:#e0a030;font-weight:600}
 
 /* ===================== Thème « Platinum » : entre Mac OS 9 et Windows 98 ===================== */
 .subH{margin:16px 0 4px;font-size:.95rem}
+.mvHint{list-style:none;padding:8px 2px}.mvHint button{margin-left:6px}
 .rptOv{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}.rptOv[hidden]{display:none}
 .rpt{background:var(--surface,#fff);color:var(--ink,#111);border:1px solid var(--line,#ccc);border-radius:10px;max-width:460px;width:100%;max-height:85vh;overflow:auto;padding:16px 18px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
 .rptHd{display:flex;align-items:center;gap:10px;margin-bottom:8px}.rptHd h3{margin:0;font-size:1.05rem}
@@ -455,6 +456,9 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 <button type="button" class="setItem" id="invOpen"><b>Inventory</b><small>Scan your CDs to enable offline recognition</small></button>
 <button type="button" class="setItem" id="cbGo"><b>Fetch likely barcodes</b><small>For albums with an identified edition</small></button><p class="hint" id="cbMsg"></p>
 <button type="button" class="wide" id="seeNoCode">Show albums without a barcode</button>
+</div></section>
+<section class="win" id="tw-cls"><div class="wtitle">Classical music</div><div class="wbody">
+<button type="button" class="setItem" id="mvGo"><b>Recognise movements and pieces</b><small id="mvN">Links each track to its MusicBrainz work</small></button><p class="hint" id="mvMsg"></p>
 </div></section>
 <section class="win" id="tw-org"><div class="wtitle">Organization</div><div class="wbody">
 <button type="button" class="setItem" id="gGo"><b>Classify genres</b><small>Automatic, via AI or Discogs</small></button><p class="hint" id="gMsg"></p>
@@ -717,7 +721,7 @@ function tidyWorks(){const W=S.works,used=new Set();
     if(o&&!o.c&&!catKey(o.t)&&SECTION.test(String(o.t).trim())){if(/bonus/i.test(o.t))t.b=1;delete t.w;}})));
   [...S.col,...S.wish].forEach(x=>discsOf(x).forEach(d=>d.tr.forEach(t=>{if(typeof t==="string"||!t.w)return;const o=W[t.w];
     if(o&&/^mb:/.test(t.w)){const m=splitMvt(o.t);m&&m.unshift(o.t);if(m){const c=canonC(o.c),pk="mbp:"+norm(c+"|"+m[1]).replace(/[^a-z0-9|]+/g,"-");
-      W[pk]=W[pk]||{c,t:m[1].trim(),cat:""};t.w=pk;if(norm(t.n).startsWith(norm(o.t))||!t.n)t.n=m[2].trim();else if(t.n.includes(": "))t.n=m[2].trim();}}
+      W[pk]=W[pk]||{c,t:m[1].trim(),cat:""};if(!t.mw)t.mw=t.w.slice(3);t.w=pk;if(norm(t.n).startsWith(norm(o.t))||!t.n)t.n=m[2].trim();else if(t.n.includes(": "))t.n=m[2].trim();}}
     used.add(t.w);})));
   (S.trash||[]).forEach(e=>tracksOf(e.x).forEach(t=>{if(typeof t!=="string"&&t.w)used.add(t.w);}));
   [...S.col,...S.wish].forEach(x=>{if(x.a&&nonLatin(x.a))x.a=x.a.split(/(\s*[;,&\/]\s*)/).map(s=>nonLatin(s)?canonC(s):s).join("");});
@@ -758,19 +762,39 @@ const coverUrl=x=>COV[x.id]||x.img||(x.c1?sleeve(x):"");
 const OFFICIAL=new Set(COMPOSERS.map(c=>c[0]));
 // Intitulés de section (pas des œuvres) : "Bonus Tracks", "Live", "Face A"…
 const SECTION=/^(bonus(\s*tracks?)?|titres? bonus|pistes? bonus|bonus disc|extras?|live|studio|side\s*[a-d12]|face\s*[a-d12]|appendix|outtakes|demos?|singles?|b-sides?|rarities|previously unreleased|inédits?)\b/i;
-function classicalWork(w,o){if(o&&/^dg:/.test(w)&&!o.c&&!catKey(o.t))return false;return !!o&&(/^(mbp|ai|dg|id|imp):/.test(w)||!!catKey(o.t)||!!o.cat||!!o.cy||OFFICIAL.has(canonC(o.c)));}
+function classicalWork(w,o){if(o&&/^dg:/.test(w)&&!o.c&&!catKey(o.t))return false;return !!o&&(/^(mbp|mbw|ai|dg|id|imp):/.test(w)||!!catKey(o.t)||!!o.cat||!!o.cy||OFFICIAL.has(canonC(o.c)));}
 function isClassical(x,W){W=W||WORKS();return tracksOf(x).some(t=>typeof t!=="string"&&t.w&&classicalWork(t.w,W[t.w]));}
 let _V=null,_Vk="";
 function versions(){const vk=DATAV+"|"+S.col.length+"|"+S.wish.length+"|"+_Wn+"|"+(S.works===_Wref);if(_V&&_Vk===vk)return _V;const v=versions0();_V=v;_Vk=DATAV+"|"+S.col.length+"|"+S.wish.length+"|"+_Wn+"|"+(S.works===_Wref);return v;}
-let _Pc={};
-function versions0(){const v={},P={},W=WORKS();[[S.col,true],[S.wish,false]].forEach(([arr,own])=>arr.forEach(x=>{if(!isClassical(x,W))return;const seen=new Set(),pseen=new Set();discsOf(x).forEach((d,di)=>{
-  d.tr.forEach(t=>{if(typeof t==="string"||!t.w)return;
-    const pc=trackPiece(t.w,W,t);if(pc){const pk=pc.id+"|"+di;if(!pseen.has(pk)){pseen.add(pk);const e=P[pc.id]||(P[pc.id]={label:pc.label,num:pc.num,cyc:new Set(),vs:[]});e.cyc.add(t.w);e.vs.push({x,di,d,own,tn:t.n,piece:true});}}
-    const id=workId(t.w,W),k=id+"|"+(d.rec||"");if(seen.has(k))return;seen.add(k);
-    if(!v[id]){v[id]=[];v[id].rep=t.w;}else if(repScore(W[t.w])>repScore(W[v[id].rep]))v[id].rep=t.w;v[id].push({x,di,d,own});});});}));
-  Object.keys(P).forEach(id=>{if(v[id])P[id].vs.forEach(e=>v[id].push(e));});_Pc=P;return v;}
+// Movement number and name from a track title: "I. Allegro con brio", "Symphony No. 5: IV. Allegro", "2. Adagio"
+const ROMAN={i:1,ii:2,iii:3,iv:4,v:5,vi:6,vii:7,viii:8,ix:9,x:10,xi:11,xii:12,xiii:13,xiv:14,xv:15,xvi:16,xvii:17,xviii:18,xix:19,xx:20,xxi:21,xxii:22,xxiii:23,xxiv:24};
+function mvtNum(n){const s=norm(n||"").replace(/^.*:\s+(?=(?:[ivx]+|\d{1,2})[.:)]\s)/,"").trim(),m=s.match(/^([ivx]+|\d{1,2})[.:)]\s+\S/);return m?(ROMAN[m[1]]||(/^\d/.test(m[1])?+m[1]:0)):0;}
+function mvtSlug(n){return norm(n||"").replace(/^.*:\s+/,"").replace(/^([ivx]+|\d{1,2})[.:)]\s+/,"").replace(/\([^)]*\)|["“”«»][^"“”«»]*["“”«»]/g," ").replace(/[^a-z]+/g," ").trim();}
+const cleanMvt=n=>{n=n||"";const i=n.lastIndexOf(": ");return i>0&&i<n.length-3?n.slice(i+2):n;};
+let _Pc={},_Pn={};
+function versions0(){const v={},W=WORKS(),occ=[];
+  [[S.col,true],[S.wish,false]].forEach(([arr,own])=>arr.forEach(x=>{if(!isClassical(x,W))return;const seen=new Set();discsOf(x).forEach((d,di)=>{
+    const byW={};d.tr.forEach(t=>{if(typeof t!=="string"&&t.w)(byW[t.w]=byW[t.w]||[]).push(t);});
+    d.tr.forEach(t=>{if(typeof t==="string"||!t.w)return;const id=workId(t.w,W),k=id+"|"+(d.rec||"");
+      // what exactly this track plays: MusicBrainz id, piece of a cycle, movement number, or movement name
+      const sib=byW[t.w],nodes=[],pc=trackPiece(t.w,W,t),mn=+t.mo||mvtNum(t.n);
+      if(t.mw)nodes.push("mw:"+t.mw);if(pc)nodes.push(pc.id);
+      // a stand-alone piece (Op. 28 No. 15 on a recital) is the same piece as the one inside the cycle
+      if(sib.length===1&&(/^id:.*-\d+$/.test(id)||(t.mw&&(W[t.w].mb===t.mw||(!/^mb[pw]:/.test(t.w)&&!mvtNum(t.n))))))nodes.push(id);
+      if(sib.length>1){if(mn)nodes.push(id+"#"+mn);else if(!pc){const sl=mvtSlug(t.n);if(sl.length>2&&sib.filter(u=>mvtSlug(u.n)===sl).length===1)nodes.push(id+"~"+sl);}}
+      if(nodes.length)occ.push({nodes,x,di,d,own,tn:t.n,gid:id,inside:sib.length>1,num:(pc&&pc.num)||mn||0,label:pc?pc.label:cleanMvt(t.n)});
+      if(seen.has(k))return;seen.add(k);
+      if(!v[id]){v[id]=[];v[id].rep=t.w;}else if(repScore(W[t.w])>repScore(W[v[id].rep]))v[id].rep=t.w;v[id].push({x,di,d,own});});});}));
+  const U=new Map(),find=a=>{while(U.get(a)!==a){U.set(a,U.get(U.get(a)));a=U.get(a);}return a;},uni=(a,b)=>{if(!U.has(a))U.set(a,a);if(!U.has(b))U.set(b,b);const r1=find(a),r2=find(b);if(r1!==r2)U.set(r1,r2);};
+  occ.forEach((o,i)=>{uni("o"+i,"o"+i);o.nodes.forEach(n=>uni("o"+i,n));});
+  const G=new Map();occ.forEach((o,i)=>{const r=find("o"+i);if(!G.has(r))G.set(r,{nodes:new Set(),vs:[],parents:new Set(),num:0,label:"",keys:new Set()});const g=G.get(r);
+    o.nodes.forEach(n=>g.nodes.add(n));if(o.inside)g.parents.add(o.gid);if(!g.num&&o.num)g.num=o.num;if(!g.label)g.label=o.label;
+    const dk=o.x.id+"|"+o.di;if(g.keys.has(dk))return;g.keys.add(dk);g.vs.push({x:o.x,di:o.di,d:o.d,own:o.own,tn:o.inside?o.tn:"",piece:o.inside});});
+  const P={},N={};G.forEach(g=>{const ns=[...g.nodes].sort(),id=ns.find(n=>/^id:.*-\d+$/.test(n))||ns.find(n=>/^mw:/.test(n))||ns[0];g.id=id;P[id]=g;ns.forEach(n=>N[n]=id);
+    const sv=ns.find(n=>v[n]);if(sv){g.std=sv;const have=new Set(v[sv].map(e=>e.x.id+"|"+e.di));g.vs.forEach(e=>{if(e.piece&&!have.has(e.x.id+"|"+e.di)){have.add(e.x.id+"|"+e.di);v[sv].push(e);}});}});
+  _Pc=P;_Pn=N;return v;}
 function pieces(){versions();return _Pc;}
-const pieceN=id=>{const v=versions(),P=_Pc;return v[id]?v[id].length:(P[id]?P[id].vs.length:0);};
+const pieceN=id=>{const v=versions(),g=_Pc[id];return !g?0:g.std&&v[g.std]?v[g.std].length:g.vs.length;};
 const verRows=vs=>vs.map(e=>`<li class="item tap" data-open="${e.x.id}"><img class="cover" src="${coverUrl(e.x)}" alt=""><div class="meta"><b>${esc(firstPerf(e.x.perf)||e.x.a)}</b><small>${esc(e.d.rec||e.x.rec||e.x.y||"")}${e.d.t?" · "+esc(e.d.t):""}</small><small>${esc(e.x.t)}${e.x.box?" · CD "+(e.di+1):""}</small>${e.tn?`<small>Track: ${esc(e.tn)}</small>`:""}</div><span class="chip ${e.own?"own":"wish"}">${e.own?"Owned":"Wishlist"}</span></li>`).join("");
 // Display title for a group: prefer one with a catalogue number, then a reasonably long one (not a bare "Symphony No. 5")
 function repScore(o){const t=(o&&o.t)||"";return (catKey(t)?1000:0)+Math.min(t.length,80)-(t.length>80?t.length-80:0);}
@@ -863,13 +887,15 @@ $("list").addEventListener("toggle",e=>{const d=e.target;if(!d.matches||!d.match
 function renderComposers(){const v=versions(),W=WORKS(),byC={};
   Object.keys(v).forEach(id=>{const o=W[v[id].rep];if(!o||!o.c)return;const c=canonC(o.c);(byC[c]=byC[c]||[]).push(id);});
   const comps=Object.keys(byC).sort((a,b)=>surname(a).localeCompare(surname(b),"fr"));
-  $("list").innerHTML=comps.map(c=>{const ids=byC[c];
+  const mvn=mvTodo().length,mvh=mvn?`<li class="mvHint"><p class="hint">${mvn} classical album${mvn!==1?"s":""} can be linked to MusicBrainz to recognise each movement and piece. <button type="button" class="small" id="mvGo2">${MV.run?"Linking… (stop)":"Link now"}</button></p></li>`:"";
+  $("list").innerHTML=mvh+comps.map(c=>{const ids=byC[c];
     const cyc={};ids.forEach(id=>{const o=W[v[id].rep];if(o.cy&&v[id].some(e=>e.own))(cyc[o.cy]=cyc[o.cy]||{of:o.of,n:[]}).n.push(o.n);});
     const cycTxt=Object.entries(cyc).map(([k,o])=>`<span>${esc(k)} : ${o.n.length} of ${o.of} (no. ${o.n.sort((a,b)=>a-b).join(", ")})</span>`).join("");
     const inner=(cycTxt?`<p class="facts">${cycTxt}</p>`:"")+`<ul class="works">`+
       ids.sort((a,b)=>W[v[a].rep].t.localeCompare(W[v[b].rep].t,"fr",{numeric:true})).map(id=>{const vs=v[id],w=vs.rep,own=vs.filter(e=>e.own).length;
         return `<li class="item tap" data-work="${esc(w)}"><div class="meta"><b>${esc(wLabel(w))}</b><small>${own} version${own!==1?"s":""} owned${vs.length>own?" · "+(vs.length-own)+" on wishlist":""}</small></div><span class="count">${vs.length}</span></li>`;}).join("")+`</ul>`;
     return fold("c:"+c,c,ids.length+" work"+(ids.length!==1?"s":"")+(cycTxt?" · "+Object.keys(cyc).length+" cycle"+(Object.keys(cyc).length>1?"s":""):""),inner);}).join("")||`<li class="empty">No classical works found yet.</li>`;}
+  if($("mvGo2"))$("mvGo2").onclick=linkMovements;
 
 // ---------- Interprètes (surtout pour le classique) ----------
 const MAX_PERF=3;
@@ -1127,10 +1153,10 @@ function buildWorkIndex(W){const P=new Map(),find=a=>{let r=a;while(P.get(r)!==r
   const info=[],cats=new Map();
   for(const w in W){const o=W[w];if(!o||!o.c)continue;const comp=norm(canonC(o.c)),d=(S.wsp&&S.wsp[w])?{cat:"",desc:"",slug:""}:workDesc(comp,o.t);
     const cc=d.cat||catKey(o.cat||"");
-    const e={w,cat:cc?"c:"+comp+"|"+cc:"",weak:[d.desc?"d:"+comp+"|"+d.desc:"",d.slug?"s:"+comp+"|"+d.slug:""].filter(Boolean)};info.push(e);
+    const e={w,mb:(S.wsp&&S.wsp[w])?"":o.mb||"",cat:cc?"c:"+comp+"|"+cc:"",weak:[d.desc?"d:"+comp+"|"+d.desc:"",d.slug?"s:"+comp+"|"+d.slug:""].filter(Boolean)};info.push(e);
     if(e.cat)e.weak.forEach(k=>{if(!cats.has(k))cats.set(k,new Set());cats.get(k).add(e.cat.replace(/-\d+$/,""));});}
   // a weak key (form+number, same words) only links a work that has a catalogue number when it points to a single catalogue number
-  info.forEach(e=>{const n="w:"+e.w;uni(n,n);if(e.cat)uni(n,e.cat);e.weak.forEach(k=>{if(!e.cat||cats.get(k).size<2)uni(n,k);});});
+  info.forEach(e=>{const n="w:"+e.w;uni(n,n);if(e.cat)uni(n,e.cat);if(e.mb)uni(n,"m:"+e.mb);e.weak.forEach(k=>{if(!e.cat||cats.get(k).size<2)uni(n,k);});});
   // manual links (S.wl) override the automatic rules
   for(const a in (S.wl||{})){const b=S.wl[a];if(W[a]&&W[b]&&W[a].c&&W[b].c&&!(S.wsp&&S.wsp[a]))uni("w:"+a,"w:"+b);}
   const groups=new Map();info.forEach(e=>{const r=find("w:"+e.w);if(!groups.has(r))groups.set(r,{cat:"",weak:"",ws:[]});const g=groups.get(r);g.ws.push(e.w);if(e.cat&&(!g.cat||e.cat<g.cat))g.cat=e.cat;});
@@ -1160,15 +1186,20 @@ function splitMvt(title){const m=(title||"").match(MVT);if(m)return [m[1],m[2]];
 async function mbRelease(rid){
   const d=await mbGet("release/"+rid+"?inc=artist-credits+labels+recordings+media+recording-level-rels+work-rels+work-level-rels+artist-rels+genres+release-groups");
   const newWorks={},perfs=new Set();
-  const discs=(d.media||[]).map(m=>({t:m.title||"",tr:(m.tracks||[]).map(tk=>{const rec=tk.recording||{};
+  // Each track keeps the MusicBrainz id of exactly what is played (movement, prelude…) in "mw", its number in the parent work in "mo";
+  // the parent work's id goes in the work's "mb". This identifies every movement whatever the title language.
+  const discs=(d.media||[]).map(m=>{const raw=(m.tracks||[]).map(tk=>{const rec=tk.recording||{};
     const pr=(rec.relations||[]).find(x=>x.type==="performance"&&x.work);
     (rec.relations||[]).forEach(x=>{if(["instrument","vocal","conductor","performing orchestra","performer"].includes(x.type)&&x.artist)perfs.add(nonLatin(x.artist.name)&&x.artist["sort-name"]?x.artist["sort-name"].split(",").map(s=>s.trim()).reverse().join(" "):x.artist.name);});
-    const dur=tk.length?Math.round(tk.length/1000):0;
-    if(pr){const w=pr.work,comp=(w.relations||[]).find(x=>x.type==="composer"&&x.artist),cn=comp?canonC(comp.artist.name,comp.artist["sort-name"]):"";
-      const m=splitMvt(w.title);m&&m.unshift(w.title);
-      if(m){const key="mbp:"+norm(cn+"|"+m[1]).replace(/[^a-z0-9|]+/g,"-");newWorks[key]={c:cn,t:m[1].trim(),cat:""};return {w:key,n:m[2].trim(),d:dur};}
-      newWorks["mb:"+w.id]={c:cn,t:w.title,cat:""};return {w:"mb:"+w.id,n:tk.title,d:dur};}
-    return {n:tk.title,d:dur};})}));
+    const dur=tk.length?Math.round(tk.length/1000):0;if(!pr)return {tk,dur};
+    const w=pr.work,comp=(w.relations||[]).find(x=>x.type==="composer"&&x.artist),cn=comp?canonC(comp.artist.name,comp.artist["sort-name"]):"",par=(w.relations||[]).find(x=>x.type==="parts"&&x.direction==="backward"&&x.work);
+    return {tk,dur,w,cn,par:par?par.work:null,mo:par&&par["ordering-key"]?+par["ordering-key"]:0};});
+    const pc={};raw.forEach(r=>{if(r.par)pc[r.par.id]=(pc[r.par.id]||0)+1;});
+    return {t:m.title||"",tr:raw.map(r=>{if(!r.w)return {n:r.tk.title,d:r.dur};const w=r.w,cn=r.cn,base={d:r.dur,mw:w.id};if(r.mo)base.mo=r.mo;
+      const sp=splitMvt(w.title);
+      if(sp){const key="mbp:"+norm(cn+"|"+sp[0]).replace(/[^a-z0-9|]+/g,"-");newWorks[key]=newWorks[key]||{c:cn,t:sp[0].trim(),cat:""};if(r.par)newWorks[key].mb=r.par.id;return Object.assign({w:key,n:sp[1].trim()},base);}
+      if(r.par&&pc[r.par.id]>1){const key="mbw:"+r.par.id;newWorks[key]={c:cn,t:r.par.title,cat:"",mb:r.par.id};return Object.assign({w:key,n:w.title},base);}
+      newWorks["mb:"+w.id]={c:cn,t:w.title,cat:"",mb:w.id};return Object.assign({w:"mb:"+w.id,n:r.tk.title},base);})};});
   const lab=(d["label-info"]||[]).find(l=>l.label);
   const mbg=[...(d.genres||[]),...((d["release-group"]||{}).genres||[])].sort((p,q)=>(q.count||0)-(p.count||0)).map(g=>g.name);
   const a={ean:(d.barcode||"").replace(/\D/g,""),g:mapGenre(mbg,[]),id:"mb"+d.id,a:credit(d["artist-credit"])||"Unknown artist",t:d.title,l:lab?lab.label.name:"",cat:lab&&lab["catalog-number"]&&lab["catalog-number"]!=="[none]"?lab["catalog-number"]:"",y:(d.date||"").slice(0,4),
@@ -1247,8 +1278,8 @@ $("catno").addEventListener("keydown",e=>{if(e.key==="Enter")$("catGo").click();
 
 // ---------- Fiches ----------
 function openWork(w){const o=WORKS()[w],vs=versions()[workId(w)]||[],p=$("detail");if(!o)return;CUR=()=>openWork(w);
-  const mem=new Set(groupMembers(w)),P=pieces(),pids=Object.keys(P).filter(id=>[...P[id].cyc].some(k=>mem.has(k))).sort((a,b)=>P[a].num-P[b].num);
-  const PC=pids.length?`<h3 class="subH">Pieces in this work (${pids.length})</h3><ul class="list pcs">${pids.map(id=>`<li class="item tap" data-piece="${esc(id)}"><div class="meta"><b>${esc(P[id].label)}</b><small>${pieceN(id)} version${pieceN(id)!==1?"s":""} in your collection and wishlist</small></div><span class="count">${pieceN(id)}</span></li>`).join("")}</ul>`:"";
+  const gid=workId(w),P=pieces(),pids=Object.keys(P).filter(id=>P[id].parents.has(gid)).sort((a,b)=>(P[a].num||999)-(P[b].num||999)||P[a].label.localeCompare(P[b].label));
+  const PC=pids.length>1?`<h3 class="subH">Movements and pieces (${pids.length})</h3><ul class="list pcs">${pids.map(id=>`<li class="item tap" data-piece="${esc(id)}"><div class="meta"><b>${esc(P[id].label)}</b><small>${pieceN(id)} version${pieceN(id)!==1?"s":""} in your collection and wishlist</small></div><span class="count">${pieceN(id)}</span></li>`).join("")}</ul>`:"";
   p.innerHTML=`<p class="cat">${esc(canonC(o.c))}</p><h2 class="wh">${esc(wLabel(w))}</h2><p class="hint">${vs.length} version${vs.length!==1?"s":""} in your collection and wishlist</p>
    <ul class="list">${verRows(vs)}</ul>${PC}
    <details class="more"><summary>⋯ Fix grouping</summary><div class="mgrp"><button type="button" class="setItem" id="wMerge"><b>Merge with another work…</b><small>Group it with other versions of the same piece</small></button>${groupMembers(w).length>1||(S.wl&&S.wl[w])?`<button type="button" class="setItem" id="wSplit"><b>Split from this group</b><small>Make it a separate work</small></button>`:""}</div></details>
@@ -1258,9 +1289,9 @@ function openWork(w){const o=WORKS()[w],vs=versions()[workId(w)]||[],p=$("detail
   $("detClose").onclick=()=>closeSheet();if($("detBack"))$("detBack").onclick=goBack;
   p.querySelectorAll("[data-open]").forEach(n=>n.onclick=()=>subView(()=>openDetail(n.dataset.open)));
   p.querySelectorAll("[data-piece]").forEach(n=>n.onclick=()=>subView(()=>openPiece(n.dataset.piece)));}
-function openPiece(id){const v=versions(),P=_Pc;if(v[id]){openWork(v[id].rep);return;}const e=P[id],p=$("detail");if(!e)return;CUR=()=>openPiece(id);
-  const comp=id.slice(3).split("|")[0];
-  p.innerHTML=`<p class="cat">${esc(canonC(comp)||comp)}</p><h2 class="wh">${esc(e.label)}</h2><p class="hint">${e.vs.length} version${e.vs.length!==1?"s":""} in your collection and wishlist</p>
+function openPiece(id){const v=versions(),P=_Pc;id=_Pn[id]||id;const e=P[id],p=$("detail");if(!e)return;if(e.std&&v[e.std]){openWork(v[e.std].rep);return;}CUR=()=>openPiece(id);
+  const pw=[...e.parents].map(g=>v[g]&&WORKS()[v[g].rep]).find(Boolean),comp=pw?canonC(pw.c):"";
+  p.innerHTML=`<p class="cat">${esc(comp)}${pw?" · "+esc(pw.t):""}</p><h2 class="wh">${esc(e.label)}</h2><p class="hint">${e.vs.length} version${e.vs.length!==1?"s":""} in your collection and wishlist</p>
    <ul class="list">${verRows(e.vs)}</ul>
    <div class="${BACK.length?"pair":"row"}">${BACK.length?`<button type="button" id="detBack">← Back</button>`:""}<button type="button" id="detClose">Close</button></div>`;
   openSheet();$("detClose").onclick=()=>closeSheet();if($("detBack"))$("detBack").onclick=goBack;
@@ -1819,7 +1850,7 @@ async function importLink(s){const out=$("eanResult");$("scanPanel").hidden=fals
 
 
 // ---------- Réglages (panneau plein écran) ----------
-const APPV="0.50.0";$("hVer").textContent="v"+APPV;
+const APPV="0.51.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -1953,6 +1984,32 @@ async function fetchCodesAll(){if(CB.run){CB.run=false;return;}const m=$("cbMsg"
   logA("Likely barcodes fetched: "+f+" of "+n+" albums","","auto");save();render();
   m.textContent=`Complete: ${f} likely barcode${f!==1?"s":""} added from ${n} albums queried. Remaining editions have no online barcode (common for older CDs); use the inventory instead.`;renderToolsCounts();toast(f+" likely barcodes added");}
 $("cbGo").onclick=fetchCodesAll;
+// ---------- Movements and pieces from MusicBrainz (for albums added before 0.51) ----------
+const MV={run:false};
+const mvTodo=()=>ALL().filter(x=>!x.mvT&&(x.mbid||codesOf(x.id).length)&&isClassical(x)&&tracksOf(x).some(t=>typeof t!=="string"&&t.w&&!t.mw));
+function mvUi(){const n=mvTodo().length,s=$("mvN");if(s&&!MV.run)s.textContent=n?n+" classical album"+(n!==1?"s":"")+" to link (edition or barcode known)":"All albums with a known edition are linked ✓";}
+async function linkMovements(){if(MV.run){MV.run=false;return;}const todo=mvTodo(),m=$("mvMsg");
+  if(!todo.length){report("info","Nothing to link","Every classical album with a known edition or barcode is already linked to MusicBrainz.",[],"Albums without a matched edition can be identified first with “Choose the right edition” in their entry.");return;}
+  if(!navigator.onLine){report("err","No Internet connection","MusicBrainz cannot be reached.",[],"Connect to the Internet and try again.");return;}
+  MV.run=true;$("mvGo").querySelector("b").textContent="Stop";let n=0,ok=0,nt=0;const miss=[];try{MV.lock=await navigator.wakeLock?.request("screen");}catch(e){}
+  for(const x of todo){if(!MV.run)break;const txt=`Linking… ${n}/${todo.length} albums · ${nt} tracks identified. Keep the app open (about 1 album per second).`;m.textContent=txt;if($("mvGo2"))$("mvGo2").textContent="Linking "+n+"/"+todo.length+"… (stop)";
+    try{let rid=x.mbid;const ds=discsOf(x);
+      if(!rid){for(const c of codesOf(x.id)){const r=await mbGet("release/?query=barcode:"+c+"&limit=5");const f=(r.releases||[]).find(o=>o.barcode===c&&+o["track-count"]===tracksOf(x).length);if(f){rid=f.id;break;}}}
+      if(!rid){miss.push(x.t+": edition not found from its barcode");x.mvT=1;n++;continue;}
+      const d=await mbGet("release/"+rid+"?inc=recordings+recording-level-rels+work-rels+work-level-rels"),md=(d.media||[]).filter(o=>(o.tracks||[]).length);
+      if(md.length!==ds.length||md.some((o,i)=>o.tracks.length!==ds[i].tr.length)){miss.push(x.t+": track list differs from MusicBrainz ("+md.map(o=>o.tracks.length).join("+")+" vs "+ds.map(o=>o.tr.length).join("+")+")");x.mvT=1;n++;continue;}
+      let k=0;md.forEach((o,i)=>o.tracks.forEach((tk,j)=>{const t=ds[i].tr[j];if(typeof t==="string"||!t.w)return;const pr=((tk.recording||{}).relations||[]).find(r=>r.type==="performance"&&r.work);if(!pr)return;
+        t.mw=pr.work.id;const par=(pr.work.relations||[]).find(r=>r.type==="parts"&&r.direction==="backward"&&r.work);if(par&&par["ordering-key"])t.mo=+par["ordering-key"];
+        const wo=S.works[t.w],alone=ds[i].tr.filter(u=>u.w===t.w).length===1;
+        if(wo&&!wo.mb){if(par&&!alone)wo.mb=par.work.id;else if(alone&&!/^mb[pw]:/.test(t.w)&&!mvtNum(t.n))wo.mb=pr.work.id;}k++;}));
+      if(!x.mbid)x.mbid=rid;x.mvT=1;if(k){ok++;nt+=k;}else miss.push(x.t+": no work information on MusicBrainz");
+    }catch(e){miss.push(x.t+": "+(e.message||"error"));await sleep(2000);}
+    n++;if(n%10===0)save();}
+  const stopped=!MV.run;MV.run=false;try{MV.lock&&MV.lock.release();}catch(e){}$("mvGo").querySelector("b").textContent="Recognise movements and pieces";
+  logA("Movements linked to MusicBrainz: "+nt+" tracks in "+ok+" albums","","auto");save();render();mvUi();m.textContent=`${ok} album${ok!==1?"s":""} linked, ${nt} tracks identified.`;
+  report(ok?(miss.length?"warn":"ok"):"err",stopped&&n<todo.length?"Linking stopped":"Linking complete",`${ok} of ${n} album${n!==1?"s":""} linked; ${nt} tracks now identified by their MusicBrainz work (movement, prelude, etc.).`,
+    miss.slice(0,12).concat(miss.length>12?["…and "+(miss.length-12)+" more"]:[]),miss.length?"Albums not linked keep the automatic recognition from their titles. For these, check the edition with “Choose the right edition”, then run this again.":"Open a work in the Classical tab to see each movement and its versions.");}
+$("mvGo").onclick=linkMovements;
 // ---------- Journal des activités ----------
 function openLog(filter){closeSettings();const p=$("detail"),L=(S.log||[]).filter(e=>!filter||(filter==="auto"?e.k==="auto":e.k!=="auto"));
   const day=t=>new Date(t).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});let cur="";
@@ -1970,7 +2027,7 @@ $("logOpen").onclick=()=>openLog("");
 function todoCounts(){const all=[...S.col,...S.wish];return TODOS.map(([k,lab,f])=>[k,lab,all.filter(f).length]);}
 function seeFilter(k){TODOF=k;$("q").value="";tab="col";render();setTimeout(()=>$("stick").scrollIntoView({behavior:"smooth"}),50);}
 $("seeNoCode").onclick=()=>seeFilter("code");$("seeNoGenre").onclick=()=>seeFilter("genre");
-function renderToolsCounts(){const all=ALL(),noc=all.filter(x=>!codesOf(x.id).length),pc=noc.filter(hasPCode).length,ed=noc.filter(x=>!hasPCode(x)&&(x.mbid||x.dgid)).length,q=cbTodo().length;
+function renderToolsCounts(){try{mvUi();}catch(e){}const all=ALL(),noc=all.filter(x=>!codesOf(x.id).length),pc=noc.filter(hasPCode).length,ed=noc.filter(x=>!hasPCode(x)&&(x.mbid||x.dgid)).length,q=cbTodo().length;
   $("twCodeTxt").innerHTML=noc.length?`<b>${noc.length}</b> album${noc.length!==1?"s":""} without a confirmed barcode (<b>${pc}</b> with a likely barcode, to be confirmed on first scan).`:"All your albums have a confirmed barcode ✓";
   $("seeNoCode").hidden=!noc.length;$("seeNoCode").textContent=`Show the ${noc.length} albums without a barcode`;
   const ng=all.filter(x=>!genreOf(x)).length;$("seeNoGenre").hidden=!ng;$("seeNoGenre").textContent=`Show the ${ng} album${ng!==1?"s":""} without a genre`;
