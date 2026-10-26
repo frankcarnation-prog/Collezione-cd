@@ -472,6 +472,7 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 </section>
 <section class="card"><h3>Backup</h3>
 <p>Your collection is stored on this device. Download a backup regularly; your own cover photos are included. “Restore a file” also accepts a collection import file, which is merged with your existing data.</p>
+<label class="chk2"><input type="checkbox" id="bkKeys" checked> Include API keys and tokens (stored in plain text in the file: keep it private)</label>
 <div class="row"><button id="dlB" type="button">Download backup</button><label class="filebtn">Restore a file<input id="upB" type="file" accept="application/json,.json"></label></div>
 </section>
 <section class="card"><h3>Export</h3>
@@ -1419,9 +1420,10 @@ function editTracks(id){const x=byId(id),p=$("detail");if(!x)return;const W=WORK
 // ---------- Sauvegarde ----------
 $("nagGo").onclick=()=>$("dlB").click();
 if($("enrOpen"))$("enrOpen").onclick=()=>{closeSettings();try{localStorage.removeItem("enr-hide");}catch(e){}$("enr").hidden=false;enrUi();$("enr").scrollIntoView({behavior:"smooth"});};
-$("dlB").onclick=async()=>{S.chg=0;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}nag();const cv=Object.assign({},await covAll(),COV),withPh=Object.keys(cv).length>0,out=withPh?Object.assign({},S,{covers:cv}):S;const blob=new Blob([JSON.stringify(out,null,withPh?0:1)],{type:"application/json"});const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);a.download="album-ledger-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();$("bMsg").textContent="Backup downloaded"+(withPh?" (with photos, "+(blob.size/1048576).toFixed(1)+" MB)":"")+".";};
-$("upB").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(o&&o.collezione_import){const r=importList(o.albums||[]);$("bMsg").textContent=r.added+" albums imported"+(r.skipped?", "+r.skipped+" already present (skipped)":"")+".";e.target.value="";return;}if(!Array.isArray(o.col))throw 0;const cv=o.covers&&typeof o.covers==="object"?o.covers:null;delete o.covers;adopt(o);if(cv){await covClear();await covPutMany(cv);Object.assign(COV,cv);}save();render();$("bMsg").textContent="Backup restored"+(cv?" with photos":"")+".";}catch(err){$("bMsg").textContent="This file isn't an Album Ledger backup.";}};
+const BK_KEYS=["ai-cfg","anthropic-key","discogs-token","auto-codes"];
+$("dlB").onclick=async()=>{S.chg=0;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}nag();const cv=Object.assign({},await covAll(),COV),withPh=Object.keys(cv).length>0,sets={};if($("bkKeys").checked)BK_KEYS.forEach(k=>{try{const v=localStorage.getItem(k);if(v!==null)sets[k]=v;}catch(e){}});const withSet=Object.keys(sets).length>0,out=Object.assign({},S,withPh?{covers:cv}:{},withSet?{settings:sets}:{}),big=withPh||withSet;const blob=new Blob([JSON.stringify(out,null,big?0:1)],{type:"application/json"});const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download="album-ledger-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();$("bMsg").textContent="Backup downloaded ("+[withPh?"photos":"",withSet?"keys and settings":""].filter(Boolean).join(", ")+(withPh||withSet?", ":"")+(blob.size/1048576).toFixed(1)+" MB).";};
+$("upB").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(o&&o.collezione_import){const r=importList(o.albums||[]);$("bMsg").textContent=r.added+" albums imported"+(r.skipped?", "+r.skipped+" already present (skipped)":"")+".";e.target.value="";return;}if(!Array.isArray(o.col))throw 0;const cv=o.covers&&typeof o.covers==="object"?o.covers:null;const st=o.settings&&typeof o.settings==="object"?o.settings:null;delete o.covers;delete o.settings;adopt(o);if(st){BK_KEYS.forEach(k=>{if(typeof st[k]==="string"){try{localStorage.setItem(k,st[k]);}catch(e){}}});$("dgKey").value=dgKey();dgInfoUi();dgCheck();syncAiUi();$("autoCodes").checked=autoCodes();}if(cv){await covClear();await covPutMany(cv);Object.assign(COV,cv);}save();render();$("bMsg").textContent="Backup restored"+(cv||st?" ("+[cv?"photos":"",st?"keys and settings":""].filter(Boolean).join(", ")+")":"")+".";}catch(err){$("bMsg").textContent="This file isn't an Album Ledger backup.";}};
 // ---------- Export: printable list (PDF through the print dialog) ----------
 let EXS="col";
 document.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>{EXS=b.dataset.ex;document.querySelectorAll("[data-ex]").forEach(o=>o.setAttribute("aria-pressed",o===b));});
@@ -1674,7 +1676,7 @@ async function importLink(s){const out=$("eanResult");$("scanPanel").hidden=fals
 
 
 // ---------- Réglages (panneau plein écran) ----------
-const APPV="0.45.0";$("hVer").textContent="v"+APPV;
+const APPV="0.46.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
