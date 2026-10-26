@@ -251,6 +251,12 @@ b.warn{color:#e0a030;font-weight:600}
 .logl .item{gap:10px;padding:8px 2px;align-items:flex-start}.lt{flex:none;font-family:var(--mono);font-size:.78rem;color:var(--muted);padding-top:2px}.logl .meta span{font-size:.9rem}
 
 /* ===================== Thème « Platinum » : entre Mac OS 9 et Windows 98 ===================== */
+.rptOv{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}.rptOv[hidden]{display:none}
+.rpt{background:var(--surface,#fff);color:var(--ink,#111);border:1px solid var(--line,#ccc);border-radius:10px;max-width:460px;width:100%;max-height:85vh;overflow:auto;padding:16px 18px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.rptHd{display:flex;align-items:center;gap:10px;margin-bottom:8px}.rptHd h3{margin:0;font-size:1.05rem}
+.rptI{flex:none;width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.95rem;background:#1565c0}
+.rpt.ok .rptI{background:#1a7f37}.rpt.err .rptI{background:#b3261e}.rpt.warn .rptI{background:#b26a00}
+.rpt p{margin:.3rem 0}.rpt ul{margin:.4rem 0 .4rem 1.1rem;padding:0}.rpt li{margin:.15rem 0;font-size:.92rem}.rpt .row{margin-top:12px;justify-content:flex-end}
 :root{--desk:#d4d4d4;--face:#e6e6e6;--hi:#ffffff;--sh:#8c8c8c;--dk:#404040;--win:#ffffff;
   --bg:#ffffff;--surface:#e6e6e6;--ink:#111111;--muted:#545454;--line:#bdbdbd;
   --accent:#1c5fbf;--accent-ink:#ffffff;--own:#1d6b2f;--own-bg:#ddefdd;--wish:#7a4a00;--wish-bg:#fbeccd;--err:#b3261e;
@@ -461,6 +467,7 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 </div></div>
 <div class="lightbox" id="lightbox" hidden></div>
 <div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
+<div class="rptOv" id="rpt" hidden><div class="rpt" role="alertdialog" aria-modal="true" aria-labelledby="rptT" aria-describedby="rptB"><div class="rptHd"><span class="rptI" id="rptI" aria-hidden="true"></span><h3 id="rptT"></h3></div><p id="rptB"></p><ul id="rptL"></ul><p class="hint" id="rptH"></p><div class="row"><button type="button" class="primary" id="rptOk">OK</button></div></div></div>
 <div class="selbar" id="selBar" hidden><span id="selTxt"></span><button type="button" class="primary" id="selBox" disabled>Group into box set</button><button type="button" id="selCancel" aria-label="Cancel selection">✕</button></div>
 <p class="empty" id="more" hidden></p>
 
@@ -942,6 +949,16 @@ function logA(msg,id,kind){S.log=S.log||[];S.log.unshift({at:Date.now(),m:msg,id
 function undoable(label,id){UNDO={s:JSON.stringify(S),label};logA(label,id);S.chg=(S.chg||0)+1;setTimeout(()=>{if(UNDO)toast(UNDO.label,"Undo",()=>{const u=UNDO;UNDO=null;if(!u)return;S=JSON.parse(u.s);logA("Undone: "+u.label,"","undo");save();render();if(sheetOpen)closeSheet();toast("Undone");});},0);}
 function toast(msg,btn,fn){const t=$("toast");t.innerHTML=`<span>${esc(msg)}</span>${btn?`<button type="button">${esc(btn)}</button>`:""}`;t.hidden=false;
   if(btn)t.querySelector("button").onclick=()=>{t.hidden=true;fn();};clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true;},btn?7000:2500);}
+// Result dialog: tells the user whether an operation worked, with details, or why it failed and what to do
+let _rptCb=null;
+function report(kind,title,msg,list,hint,onClose){const o=$("rpt");o.firstElementChild.className="rpt "+kind;$("rptI").textContent={ok:"✓",err:"✕",warn:"!",info:"i"}[kind]||"i";
+  $("rptT").textContent=title;$("rptB").textContent=msg||"";$("rptB").hidden=!msg;
+  $("rptL").innerHTML=(list||[]).map(x=>`<li>${esc(x)}</li>`).join("");$("rptL").hidden=!(list&&list.length);
+  $("rptH").textContent=hint||"";$("rptH").hidden=!hint;_rptCb=onClose||null;o.hidden=false;$("rptOk").focus();}
+function reportClose(){const o=$("rpt");if(o.hidden)return;o.hidden=true;const f=_rptCb;_rptCb=null;if(f)f();}
+$("rptOk").onclick=reportClose;$("rpt").addEventListener("click",e=>{if(e.target===$("rpt"))reportClose();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("rpt").hidden){e.stopPropagation();reportClose();}},true);
+window.addEventListener("unhandledrejection",e=>{const m=(e.reason&&e.reason.message)||String(e.reason||"");if(m&&!/AbortError|ResizeObserver|NotAllowedError/.test(m))report("err","Something went wrong",m,null,"If this keeps happening, download a backup and reload the app.");});
 $("list").addEventListener("click",e=>{
   if(SEL){const o=e.target.closest("[data-open]");if(o){const i=SEL.indexOf(o.dataset.open);if(i<0)SEL.push(o.dataset.open);else SEL.splice(i,1);render();}return;}
   const b=e.target.closest("button");
@@ -1494,16 +1511,34 @@ function editTracks(id){const x=byId(id),p=$("detail");if(!x)return;const W=WORK
 $("nagGo").onclick=()=>$("dlB").click();
 if($("enrOpen"))$("enrOpen").onclick=()=>{closeSettings();try{localStorage.removeItem("enr-hide");}catch(e){}$("enr").hidden=false;enrUi();$("enr").scrollIntoView({behavior:"smooth"});};
 const BK_KEYS=["ai-cfg","anthropic-key","discogs-token","auto-codes"];
-$("dlB").onclick=async()=>{S.chg=0;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}nag();const cv=Object.assign({},await covAll(),COV),withPh=Object.keys(cv).length>0,sets={};if($("bkKeys").checked)BK_KEYS.forEach(k=>{try{const v=localStorage.getItem(k);if(v!==null)sets[k]=v;}catch(e){}});const withSet=Object.keys(sets).length>0,out=Object.assign({},S,withPh?{covers:cv}:{},withSet?{settings:sets}:{}),big=withPh||withSet;const blob=new Blob([JSON.stringify(out,null,big?0:1)],{type:"application/json"});const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);a.download="album-ledger-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();$("bMsg").textContent="Backup downloaded ("+[withPh?"photos":"",withSet?"keys and settings":""].filter(Boolean).join(", ")+(withPh||withSet?", ":"")+(blob.size/1048576).toFixed(1)+" MB).";};
-$("upB").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(o&&o.collezione_import){const r=importList(o.albums||[]);$("bMsg").textContent=r.added+" albums imported"+(r.skipped?", "+r.skipped+" already present (skipped)":"")+".";e.target.value="";return;}if(!Array.isArray(o.col))throw 0;const cv=o.covers&&typeof o.covers==="object"?o.covers:null;const st=o.settings&&typeof o.settings==="object"?o.settings:null;delete o.covers;delete o.settings;adopt(o);if(st){BK_KEYS.forEach(k=>{if(typeof st[k]==="string"){try{localStorage.setItem(k,st[k]);}catch(e){}}});$("dgKey").value=dgKey();dgInfoUi();dgCheck();syncAiUi();$("autoCodes").checked=autoCodes();}if(cv){await covClear();await covPutMany(cv);Object.assign(COV,cv);}save();render();$("bMsg").textContent="Backup restored"+(cv||st?" ("+[cv?"photos":"",st?"keys and settings":""].filter(Boolean).join(", ")+")":"")+".";}catch(err){$("bMsg").textContent="This file isn't an Album Ledger backup.";}};
+$("dlB").onclick=async()=>{try{S.chg=0;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}nag();const cv=Object.assign({},await covAll(),COV),withPh=Object.keys(cv).length>0,sets={};if($("bkKeys").checked)BK_KEYS.forEach(k=>{try{const v=localStorage.getItem(k);if(v!==null)sets[k]=v;}catch(e){}});const withSet=Object.keys(sets).length>0,out=Object.assign({},S,withPh?{covers:cv}:{},withSet?{settings:sets}:{}),big=withPh||withSet;const blob=new Blob([JSON.stringify(out,null,big?0:1)],{type:"application/json"});const a=document.createElement("a"),fn="album-ledger-"+new Date().toISOString().slice(0,10)+".json";
+  a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();a.remove();const mb=blob.size/1048576,size=mb>=0.1?mb.toFixed(1)+" MB":Math.max(1,Math.round(blob.size/1024))+" KB";
+  $("bMsg").textContent="Backup downloaded ("+size+").";
+  report("ok","Backup downloaded","The file “"+fn+"” was sent to your browser’s download location.",[S.col.length+" album"+(S.col.length!==1?"s":"")+" and "+S.wish.length+" wishlist item"+(S.wish.length!==1?"s":""),withPh?Object.keys(cv).length+" cover image"+(Object.keys(cv).length!==1?"s":"")+" and photos":"No cover images or photos",withSet?"API keys and settings (stored in plain text)":"No API keys or settings","Size: "+size],"Keep the file somewhere safe. To restore it, use “Restore a file” and select the .json file as is — do not unzip or rename it.");
+  }catch(err){report("err","Backup failed","The backup file could not be created.",[(err&&err.message)||String(err)],"Check that your browser allows downloads for this site, then try again.");}};
+$("upB").onchange=async e=>{const inp=e.target,f=inp.files[0];if(!f)return;const done=()=>{inp.value="";};
+  const fail=(why,list,hint)=>{$("bMsg").textContent="Restore failed: "+why;report("err","Restore failed",why,[("File: "+f.name+" ("+(f.size/1024<1024?Math.max(1,Math.round(f.size/1024))+" KB":(f.size/1048576).toFixed(1)+" MB")+")")].concat(list||[]),hint||"Your current collection was not changed.");done();};
+  let text;try{text=await f.text();}catch(err){return fail("The file could not be read.",[(err&&err.message)||"Read error"],"Try copying the file to this device and selecting it again.");}
+  if(!text.trim())return fail("The file is empty.",[],"Select the .json file created by “Download backup”.");
+  if(/^PK\x03\x04/.test(text))return fail("This is a ZIP archive, not a backup file.",[],"Unzip it first, then select the .json file inside.");
+  let o;try{o=JSON.parse(text);}catch(err){return fail("The file is not valid JSON"+(/\.json$/i.test(f.name)?"":" and its name does not end in .json")+".",[(err&&err.message)||""].filter(Boolean),"A backup must be a .json file created by “Download backup” (or an import list). It may have been edited, truncated during download, or saved in another format.");}
+  try{if(o&&o.collezione_import){const r=importList(o.albums||[]);$("bMsg").textContent=r.added+" albums imported"+(r.skipped?", "+r.skipped+" already present (skipped)":"")+".";
+      report(r.added?"ok":"info","Import "+(r.added?"complete":"finished: nothing new"),r.added+" album"+(r.added!==1?"s":"")+" added to your collection.",["Added: "+r.added,"Skipped (already present): "+(r.skipped||0),"Total albums now: "+S.col.length],"Imports are merged with your existing data; nothing was replaced.");done();return;}
+    if(!o||typeof o!=="object"||!Array.isArray(o.col)||!Array.isArray(o.wish))return fail("The file is valid JSON but not an Album Ledger backup.",[!o||typeof o!=="object"?"Content type: "+(Array.isArray(o)?"list":typeof o):"Missing the "+(!Array.isArray(o.col)?"“col” (collection)":"“wish” (wishlist)")+" section"],"Use a file created by “Download backup”, or a collection import file.");
+    const had=S.col.length,cv=o.covers&&typeof o.covers==="object"?o.covers:null,st=o.settings&&typeof o.settings==="object"?o.settings:null;delete o.covers;delete o.settings;adopt(o);let nset=0;
+    if(st){BK_KEYS.forEach(k=>{if(typeof st[k]==="string"){nset++;try{localStorage.setItem(k,st[k]);}catch(e){}}});$("dgKey").value=dgKey();dgInfoUi();dgCheck();syncAiUi();$("autoCodes").checked=autoCodes();}
+    if(cv){await covClear();await covPutMany(cv);Object.assign(COV,cv);}
+    $("sync").textContent="";save();render();const warn=$("sync").textContent;
+    const ncv=cv?Object.keys(cv).length:0;$("bMsg").textContent="Backup restored.";
+    report(warn?"warn":"ok",warn?"Restored, with a warning":"Backup restored",warn?warn+" The data is loaded now but may not persist after you close the app.":"Your collection was replaced by the contents of the file.",["File: "+f.name,S.col.length+" album"+(S.col.length!==1?"s":"")+" and "+S.wish.length+" wishlist item"+(S.wish.length!==1?"s":"")+(had?" (previously "+had+")":""),cv?ncv+" cover image"+(ncv!==1?"s":"")+" and photos restored":"No cover images in this file",st?nset+" API key/settings entr"+(nset!==1?"ies":"y")+" restored":"No API keys or settings in this file"]);done();
+  }catch(err){fail("The backup was read but could not be applied.",[(err&&err.message)||String(err)],"Your current data may be partially updated. Reload the app and check your collection.");}};
 // ---------- Export: printable list (PDF through the print dialog) ----------
 let EXS="col";
 document.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>{EXS=b.dataset.ex;document.querySelectorAll("[data-ex]").forEach(o=>o.setAttribute("aria-pressed",o===b));});
 const fmtTotal=sec=>{if(!sec)return "";let m=Math.round(sec/60);const h=Math.floor(m/60);m%=60;return h?h+" h "+String(m).padStart(2,"0")+" min":m+" min";};
 $("exGo").onclick=async()=>{const m=$("exMsg");
   const rows=(EXS!=="wish"?S.col.map(x=>[x,"own"]):[]).concat(EXS!=="col"?S.wish.map(x=>[x,"wish"]):[]);
-  if(!rows.length){m.textContent="Nothing to export.";return;}
+  if(!rows.length){m.textContent="Nothing to export.";report("info","Nothing to export","The "+(EXS==="wish"?"wishlist":EXS==="col"?"collection":"collection and wishlist")+" is empty.",[],"Add albums first, then export again.");return;}
   const key=x=>norm(x.a).replace(/^(the|les|le|la|l')\s+/,"");
   rows.sort((p,q)=>key(p[0]).localeCompare(key(q[0]),"fr")||norm(p[0].t).localeCompare(norm(q[0].t),"fr",{numeric:true}));
   m.textContent="Preparing…";
@@ -1519,7 +1554,7 @@ $("exGo").onclick=async()=>{const m=$("exMsg");
   m.textContent="";window.addEventListener("afterprint",()=>{pa.innerHTML="";},{once:true});
   setTimeout(()=>window.print(),100);};
 $("wipe").onclick=()=>{$("wipeConfirm").hidden=false;};$("wipeNo").onclick=()=>{$("wipeConfirm").hidden=true;};
-$("wipeYes").onclick=async()=>{S=emptyState();await covClear();save();render();$("wipeConfirm").hidden=true;closeSheet();$("bMsg").textContent="Collection erased.";};
+$("wipeYes").onclick=async()=>{S=emptyState();await covClear();save();render();$("wipeConfirm").hidden=true;closeSheet();$("bMsg").textContent="Collection erased.";report("ok","Collection erased","All albums, wishlist items, covers and photos were removed from this device.",[],"If this was a mistake, restore your latest backup with “Restore a file”.");};
 
 
 // (voir attachWorks plus bas)
@@ -1749,7 +1784,7 @@ async function importLink(s){const out=$("eanResult");$("scanPanel").hidden=fals
 
 
 // ---------- Réglages (panneau plein écran) ----------
-const APPV="0.48.0";$("hVer").textContent="v"+APPV;
+const APPV="0.49.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
