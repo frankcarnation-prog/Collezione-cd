@@ -407,6 +407,10 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
   #printArea .pp{display:block;font-size:8pt;font-style:italic;color:#333}
   #printArea .pm{display:block;font-size:8pt;color:#555}
 }
+
+/* Windows are centred on screen (not stuck to the bottom) */
+.overlay{align-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
+.sheet{max-height:calc(100dvh - 32px);border-radius:10px;border-bottom:1px solid var(--dk,var(--line));padding-bottom:20px}
 </style>
 </head>
 <body>
@@ -1887,7 +1891,7 @@ async function importLink(s){const out=$("eanResult");$("scanPanel").hidden=fals
 
 
 // ---------- Réglages (panneau plein écran) ----------
-const APPV="0.52.2";$("hVer").textContent="v"+APPV;
+const APPV="0.52.3";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
