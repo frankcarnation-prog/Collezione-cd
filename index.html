@@ -311,6 +311,7 @@ label{color:var(--muted)}
 /* contrôle segmenté façon Mac */
 .seg{border:1px solid var(--dk);border-radius:6px;padding:0;overflow:hidden;background:var(--face);box-shadow:inset 1px 1px var(--hi)}
 .seg button{border:0;border-radius:0;box-shadow:none;border-right:1px solid var(--sh);color:var(--ink);padding:7px 14px}.seg button:last-child{border-right:0}
+#exSeg{display:flex;width:100%}#exSeg button{flex:1;text-align:center;justify-content:center}
 .seg button[aria-pressed="true"]{background:linear-gradient(#5ea4ff,#1c5fbf);color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,.25)}
 .subseg{list-style:none;padding:10px 0 4px;border:0}
 /* barre des tâches en bas */
@@ -450,19 +451,17 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 </nav>
 <div hidden id="tbHolder"><div class="toolbox" id="toolbox">
 <ul hidden id="tbTodo"></ul>
-<section class="win" id="tw-cover"><div class="wtitle">Covers and info</div><div class="wbody"><section class="enr" id="enr"><button type="button" class="x2" id="enrX" aria-label="Hide">✕</button><p id="enrTxt"></p><button type="button" class="primary" id="enrGo">Start search</button></section></div></section>
+<section class="win" id="tw-cover"><div class="wtitle">Covers and info</div><div class="wbody"><section class="enr" id="enr"><button type="button" class="x2" id="enrX" aria-label="Hide">✕</button><p id="enrTxt"></p><button type="button" class="primary" id="enrGo">Start search</button></section><button type="button" class="setItem" id="gGo"><b>Classify genres</b><small>Automatic, via AI or Discogs</small></button><p class="hint" id="gMsg"></p>
+<button type="button" class="wide" id="seeNoGenre">Show albums without a genre</button>
+</div></section>
 <section class="win" id="tw-code"><div class="wtitle">Barcodes</div><div class="wbody">
 <p class="hint" id="twCodeTxt"></p>
 <button type="button" class="setItem" id="invOpen"><b>Inventory</b><small>Scan your CDs to enable offline recognition</small></button>
 <button type="button" class="setItem" id="cbGo"><b>Fetch likely barcodes</b><small>For albums with an identified edition</small></button><p class="hint" id="cbMsg"></p>
 <button type="button" class="wide" id="seeNoCode">Show albums without a barcode</button>
 </div></section>
-<section class="win" id="tw-cls"><div class="wtitle">Classical music</div><div class="wbody">
-<button type="button" class="setItem" id="mvGo"><b>Recognise movements and pieces</b><small id="mvN">Links each track to its MusicBrainz work</small></button><p class="hint" id="mvMsg"></p>
-</div></section>
 <section class="win" id="tw-org"><div class="wtitle">Organization</div><div class="wbody">
-<button type="button" class="setItem" id="gGo"><b>Classify genres</b><small>Automatic, via AI or Discogs</small></button><p class="hint" id="gMsg"></p>
-<button type="button" class="wide" id="seeNoGenre">Show albums without a genre</button>
+<button type="button" class="setItem" id="mvGo"><b>Recognise movements and pieces</b><small id="mvN">Links each track to its MusicBrainz work</small></button><p class="hint" id="mvMsg"></p>
 <button type="button" class="setItem" id="tbGroup"><b>Group into box sets</b><small id="tbGroupN">Automatic suggestions</small></button>
 </div></section>
 <section class="win" id="tw-hist"><div class="wtitle">History</div><div class="wbody">
@@ -1850,7 +1849,7 @@ async function importLink(s){const out=$("eanResult");$("scanPanel").hidden=fals
 
 
 // ---------- Réglages (panneau plein écran) ----------
-const APPV="0.51.0";$("hVer").textContent="v"+APPV;
+const APPV="0.51.1";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2042,7 +2041,7 @@ function renderTools(){$("list").classList.add("toolsMode");$("list").innerHTML=
     if(k==="group"){openGroupSugg();return;}if(k==="auto"){openReview();return;}TODOF=k;$("q").value="";tab="col";render();setTimeout(()=>$("stick").scrollIntoView({behavior:"smooth"}),50);});
   try{enrUi();}catch(e){}}
 // "À faire" sur la page Collection : repliable, chaque ligne mène à l'outil concerné
-const TODO_SEC={cover:"tw-cover",auto:"tw-cover",year:"tw-cover",label:"tw-cover",genre:"tw-org",group:"tw-org",code:"tw-code"};
+const TODO_SEC={cover:"tw-cover",auto:"tw-cover",year:"tw-cover",label:"tw-cover",genre:"tw-cover",group:"tw-org",code:"tw-code"};
 function goTools(sec,k){goTab("tools");setTimeout(()=>{const el=$(sec);if(!el)return;el.scrollIntoView({behavior:"smooth",block:"start"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash");},80);}
 function homeTodo(){const c=$("todoCard");if(!c)return;const g=groupSuggestions().length;
   const rows=todoCounts().filter(([k,,n])=>n).map(([k,lab,n])=>({k,lab,n}));if(g)rows.push({k:"group",lab:"To group into box sets",n:g});
