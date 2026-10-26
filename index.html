@@ -532,7 +532,7 @@ function validEan(c){if(!/^\d{8,13}$/.test(c))return false;if(c.length===8){cons
 const CAT=DEMO.albums.map((x,i)=>Object.assign({id:"d"+i},x));
 const pick=x=>{const o=JSON.parse(JSON.stringify(x));delete o.st;delete o.ean;return o;};
 function demoState(){const s={col:[],wish:[],codes:{},works:{},demo:true};CAT.forEach(x=>{if(x.st==="own"){s.col.push(pick(x));s.codes[x.ean]=x.id;}if(x.st==="wish"){s.wish.push(pick(x));s.codes[x.ean]=x.id;}});return s;}
-const emptyState=()=>({col:[],wish:[],codes:{},works:{},demo:false});
+const emptyState=()=>({col:[],wish:[],codes:{},works:{},wl:{},wsp:{},demo:false});
 let S=emptyState();
 function adopt(o){if(o&&Array.isArray(o.col)&&Array.isArray(o.wish)){S=Object.assign(emptyState(),o);toEnglish();}}
 // Before 0.43.0 the app was in French: genres and the unknown-artist placeholder were stored in French
@@ -1100,13 +1100,17 @@ const WIDX=new WeakMap();
 function buildWorkIndex(W){const P=new Map(),find=a=>{let r=a;while(P.get(r)!==r&&P.has(r))r=P.get(r);let c=a;while(c!==r){const n=P.get(c);P.set(c,r);c=n;}return r;},
   uni=(a,b)=>{if(!P.has(a))P.set(a,a);if(!P.has(b))P.set(b,b);const x=find(a),y=find(b);if(x!==y)P.set(x,y);};
   const info=[],cats=new Map();
-  for(const w in W){const o=W[w];if(!o||!o.c)continue;const comp=norm(canonC(o.c)),d=workDesc(comp,o.t);
+  for(const w in W){const o=W[w];if(!o||!o.c)continue;const comp=norm(canonC(o.c)),d=(S.wsp&&S.wsp[w])?{cat:"",desc:"",slug:""}:workDesc(comp,o.t);
     const e={w,cat:d.cat?"c:"+comp+"|"+d.cat:"",weak:[d.desc?"d:"+comp+"|"+d.desc:"",d.slug?"s:"+comp+"|"+d.slug:""].filter(Boolean)};info.push(e);
     if(e.cat)e.weak.forEach(k=>{if(!cats.has(k))cats.set(k,new Set());cats.get(k).add(e.cat.replace(/-\d+$/,""));});}
   // a weak key (form+number, same words) only links a work that has a catalogue number when it points to a single catalogue number
   info.forEach(e=>{const n="w:"+e.w;uni(n,n);if(e.cat)uni(n,e.cat);e.weak.forEach(k=>{if(!e.cat||cats.get(k).size<2)uni(n,k);});});
+  // manual links (S.wl) override the automatic rules
+  for(const a in (S.wl||{})){const b=S.wl[a];if(W[a]&&W[b]&&W[a].c&&W[b].c&&!(S.wsp&&S.wsp[a]))uni("w:"+a,"w:"+b);}
   const groups=new Map();info.forEach(e=>{const r=find("w:"+e.w);if(!groups.has(r))groups.set(r,{cat:"",weak:"",ws:[]});const g=groups.get(r);g.ws.push(e.w);if(e.cat&&(!g.cat||e.cat<g.cat))g.cat=e.cat;});
-  const out=new Map();groups.forEach(g=>{const id=g.cat?"id:"+g.cat.slice(2):"g:"+g.ws.slice().sort()[0];g.ws.forEach(w=>out.set(w,id));});return out;}
+  const out=new Map();groups.forEach(g=>{const id=g.cat?"id:"+g.cat.slice(2):"g:"+g.ws.slice().sort()[0];g.ws.forEach(w=>out.set(w,id));});
+  out.members=new Map();out.forEach((id,w)=>{if(!out.members.has(id))out.members.set(id,[]);out.members.get(id).push(w);});return out;}
+function groupMembers(w){const W=WORKS(),id=workId(w,W),ix=WIDX.get(W);return (ix&&ix.members&&ix.members.get(id))||[w];}
 function workId(w,W){W=W||WORKS();const o=W[w];if(!o||!o.c)return w;let ix=WIDX.get(W);if(!ix){ix=buildWorkIndex(W);WIDX.set(W,ix);}return ix.get(w)||w;}
 // "Œuvre, op. 43: Variation II: …" → [œuvre, mouvement]
 function splitMvt(title){const m=(title||"").match(MVT);if(m)return [m[1],m[2]];const i=(title||"").indexOf(": ");
@@ -1203,9 +1207,21 @@ $("catno").addEventListener("keydown",e=>{if(e.key==="Enter")$("catGo").click();
 function openWork(w){const o=WORKS()[w],vs=versions()[workId(w)]||[],p=$("detail");if(!o)return;CUR=()=>openWork(w);
   p.innerHTML=`<p class="cat">${esc(canonC(o.c))}</p><h2 class="wh">${esc(wLabel(w))}</h2><p class="hint">${vs.length} version${vs.length!==1?"s":""} in your collection and wishlist</p>
    <ul class="list">${vs.map(e=>`<li class="item tap" data-open="${e.x.id}"><img class="cover" src="${coverUrl(e.x)}" alt=""><div class="meta"><b>${esc(firstPerf(e.x.perf)||e.x.a)}</b><small>${esc(e.d.rec||e.x.rec||e.x.y||"")}${e.d.t?" · "+esc(e.d.t):""}</small><small>${esc(e.x.t)}${e.x.box?" · CD "+(e.di+1):""}</small></div><span class="chip ${e.own?"own":"wish"}">${e.own?"Owned":"Wishlist"}</span></li>`).join("")}</ul>
+   <details class="more"><summary>⋯ Fix grouping</summary><div class="mgrp"><button type="button" class="setItem" id="wMerge"><b>Merge with another work…</b><small>Group it with other versions of the same piece</small></button>${groupMembers(w).length>1||(S.wl&&S.wl[w])?`<button type="button" class="setItem" id="wSplit"><b>Split from this group</b><small>Make it a separate work</small></button>`:""}</div></details>
+   <div class="${BACK.length?"pair":"row"}">${BACK.length?`<button type="button" id="detBack">← Back</button>`:""}<button type="button" id="detClose">Close</button></div>`;
+  openSheet();$("wMerge").onclick=()=>subView(()=>openMerge(w));
+  if($("wSplit"))$("wSplit").onclick=()=>{S.wsp=S.wsp||{};S.wsp[w]=1;if(S.wl)delete S.wl[w];save();toast("Work split from its group");render();openWork(w);};
+  $("detClose").onclick=()=>closeSheet();if($("detBack"))$("detBack").onclick=goBack;
+  p.querySelectorAll("[data-open]").forEach(n=>n.onclick=()=>subView(()=>openDetail(n.dataset.open)));}
+function openMerge(w){const W=WORKS(),o=W[w],V=versions(),gid=workId(w,W),comp=norm(canonC(o.c)),p=$("detail");CUR=()=>openMerge(w);
+  const opts=Object.keys(V).filter(id=>id!==gid&&W[V[id].rep]&&norm(canonC(W[V[id].rep].c))===comp).map(id=>({t:V[id].rep,n:V[id].length})).sort((a,b)=>wLabel(a.t).localeCompare(wLabel(b.t)));
+  p.innerHTML=`<p class="cat">${esc(canonC(o.c))}</p><h2 class="wh">Merge with…</h2><p class="hint">Choose the work that “${esc(wLabel(w))}” should be grouped with.</p>
+   <input type="search" id="mgQ" placeholder="Filter" aria-label="Filter works"><ul class="list" id="mgL"></ul>
    <div class="${BACK.length?"pair":"row"}">${BACK.length?`<button type="button" id="detBack">← Back</button>`:""}<button type="button" id="detClose">Close</button></div>`;
   openSheet();$("detClose").onclick=()=>closeSheet();if($("detBack"))$("detBack").onclick=goBack;
-  p.querySelectorAll("[data-open]").forEach(n=>n.onclick=()=>subView(()=>openDetail(n.dataset.open)));}
+  const draw=()=>{const q=norm($("mgQ").value);$("mgL").innerHTML=opts.filter(e=>!q||norm(wLabel(e.t)).includes(q)).map(e=>`<li class="item tap" data-t="${esc(e.t)}"><div class="meta"><b>${esc(wLabel(e.t))}</b><small>${e.n} version${e.n!==1?"s":""}</small></div></li>`).join("")||`<li class="empty">No other work by this composer.</li>`;
+    $("mgL").querySelectorAll("[data-t]").forEach(n=>n.onclick=()=>{S.wl=S.wl||{};S.wl[w]=n.dataset.t;if(S.wsp)delete S.wsp[w];save();toast("Works merged");render();goBack();});};
+  $("mgQ").oninput=draw;draw();}
 function openDetail(id){const x=byId(id);if(!x)return;CUR=()=>openDetail(id);const p=$("detail"),cu=coverUrl(x),own=!isWish(id),c=codeOf(id),W=WORKS(),V=versions(),cls=isClassical(x,W);
   const multi=discsOf(x).length>1;
   let num=0;
@@ -1733,7 +1749,7 @@ async function importLink(s){const out=$("eanResult");$("scanPanel").hidden=fals
 
 
 // ---------- Réglages (panneau plein écran) ----------
-const APPV="0.47.0";$("hVer").textContent="v"+APPV;
+const APPV="0.48.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
