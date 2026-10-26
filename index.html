@@ -492,7 +492,7 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 <div class="lightbox" id="lightbox" hidden></div>
 <div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
 <div class="rptOv" id="rpt" hidden><div class="rpt" role="alertdialog" aria-modal="true" aria-labelledby="rptT" aria-describedby="rptB"><div class="rptHd"><span class="rptI" id="rptI" aria-hidden="true"></span><h3 id="rptT"></h3></div><p id="rptB"></p><ul id="rptL"></ul><p class="hint" id="rptH"></p><div class="row"><button type="button" id="rptFull" hidden>View full report</button><button type="button" class="primary" id="rptOk">OK</button></div></div></div>
-<div class="selbar" id="selBar" hidden><span id="selTxt"></span><button type="button" class="primary" id="selBox" disabled>Group into box set</button><button type="button" id="selCancel" aria-label="Cancel selection">✕</button></div>
+<div class="selbar" id="selBar" hidden><span id="selTxt"></span><button type="button" class="small" id="selAll">All</button><button type="button" class="primary" id="selAct" disabled>Actions</button><button type="button" id="selBox" disabled>Group</button><button type="button" id="selCancel" aria-label="Cancel selection">✕</button></div>
 <p class="empty" id="more" hidden></p>
 
 <section class="settings" id="settings" hidden role="dialog" aria-modal="true" aria-label="Settings">
@@ -582,7 +582,7 @@ function save(){DATAV++;_W=null;tidyWorks();_W=null;setTimeout(nag,0);try{localS
 
 // Photos de pochettes : IndexedDB (plus de place que localStorage)
 const COV={};
-function idb(){return new Promise((res,rej)=>{const r=indexedDB.open("collezione-cd",1);r.onupgradeneeded=()=>r.result.createObjectStore("covers");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open("collezione-cd",2);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains("covers"))d.createObjectStore("covers");if(!d.objectStoreNames.contains("snaps"))d.createObjectStore("snaps");};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 async function covPut(id,data){const d=await idb();return new Promise((res,rej)=>{const t=d.transaction("covers","readwrite");t.objectStore("covers").put(data,id);t.oncomplete=res;t.onerror=()=>rej(t.error);});}
 async function covPutMany(o){const d=await idb();return new Promise((res,rej)=>{const t=d.transaction("covers","readwrite"),st=t.objectStore("covers");for(const k in o)st.put(o[k],k);t.oncomplete=res;t.onerror=()=>rej(t.error);});}
 async function covAll(){try{const d=await idb();return await new Promise(res=>{const out={},t=d.transaction("covers"),st=t.objectStore("covers"),rq=st.openCursor();rq.onsuccess=()=>{const c=rq.result;if(c){out[c.key]=c.value;c.continue();}else res(out);};rq.onerror=()=>res(out);});}catch(e){return {};}}
@@ -843,9 +843,9 @@ $("recentRow").addEventListener("click",e=>{const b=e.target.closest("[data-open
 // ---------- Sélection → coffret ----------
 let SEL=null;
 function selUi(){const on=!!SEL;$("selBtn").textContent=on?"Done":"Select";$("selBar").hidden=!on;
-  if(on){$("selTxt").textContent=SEL.length?SEL.length+" selected":"Select the albums to group";$("selBox").disabled=SEL.length<2;}}
+  if(on){$("selTxt").textContent=SEL.length?SEL.length+" selected":"Select albums";$("selBox").disabled=SEL.length<2;$("selAct").disabled=!SEL.length;}}
 $("selBtn").onclick=()=>{SEL=SEL?null:[];render();};$("selCancel").onclick=()=>{SEL=null;render();};
-$("selBox").onclick=()=>{if(SEL&&SEL.length>1)openBoxer(SEL.slice());};
+$("selAct").onclick=()=>selActions();$("selAll").onclick=()=>{if(SEL){SEL=(window.VISIDS||[]).slice();render();}};$("selBox").onclick=()=>{if(SEL&&SEL.length>1)openBoxer(SEL.slice());};
 function commonTitle(ts){const strip=t=>t.replace(/\s*[\[(](?:disc|disque|cd|vol\.?|volume)\s*\d+[\])]\s*/ig," ").replace(/\s*[-–:,]?\s*(?:disc|disque|cd|vol\.?|volume)\s*\d+\s*$/i,"").trim();
   const s=ts.map(strip);if(s.every(t=>t===s[0]))return s[0];let p=s[0];s.forEach(t=>{let i=0;while(i<p.length&&i<t.length&&p[i].toLowerCase()===t[i].toLowerCase())i++;p=p.slice(0,i);});
   p=p.replace(/[\s\-–:,;.(]+$/,"").trim();return p.length>=6?p:s[0];}
@@ -896,7 +896,7 @@ function render(){$("list").classList.remove("toolsMode");$("more").hidden=true;
       title:(a,b)=>tk(a).localeCompare(tk(b),"fr",{numeric:true}),year:(a,b)=>(+b.y||0)-(+a.y||0)||artKey(a).localeCompare(artKey(b),"fr")}[by];
     rows.sort((r1,r2)=>cmp(r1[0],r2[0]));$("sortCount").textContent=rows.length+" album"+(rows.length!==1?"s":"");}
   const CODE={};for(const k in S.codes)if(!CODE[S.codes[k]])CODE[S.codes[k]]=k;
-  const total=rows.length;if(q)$("sortCount").textContent=total+" result"+(total!==1?"s":"");rows=rows.slice(0,LIMIT);
+  const total=rows.length;if(q)$("sortCount").textContent=total+" result"+(total!==1?"s":"");window.VISIDS=rows.map(r=>r[0].id);rows=rows.slice(0,LIMIT);
   $("more").hidden=total<=LIMIT;$("more").innerHTML=total>LIMIT?`<button type="button" id="moreBtn">Show more (${total-LIMIT} more)</button>`:"";
   ul.innerHTML=rows.length?rows.map(([x,k])=>{const c=CODE[x.id],cu=coverUrl(x);
     return `<li class="item tap${SEL?(SEL.includes(x.id)?" picked":" pickable"):""}" data-open="${x.id}">${SEL?`<span class="chk" aria-hidden="true">${SEL.includes(x.id)?SEL.indexOf(x.id)+1:""}</span>`:""}${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${fmtLabel(x)?" · "+esc(fmtLabel(x)):""}${genreOf(x)&&genreOf(x)!=="Classical"?" · "+esc(genreOf(x)):""}${x.box?" · Box set "+discsOf(x).length+" CDs":" · "+tracksOf(x).length+" tracks"}</small>${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
@@ -1021,8 +1021,15 @@ function nag(){trashUi();const n=S.chg||0;$("nag").hidden=n<10;$("nagTxt").textC
 // ---------- Annuler ----------
 let UNDO=null,toastT=0;
 // Journal des activités (les 600 dernières)
+
+// Restore points: the state before each action is kept (last 25) so the activity log can go back to it
+const SNAP_MAX=25;
+async function snapPut(k,s){const d=await idb();await new Promise((res,rej)=>{const t=d.transaction("snaps","readwrite");t.objectStore("snaps").put(s,k);t.oncomplete=res;t.onerror=()=>rej(t.error);});
+  const ks=await snapKeys();if(ks.length>SNAP_MAX){const d2=await idb(),t=d2.transaction("snaps","readwrite");ks.sort().slice(0,ks.length-SNAP_MAX).forEach(x=>t.objectStore("snaps").delete(x));}}
+async function snapKeys(){try{const d=await idb();return await new Promise(res=>{const r=d.transaction("snaps").objectStore("snaps").getAllKeys();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>res([]);});}catch(e){return [];}}
+async function snapGet(k){const d=await idb();return new Promise((res,rej)=>{const r=d.transaction("snaps").objectStore("snaps").get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 function logA(msg,id,kind){S.log=S.log||[];S.log.unshift({at:Date.now(),m:msg,id:id||"",k:kind||"user"});if(S.log.length>600)S.log.length=600;}
-function undoable(label,id){UNDO={s:JSON.stringify(S),label};logA(label,id);S.chg=(S.chg||0)+1;setTimeout(()=>{if(UNDO)toast(UNDO.label,"Undo",()=>{const u=UNDO;UNDO=null;if(!u)return;S=JSON.parse(u.s);logA("Undone: "+u.label,"","undo");save();render();if(sheetOpen)closeSheet();toast("Undone");});},0);}
+function undoable(label,id){const sk=Date.now().toString(36).padStart(9,"0")+Math.random().toString(36).slice(2,5),ss=JSON.stringify(S);UNDO={s:ss,label};logA(label,id);S.log[0].sid=sk;snapPut(sk,ss).catch(()=>{});S.chg=(S.chg||0)+1;setTimeout(()=>{if(UNDO)toast(UNDO.label,"Undo",()=>{const u=UNDO;UNDO=null;if(!u)return;S=JSON.parse(u.s);logA("Undone: "+u.label,"","undo");save();render();if(sheetOpen)closeSheet();toast("Undone");});},0);}
 function toast(msg,btn,fn){const t=$("toast");t.innerHTML=`<span>${esc(msg)}</span>${btn?`<button type="button">${esc(btn)}</button>`:""}`;t.hidden=false;
   if(btn)t.querySelector("button").onclick=()=>{t.hidden=true;fn();};clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true;},btn?7000:2500);}
 // Result dialog: tells the user whether an operation worked, with details, or why it failed and what to do
@@ -1882,11 +1889,11 @@ function viewPhoto(id,i){const a=COV["ph:"+id]||[],lb=$("lightbox");if(!a[i])ret
 function albumRow(x,sub){const cu=coverUrl(x),n=discsOf(x).length;return `<li class="item tap" data-open="${esc(x.id)}">${cu?`<img class="cover" src="${cu}" alt="" onerror="this.remove()">`:`<span class="disc"></span>`}<div class="meta"><b>${esc(x.t)}</b><small>${esc([x.a,x.y,x.l].filter(Boolean).join(" · "))}${n>1?" · "+n+" CDs":tracksOf(x).length?" · "+tracksOf(x).length+" tracks":""}</small>${sub?`<small>${esc(sub)}</small>`:""}</div><span class="go" aria-hidden="true">›</span></li>`;}
 // Before any automatic operation on a list of albums: choose which ones to include.
 // Albums left unchecked are remembered for this operation (S.opSkip) and start unchecked next time.
-function pickAlbums(o,cb){const skip=new Set(o.skipMemo?[]:(S.opSkip&&S.opSkip[o.op])||[]),sel=new Set(o.list.filter(x=>!skip.has(x.id)).map(x=>x.id)),p=$("detail");
+function pickAlbums(o,cb){const skip=new Set(o.skipMemo?[]:(S.opSkip&&S.opSkip[o.op])||[]),sel=new Set(o.list.filter(x=>o.pre?o.pre(x):!skip.has(x.id)).map(x=>x.id)),p=$("detail");
   const draw=()=>{CUR=draw;
     p.innerHTML=`<p class="cat">${esc(o.cat||"Automatic operation")}</p><h2 class="wh">${esc(o.title)}</h2><p>${o.intro||""}</p>
      <div class="pickBar"><span id="pkN"></span><span class="pkB"><button type="button" class="small" id="pkAll">Select all</button><button type="button" class="small" id="pkNone">Select none</button></span></div>
-     <ul class="list pick">${o.list.map(x=>{const cu=coverUrl(x),n=discsOf(x).length;return `<li class="item"><label class="pk"><input type="checkbox" data-pk="${esc(x.id)}"${sel.has(x.id)?" checked":""}>${cu?`<img class="cover" src="${cu}" alt="" onerror="this.remove()">`:`<span class="disc"></span>`}<span class="meta"><b>${esc(x.t)}</b><small>${esc([x.a,x.y,x.l].filter(Boolean).join(" · "))}${n>1?" · "+n+" CDs":tracksOf(x).length?" · "+tracksOf(x).length+" tracks":""}</small></span></label><button type="button" class="small pkOpen" data-open="${esc(x.id)}" aria-label="Open ${esc(x.t)}">›</button></li>`;}).join("")}</ul>
+     <ul class="list pick">${o.list.map(x=>{const cu=coverUrl(x),n=discsOf(x).length;return `<li class="item"><label class="pk"><input type="checkbox" data-pk="${esc(x.id)}"${sel.has(x.id)?" checked":""}>${cu?`<img class="cover" src="${cu}" alt="" onerror="this.remove()">`:`<span class="disc"></span>`}<span class="meta"><b>${esc(x.t)}</b><small>${esc([x.a,x.y,x.l,o.sub?o.sub(x):""].filter(Boolean).join(" · "))}${n>1?" · "+n+" CDs":tracksOf(x).length?" · "+tracksOf(x).length+" tracks":""}</small></span></label><button type="button" class="small pkOpen" data-open="${esc(x.id)}" aria-label="Open ${esc(x.t)}">›</button></li>`;}).join("")}</ul>
      <div class="pair pickAct"><button type="button" class="primary" id="pkGo"></button><button type="button" id="pkNo">Cancel</button></div>`;
     const upd=()=>{$("pkN").textContent=sel.size+" of "+o.list.length+" selected";$("pkGo").textContent=(o.go||"Start")+" ("+sel.size+")";$("pkGo").disabled=!sel.size;};
     p.querySelectorAll("[data-pk]").forEach(c=>c.onchange=()=>{c.checked?sel.add(c.dataset.pk):sel.delete(c.dataset.pk);upd();});
@@ -2118,21 +2125,28 @@ async function dgFill(list){if(!list||!list.length)return;if(!navigator.onLine){
 
 // --- set the format of several albums at once ---
 const fmtTodo=()=>ALL().filter(x=>!x.fmt);
-function fmtBulk(){const t=fmtTodo();if(!t.length){report("info","Nothing to set","Every album already has a format.");return;}
-  pickAlbums({op:"fmt",cat:"Format",title:"Set the format",list:t,go:"Next",intro:"Choose the albums that share the same format, then pick it. You can run this again for the others.",skipMemo:true},l=>{
-    const p=$("detail"),opts=[["CD","CD",""],["Vinyl LP","Vinyl","LP"],["Vinyl 10\"","Vinyl","10\""],["Vinyl 7\"","Vinyl","7\""],["Vinyl EP","Vinyl","EP"],["Cassette","Cassette",""],["Other","Other",""]];
-    p.innerHTML=`<p class="cat">Format</p><h2 class="wh">Format for ${l.length} album${l.length!==1?"s":""}</h2><div class="list" id="fmtOpts">${opts.map((o,i)=>`<button type="button" class="setItem" data-o="${i}"><b>${esc(o[0])}</b></button>`).join("")}</div><div class="pair"><button type="button" id="fmtNo">Cancel</button></div>`;
-    openSheet();$("fmtNo").onclick=()=>closeSheet();
-    p.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const o=opts[+b.dataset.o];undoable("Format set to "+o[0]+" for "+l.length+" album"+(l.length!==1?"s":""));
-      l.forEach(x=>{x.fmt=o[1];if(o[2])x.vt=o[2];else delete x.vt;});save();render();renderToolsCounts();closeSheet();
-      report("ok","Format updated",l.length+" album"+(l.length!==1?"s":"")+" set to “"+o[0]+"”.",l.map(x=>({t:x.t+" — "+x.a,id:x.id,why:o[0]})),"You can change it for any album with Edit.");});});}
+const FMT_OPTS=[["CD","CD",""],["Vinyl LP","Vinyl","LP"],["Vinyl 10\"","Vinyl","10\""],["Vinyl 7\"","Vinyl","7\""],["Vinyl EP","Vinyl","EP"],["Cassette","Cassette",""],["Other","Other",""]];
+function fmtChoose(l){chooseSheet("Format","Format for "+l.length+" album"+(l.length!==1?"s":""),"",FMT_OPTS.map(o=>[o[0]]),o0=>{const o=FMT_OPTS.find(x=>x[0]===o0[0]);
+  undoable("Format set to "+o[0]+" for "+l.length+" album"+(l.length!==1?"s":""));l.forEach(x=>{x.fmt=o[1];if(o[2])x.vt=o[2];else delete x.vt;});save();render();renderToolsCounts();
+  report("ok","Format updated",l.length+" album"+(l.length!==1?"s":"")+" set to “"+o[0]+"”.",l.map(x=>({t:x.t+" — "+x.a,id:x.id,why:o[0]})),"Made a mistake? Open History → Activity log and press “Restore” on this action.");});}
+function fmtBulk(){const all=ALL();if(!all.length){report("info","No albums","Your library is empty.");return;}
+  pickAlbums({op:"fmt",cat:"Format",title:"Set the format",list:all,go:"Next",skipMemo:true,pre:x=>!x.fmt,sub:x=>fmtLabel(x)||"no format",intro:"Tick the albums that share the same format, then choose it. Albums without a format are ticked for you; tick others to change theirs."},l=>fmtChoose(l));}
+// --- actions on albums selected in the collection ---
+function selActions(){const ids=(SEL||[]).filter(byId);if(!ids.length)return;const xs=ids.map(byId),nW=xs.filter(x=>isWish(x.id)).length,nC=xs.length-nW;
+  const opts=[["Set the format","CD, vinyl, cassette…"],["Set the genre",""]];if(nC)opts.push(["Move to wishlist",nC+" album"+(nC!==1?"s":"")]);if(nW)opts.push(["Move to collection",nW+" album"+(nW!==1?"s":"")]);opts.push(["Move to trash","Can be recovered from History → Trash"]);
+  chooseSheet("Selection",xs.length+" album"+(xs.length!==1?"s":"")+" selected","",opts,o=>{const k=o[0];
+    if(k==="Set the format"){fmtChoose(xs);SEL=null;return;}
+    if(k==="Set the genre"){chooseSheet("Genre","Genre for "+xs.length+" album"+(xs.length!==1?"s":""),"",GENRES.map(g=>[g]),g=>{undoable("Genre set to "+g[0]+" for "+xs.length+" album"+(xs.length!==1?"s":""));xs.forEach(x=>{x.g=g[0];});SEL=null;save();render();report("ok","Genre updated",xs.length+" album"+(xs.length!==1?"s":"")+" set to “"+g[0]+"”.",xs.map(x=>({t:x.t+" — "+x.a,id:x.id,why:g[0]})),"");});return;}
+    if(k==="Move to trash"){askSheet("Move "+xs.length+" album"+(xs.length!==1?"s":"")+" to trash?","They can be recovered from History → Trash.","Move to trash",()=>{undoable(xs.length+" albums moved to trash");xs.forEach(x=>{toTrash(x,"del",{own:!isWish(x.id),codes:Object.keys(S.codes).filter(c=>S.codes[c]===x.id)});});const del=new Set(xs.map(x=>x.id));S.col=S.col.filter(y=>!del.has(y.id));S.wish=S.wish.filter(y=>!del.has(y.id));for(const c in S.codes)if(del.has(S.codes[c]))delete S.codes[c];SEL=null;save();render();toast(xs.length+" album"+(xs.length!==1?"s":"")+" moved to trash");});return;}
+    const toW=k==="Move to wishlist",mv=xs.filter(x=>isWish(x.id)!==toW),del=new Set(mv.map(x=>x.id));undoable(mv.length+" album"+(mv.length!==1?"s":"")+" moved to "+(toW?"wishlist":"collection"));
+    S.col=S.col.filter(y=>!del.has(y.id));S.wish=S.wish.filter(y=>!del.has(y.id));mv.forEach(x=>{if(!toW)x.at=Date.now();(toW?S.wish:S.col).push(x);});SEL=null;save();render();toast(mv.length+" album"+(mv.length!==1?"s":"")+" moved to your "+(toW?"wishlist":"collection"));});}
 const DGF={run:false,lock:null};
 function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("info","Discogs token needed","Completing albums from Discogs uses your personal Discogs token.",[],"Add it in Settings → Discogs, then try again.");return;}
   const t=dgTodo();if(!t.length){report("info","Nothing to complete","No imported album with a Discogs ID is missing its track list.");return;}
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.55.0";$("hVer").textContent="v"+APPV;
+const APPV="0.56.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2311,15 +2325,28 @@ function openMvConfirm(){if(MV.run){MV.run=false;return;}const todo=mvTodo();if(
     intro:`Choose the albums to look up on MusicBrainz (about 1 second each; keep the app open). Each track gets the identifier of the movement or piece it plays. Titles and track names are not changed. Albums you leave unchecked are skipped and stay unchecked next time.`},l=>linkMovements(l));}
 $("mvGo").onclick=openMvConfirm;
 // ---------- Journal des activités ----------
-function openLog(filter){closeSettings();const p=$("detail"),L=(S.log||[]).filter(e=>!filter||(filter==="auto"?e.k==="auto":e.k!=="auto"));
-  const day=t=>new Date(t).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});let cur="";
+
+function askSheet(title,msg,ok,fn,danger){const p=$("detail");p.innerHTML=`<p class="cat">Confirm</p><h2 class="wh">${esc(title)}</h2><p>${msg}</p><div class="pair"><button type="button" class="primary" id="akOk">${esc(ok)}</button><button type="button" id="akNo">Cancel</button></div>`;openSheet();$("akNo").onclick=()=>closeSheet();$("akOk").onclick=()=>{closeSheet();setTimeout(fn,350);};}
+function chooseSheet(cat,title,intro,opts,cb){const p=$("detail");p.innerHTML=`<p class="cat">${esc(cat)}</p><h2 class="wh">${esc(title)}</h2>${intro?`<p class="hint">${esc(intro)}</p>`:""}<div class="list">${opts.map((o,i)=>`<button type="button" class="setItem" data-o="${i}"><b>${esc(o[0])}</b>${o[1]?`<small>${esc(o[1])}</small>`:""}</button>`).join("")}</div><div class="pair"><button type="button" id="chNo">Cancel</button></div>`;
+  openSheet();$("chNo").onclick=()=>closeSheet();p.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const o=opts[+b.dataset.o];closeSheet();setTimeout(()=>cb(o),350);});}
+async function restoreTo(e){let s;try{s=await snapGet(e.sid);}catch(x){}
+  if(!s){report("err","Restore point not found","This action’s restore point is no longer available.",[],"Only the last "+SNAP_MAX+" actions can be restored.");return;}
+  const later=(S.log||[]).filter(x=>x.at>e.at&&x.k!=="undo").length;
+  askSheet("Go back in time?","Your library will return to how it was just before “"+esc(e.m)+"” ("+fmtWhen(e.at)+"). "+(later?"The <b>"+later+" later action"+(later!==1?"s":"")+"</b> will be undone as well. ":"")+"The current state is saved first, so this restore can itself be reversed from the log.","Restore",()=>{
+    undoable("Restored the library to before: "+e.m);const keep=S.log,cur=JSON.parse(JSON.stringify(S)),old=JSON.parse(s);
+    S=old;S.log=keep;S.chg=(cur.chg||0)+1;save();render();try{renderToolsCounts();}catch(x){}closeSheet();
+    report("ok","Library restored","Your library is back to how it was before “"+e.m+"”.",[old.col.length+" album"+(old.col.length!==1?"s":"")+" in the collection",old.wish.length+" on the wishlist"],"To reverse this, open the activity log and restore the entry “Restored the library…”.");});}
+async function openLog(filter){closeSettings();const p=$("detail"),L=(S.log||[]).filter(e=>!filter||(filter==="auto"?e.k==="auto":e.k!=="auto"));
+  const SK=new Set(await snapKeys()),day=t=>new Date(t).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});let cur="";
   p.innerHTML=`<p class="cat">Activity log</p><h2 class="wh">${(S.log||[]).length} action${(S.log||[]).length!==1?"s":""}</h2>
    <div class="seg"><button type="button" data-lf="" aria-pressed="${!filter}">All</button><button type="button" data-lf="user" aria-pressed="${filter==="user"}">My actions</button><button type="button" data-lf="auto" aria-pressed="${filter==="auto"}">Automatic</button></div>
    <ul class="list logl">${L.slice(0,300).map(e=>{const d=day(e.at),h=d!==cur?`<li class="logd">${d}</li>`:"";cur=d;
-     return h+`<li class="item${e.id&&byId(e.id)?" tap":""}" ${e.id&&byId(e.id)?`data-open="${e.id}"`:""}><span class="lt">${new Date(e.at).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}</span><div class="meta"><span>${esc(e.m)}</span></div>${e.k==="auto"?`<span class="chip">auto</span>`:""}</li>`;}).join("")||`<li class="empty">No activity yet.</li>`}</ul>
+     return h+`<li class="item${e.id&&byId(e.id)?" tap":""}" ${e.id&&byId(e.id)?`data-open="${e.id}"`:""}><span class="lt">${new Date(e.at).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}</span><div class="meta"><span>${esc(e.m)}</span></div>${e.k==="auto"?`<span class="chip">auto</span>`:""}${e.sid&&SK.has(e.sid)?`<button type="button" class="small" data-rs="${esc(e.sid)}" aria-label="Go back to before this action">Restore</button>`:""}</li>`;}).join("")||`<li class="empty">No activity yet.</li>`}</ul>
+   <p class="hint">“Restore” returns your library to how it was just before that action. The last ${SNAP_MAX} actions can be restored.</p>
    <div class="row"><button type="button" id="lgClose">Close</button></div>`;
   openSheet();$("lgClose").onclick=()=>closeSheet();p.querySelectorAll("[data-lf]").forEach(bt=>bt.onclick=()=>openLog(bt.dataset.lf));
-  p.querySelectorAll("[data-open]").forEach(li=>li.onclick=()=>openDetail(li.dataset.open));}
+  p.querySelectorAll("[data-open]").forEach(li=>li.onclick=()=>openDetail(li.dataset.open));
+  p.querySelectorAll("[data-rs]").forEach(b=>b.onclick=ev=>{ev.stopPropagation();const e=(S.log||[]).find(x=>x.sid===b.dataset.rs);if(e)restoreTo(e);});}
 $("logOpen").onclick=()=>openLog("");
 
 
