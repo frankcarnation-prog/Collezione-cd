@@ -254,6 +254,7 @@ b.warn{color:#e0a030;font-weight:600}
 /* ===================== Thème « Platinum » : entre Mac OS 9 et Windows 98 ===================== */
 .subH{margin:16px 0 4px;font-size:.95rem}
 .mvHint{list-style:none;padding:8px 2px}
+.chkrow{display:flex;align-items:center;gap:8px;margin:8px 0}.mapT{display:flex;flex-direction:column;gap:6px;margin:8px 0}.mapRow{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:8px;padding:6px 8px}.mapH{min-width:0;flex:1}.mapH b,.mapH small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mapH small{color:var(--muted);font-size:.8rem}.mapRow select{flex:none;max-width:48%}.filebtn.big{display:flex;width:100%;min-height:46px;margin:8px 0}#impText{width:100%;box-sizing:border-box}.chip.warn{background:var(--wish-bg);color:var(--wish)}
 .pickBar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:4px 0}.pickBar .pkB{display:flex;gap:6px}
 .list.pick{width:100%;align-self:stretch;align-items:stretch}.list.pick .item{width:100%;box-sizing:border-box}.list.pick .item{display:flex;align-items:center;gap:6px;padding:0}.pk{display:flex;align-items:center;gap:10px;flex:1;min-width:0;padding:8px 0;cursor:pointer;text-align:left;font:inherit;text-transform:none;letter-spacing:0;color:inherit;margin:0}.pk input{flex:none;width:20px;height:20px;margin:0}
 .pk .meta{flex:1;min-width:0}.pk .cover,.pk .disc{flex:none}.pkOpen{flex:none;min-width:40px}
@@ -472,6 +473,10 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 <button type="button" class="setItem" id="invOpen"><b>Inventory</b><small>Scan your CDs to enable offline recognition</small></button>
 <button type="button" class="setItem" id="cbGo"><b>Fetch likely barcodes</b><small>For albums with an identified edition</small></button><p class="hint" id="cbMsg"></p>
 <button type="button" class="wide" id="seeNoCode">Show albums without a barcode</button>
+</div></section>
+<section class="win" id="tw-imp"><div class="wtitle">Import</div><div class="wbody">
+<button type="button" class="setItem" id="impGo"><b>Import a collection</b><small>CSV (Discogs, CLZ…), Excel or a pasted list</small></button>
+<button type="button" class="setItem" id="impDg"><b>Complete from Discogs</b><small id="impDgN">Track lists for imported albums with a Discogs ID</small></button><p class="hint" id="impDgMsg"></p>
 </div></section>
 <section class="win" id="tw-org"><div class="wtitle">Organization</div><div class="wbody">
 <button type="button" class="setItem" id="mvGo"><b>Recognise movements and pieces</b><small id="mvN">Links each track to its MusicBrainz work</small></button><p class="hint" id="mvMsg"></p>
@@ -1916,7 +1921,186 @@ async function importLink(s){const out=$("eanResult");$("scanPanel").hidden=fals
 
 
 // ---------- Réglages (panneau plein écran) ----------
-const APPV="0.53.0";$("hVer").textContent="v"+APPV;
+// ---------- Import a collection: CSV, Excel (.xlsx) or pasted text ----------
+// Everything is read on this device; nothing is uploaded.
+const HSYN={a:["artist","artists","artiste","artistes","interprete","interpretes","interpreter","interpreters","performer","performers","interpreti","kunstler","artista","band","group","orchestre","ensemble"],
+  t:["title","titre","album","album title","titel","titolo","titulo","work","oeuvre","composition","werk","release","name","nom"],
+  c:["composer","compositeur","komponist","compositore","compositor","componist"],
+  y:["released","release year","year","annee","anno","jahr","rec year","recording year","date","release date","ano"],
+  l:["label","etichetta","etiquette","editeur","publisher"],
+  cat:["catalog","catalogue","cat no","cat","catalog number","catalogue number","numero de catalogue","ref","reference","serial"],
+  bc:["barcode","ean","upc","code barres","code barre","codice a barre","gtin"],
+  f:["format","support","media","medium","type","supporto","formato"],
+  g:["genre","genres","style","genere","category","categorie"],
+  n:["notes","note","remarque","remarques","comments","comment","commentaire","remark","bemerkung","nota"],
+  dg:["release id","releaseid","discogs id","discogs release id","id discogs","discogs"],
+  d:["date added","added date","added","date ajout","date d ajout","ajoute le","hinzugefugt","aggiunto"]};
+const HFIELDS=[["a","Artist / performers"],["t","Title"],["c","Composer"],["y","Year"],["l","Label"],["cat","Catalogue no."],["bc","Barcode"],["f","Format"],["g","Genre"],["n","Notes"],["dg","Discogs release ID"],["d","Date added"]];
+const hnorm=s=>norm(String(s==null?"":s)).replace(/[#_]/g," ").replace(/[^a-z0-9]+/g," ").trim();
+function mapHeaders(row){const cols=row.map(hnorm),out={},used=new Set(),bad=/condition|rating|folder|shelf|box|storage|price|disc number|cd number|^cd$|^id$|^no$|^n$/;
+  for(const pass of [0,1])for(const f in HSYN)if(out[f]===undefined)cols.forEach((h,i)=>{if(out[f]!==undefined||used.has(i)||!h||bad.test(h))return;
+    const ok=pass===0?HSYN[f].includes(h):HSYN[f].some(s=>(" "+h+" ").includes(" "+s+" "));if(ok){out[f]=i;used.add(i);}});
+  return out;}
+function detectHeader(rows){let best=-1,bs=0,bm=null;for(let i=0;i<Math.min(rows.length,10);i++){const m=mapHeaders(rows[i]),n=Object.keys(m).length;if((m.t!==undefined||m.a!==undefined)&&n>bs){bs=n;best=i;bm=m;}}
+  if(bs>=2)return {hdr:best,map:bm};const w=Math.max(0,...rows.slice(0,10).map(r=>r.length)),map={};if(w>=2){map.a=0;map.t=1;}if(w>=3)map.y=2;return {hdr:-1,map};}
+// --- parsers ---
+function parseDelimited(text,delim){if(!delim){const lines=text.split(/\r?\n/).filter(l=>l.trim()).slice(0,12);let best=",",bs=-1;
+    for(const d of [",",";","\t","|"]){const cs=lines.map(l=>{let q=false,n=0;for(const ch of l){if(ch==='"')q=!q;else if(ch===d&&!q)n++;}return n;});const mode=cs.length?cs.slice().sort((a,b)=>cs.filter(v=>v===b).length-cs.filter(v=>v===a).length)[0]:0;
+      const sc=mode>0?cs.filter(v=>v===mode).length*10+mode:0;if(sc>bs){bs=sc;best=d;}}delim=best;}
+  const rows=[];let row=[],f="",q=false;for(let i=0;i<text.length;i++){const ch=text[i];
+    if(q){if(ch==='"'){if(text[i+1]==='"'){f+='"';i++;}else q=false;}else f+=ch;}
+    else if(ch==='"')q=true;else if(ch===delim){row.push(f);f="";}else if(ch==="\n"||ch==="\r"){if(ch==="\r"&&text[i+1]==="\n")i++;row.push(f);f="";rows.push(row);row=[];}else f+=ch;}
+  if(f!==""||row.length){row.push(f);rows.push(row);}
+  return rows.map(r=>r.map(c=>c.trim())).filter(r=>r.some(c=>c!==""));}
+async function unzip(buf){const u=new Uint8Array(buf),dv=new DataView(buf);let e=-1;for(let i=u.length-22;i>=Math.max(0,u.length-70000);i--){if(dv.getUint32(i,true)===0x06054b50){e=i;break;}}
+  if(e<0)throw new Error("not a zip");const n=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true);const out=new Map(),dec=new TextDecoder();
+  for(let k=0;k<n;k++){if(dv.getUint32(p,true)!==0x02014b50)break;const meth=dv.getUint16(p+10,true),cs=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),xl=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),lo=dv.getUint32(p+42,true),name=dec.decode(u.subarray(p+46,p+46+nl));p+=46+nl+xl+cl;
+    if(!/^xl\/(workbook\.xml|_rels\/workbook\.xml\.rels|sharedStrings\.xml|worksheets\/[^/]+\.xml)$/.test(name))continue;
+    const ln=dv.getUint16(lo+26,true),lx=dv.getUint16(lo+28,true),st=lo+30+ln+lx,raw=u.subarray(st,st+cs);
+    out.set(name,meth===0?raw:new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer()));}
+  return out;}
+async function readXlsx(buf){const z=await unzip(buf),dec=new TextDecoder(),X=n=>z.has(n)?new DOMParser().parseFromString(dec.decode(z.get(n)),"application/xml"):null,T=(el,n)=>[...el.getElementsByTagNameNS("*",n)];
+  const ss=[],sx=X("xl/sharedStrings.xml");if(sx)T(sx,"si").forEach(si=>ss.push(T(si,"t").map(t=>t.textContent).join("")));
+  const wb=X("xl/workbook.xml"),rl=X("xl/_rels/workbook.xml.rels");if(!wb||!rl)throw new Error("not an xlsx");const tg={};T(rl,"Relationship").forEach(r=>{tg[r.getAttribute("Id")]=r.getAttribute("Target");});
+  const col=ref=>{let n=0;for(const ch of ref.replace(/\d+/g,""))n=n*26+ch.charCodeAt(0)-64;return n-1;},sheets=[];
+  for(const s of T(wb,"sheet")){const rid=s.getAttribute("r:id")||s.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships","id"),t=(tg[rid]||"").replace(/^\/?(xl\/)?/,"xl/"),doc=X(t);if(!doc)continue;const rows=[];
+    T(doc,"row").forEach(r=>{const row=[];T(r,"c").forEach(c=>{const i=col(c.getAttribute("r")||"A1"),ty=c.getAttribute("t"),v=T(c,"v")[0];let val="";
+        if(ty==="s")val=ss[+(v?v.textContent:-1)]||"";else if(ty==="inlineStr")val=T(c,"t").map(x=>x.textContent).join("");else if(v)val=v.textContent;
+        while(row.length<i)row.push("");row[i]=String(val).trim();});rows.push(row);});
+    while(rows.length&&!rows[rows.length-1].some(Boolean))rows.pop();sheets.push({name:s.getAttribute("name")||"Sheet",rows:rows.filter(r=>r.some(Boolean))});}
+  return sheets;}
+// --- cleaning ---
+const cleanName=s=>String(s||"").replace(/\s*\(\d+\)(?=\s*(?:,|\+|&|$))/g,"").replace(/\*+(?=\s*(?:,|$))/g,"").replace(/\s+/g," ").trim();
+const dedupeCsv=s=>{const seen=new Set(),out=[];String(s||"").split(/\s*,\s*/).forEach(p=>{const k=norm(p).trim();if(k&&!seen.has(k)){seen.add(k);out.push(p.trim());}});return out.join(", ");};
+const yearOf=s=>{s=String(s||"");if(/^\d{5}(\.\d+)?$/.test(s)&&+s>20000&&+s<80000)return String(new Date((+s-25569)*864e5).getUTCFullYear());const m=s.match(/\b(1[5-9]\d\d|20\d\d)\b/);return m?m[1]:"";};
+const dateOf=s=>{s=String(s||"");if(!s)return 0;if(/^\d{5}(\.\d+)?$/.test(s)&&+s>20000&&+s<80000)return Math.round((+s-25569)*864e5);const t=Date.parse(/^\d{4}-\d\d-\d\d[ T]/.test(s)?s.replace(" ","T"):s);return isNaN(t)?0:t;};
+const mediaOf=s=>{s=String(s||"");return /cass/i.test(s)?"Cassette":/\b(lp|vinyl|vinyle|ep|7"|10"|12")\b/i.test(s)?"Vinyl":/(^|[^a-z])(\d+x)?(cd|cdr|sacd)\b/i.test(s)?"CD":"";};
+function parseFree(line){let s=line.trim(),l="",y="",perf="",c="",a="",t=s,m=s.match(/\[([^\]]+)\]\s*$/);if(m){l=m[1];s=s.replace(m[0],"").trim();}
+  m=s.match(/\(([^()]*?)(?:,\s*)?((?:19|20)\d\d)\)\s*$/);if(m){y=m[2];perf=m[1].trim();s=s.replace(m[0],"").trim();}
+  const sl=s.split(/\s+\/\s+/),dash=s.split(/\s+[–—-]\s+/);
+  if(sl.length>1){t=sl[0];perf=perf||sl.slice(1).join(", ");}
+  else if(dash.length>1){const left=dash[0],right=dash.slice(1).join(" - ");if(OFFICIAL.has(canonC(left))||isComposerName(left,right)){c=left;t=right;}else{a=left;t=right;}}
+  else t=s;
+  return {a:a||perf,t,c,y,l,perf};}
+// --- drafts from a sheet ---
+function sheetDrafts(sh){const out=[];if(sh.free){sh.rows.forEach((r,i)=>{const d=parseFree(r[0]||"");out.push(finishDraft(Object.assign({row:i+1,raw:r[0]},d)));});return out;}
+  sh.rows.forEach((row,i)=>{if(i<=sh.hdr)return;const g=k=>{const j=sh.map[k];return j===undefined||j<0?"":String(row[j]==null?"":row[j]).trim();};
+    const d={row:i+1,raw:row.join(" · "),a:dedupeCsv(cleanName(g("a"))),t:g("t"),c:cleanName(g("c")),y:yearOf(g("y")),l:dedupeCsv(cleanName(g("l"))),cat:g("cat").replace(/\s+/g," "),bc:g("bc").replace(/\D/g,""),fmt:mediaOf(g("f")),f:g("f"),g:g("g"),n:g("n"),dg:g("dg").replace(/\D/g,""),at:dateOf(g("d"))};
+    if(!row.some(x=>String(x||"").trim())||/^(total|totale|somme|sum)\b/i.test(d.a||d.t)){return;}
+    out.push(finishDraft(d));});return out;}
+function finishDraft(d){d.t=pretty(d.t||"");d.a=pretty(d.a||"");
+  if(d.c){const cc=canonC(d.c)||d.c,sn=cc.split(/\s+/).pop();if(sn&&d.t&&!norm(d.t).includes(norm(sn)))d.t=sn+" : "+d.t;if(!d.g)d.g="Classical";}
+  if(!d.t&&!d.a){d.bad="No title or artist";}else if(!d.t){d.bad="No title";}
+  return d;}
+// --- duplicates ---
+function markDupes(drafts,own){const have=new Map(),dgs=new Set(ALL().map(x=>String(x.dgid||"")).filter(Boolean)),seen=new Map();
+  ALL().forEach(x=>have.set(tNorm(x.a)+"|"+tNorm(x.t),x));
+  drafts.forEach((d,i)=>{d.i=i;if(d.bad){d.status="invalid";return;}const k=tNorm(d.a)+"|"+tNorm(d.t);
+    if(d.dg&&dgs.has(d.dg)||have.has(k)||(d.bc&&S.codes[d.bc])){d.status="dup";d.why="Already in your library";return;}
+    if(seen.has(k)){d.status="dup";d.why="Duplicate of row "+seen.get(k)+" in the file";return;}seen.set(k,d.row);
+    const p=ALL().find(x=>tNorm(x.t)===tNorm(d.t)&&overlap(d.a,x.a)>=.5);if(p){d.status="maybe";d.why="Similar to “"+p.t+"” already in your library";return;}
+    d.status="new";});return drafts;}
+// --- state and steps ---
+const IMP={sheets:[],name:"",cur:0,target:"col",sel:new Set(),show:300,drafts:[]};
+function impAllDrafts(){let all=[];IMP.sheets.forEach(sh=>{if(sh.on)all=all.concat(sheetDrafts(sh).map(d=>(d.sheet=sh.name,d)));});return markDupes(all);}
+async function impLoad(f){const nm=f.name,ext=(nm.split(".").pop()||"").toLowerCase(),buf=await f.arrayBuffer(),head=new Uint8Array(buf.slice(0,4));
+  if(ext==="xls")throw new Error("This is an old Excel file (.xls). In Excel, use File → Save as → “Excel Workbook (.xlsx)” or “CSV”, then choose that file.");
+  if(["numbers","ods","pages","pdf","doc","docx","rtf"].includes(ext))throw new Error("“."+ext+"” files cannot be read. Export your list as CSV or Excel (.xlsx) first.");
+  let sheets;
+  if(head[0]===0x50&&head[1]===0x4B){if(!["xlsx","xlsm"].includes(ext))throw new Error("This is a ZIP archive, not a spreadsheet. Unzip it and choose the .csv or .xlsx file inside.");
+    try{sheets=await readXlsx(buf);}catch(e){throw new Error("This .xlsx file could not be read ("+(e.message||"invalid file")+"). Try saving it again from Excel, or export it as CSV.");}}
+  else{let txt;try{txt=new TextDecoder("utf-8",{fatal:true}).decode(buf);}catch(e){txt=new TextDecoder("windows-1252").decode(buf);}
+    sheets=impText(txt.replace(/^﻿/,""),nm);}
+  return impSheets(sheets,nm);}
+function impText(txt,name){const t=txt.trim();if(!t)throw new Error("The file is empty.");if(/^[{[]/.test(t)&&/"col"\s*:|collezione_import/.test(t))throw new Error("This looks like an Album Ledger backup. Use Settings → Backup → “Restore a file” instead.");
+  const lines=t.split(/\r?\n/).filter(l=>l.trim()),sample=lines.slice(0,12);
+  const cnt=(l,d)=>{let q=false,n=0;for(const ch of l){if(ch==='"')q=!q;else if(ch===d&&!q)n++;}return n;},tab=d=>{const cs=sample.map(l=>cnt(l,d)),m=cs[0];return m>0&&cs.filter(v=>v===m).length>=Math.ceil(cs.length*.8);};
+  const isTable=tab("\t")||tab(";")||(tab(",")&&!/\s[–—-]\s/.test(sample[0]))||(tab("|"));
+  if(isTable)return [{name,rows:parseDelimited(t)}];return [{name:"Pasted list",rows:lines.map(l=>[l]),free:true}];}
+function impSheets(sheets,name){sheets=sheets.filter(s=>s.rows.length);if(!sheets.length)throw new Error("No rows were found in the file.");
+  sheets.forEach(sh=>{if(sh.free){sh.hdr=-1;sh.map={};sh.on=true;return;}const h=detectHeader(sh.rows);sh.hdr=h.hdr;sh.map=h.map;sh.hdr0=h.hdr;sh.on=true;sh.hasHdr=h.hdr>=0;});
+  IMP.sheets=sheets;IMP.name=name;IMP.cur=0;IMP.sel=new Set();IMP.show=300;return sheets;}
+function impSource(){const s=IMP.sheets[0];if(!s||s.free)return "Free text, read line by line";const h=(s.rows[s.hdr]||[]).map(hnorm).join("|");return /catalog/.test(h)&&/release id/.test(h)?"Discogs collection export":/barcode|ean/.test(h)?"Collection export with barcodes":"Spreadsheet / CSV";}
+function openImport(){const p=$("detail");CUR=openImport;
+  p.innerHTML=`<p class="cat">Import</p><h2 class="wh">Import a collection</h2>
+   <p>Bring in a collection you already keep elsewhere: a Discogs export (CSV), a CLZ or other app export, an Excel spreadsheet, or a pasted list. The file is read on this device only; nothing is uploaded.</p>
+   <label class="filebtn big">Choose a file (.csv, .xlsx, .txt)<input type="file" id="impFile" accept=".csv,.tsv,.txt,.xlsx,.xlsm,.xls,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
+   <p class="hint">or paste a list (copied from Excel, a document or an email), one album per line:</p>
+   <textarea id="impText" rows="6" aria-label="Pasted list" placeholder="Artist – Title&#10;Beethoven: Symphony No. 5 (Carlos Kleiber, 1976)"></textarea>
+   <div class="pair"><button type="button" class="primary" id="impParse">Read pasted list</button><button type="button" id="impNo">Cancel</button></div>
+   <p class="hint" id="impMsg"></p>
+   <p class="hint">Discogs: Collection → Export. CLZ: export to CSV. Excel: save as .xlsx or CSV.</p>`;
+  openSheet();$("impNo").onclick=()=>closeSheet();
+  const go=async fn=>{try{$("impMsg").textContent="Reading…";await fn();$("impMsg").textContent="";subView(()=>impStep());}catch(e){$("impMsg").textContent="";report("err","The file could not be imported",e.message||"Unreadable file.",[],"Your collection was not changed.");}};
+  $("impFile").onchange=e=>{const f=e.target.files[0];if(f)go(()=>impLoad(f));e.target.value="";};
+  $("impParse").onclick=()=>go(async()=>{impSheets(impText($("impText").value,"Pasted list"),"Pasted list");});}
+function impStep(){const free=IMP.sheets.every(s=>s.free);if(free)impReview();else impMap();}
+function impMap(){const p=$("detail"),sh=IMP.sheets[IMP.cur],w=Math.max(...sh.rows.slice(0,50).map(r=>r.length)),inv=Object.fromEntries(Object.entries(sh.map).map(([k,v])=>[v,k]));CUR=impMap;
+  const names=sh.hdr>=0?sh.rows[sh.hdr]:[],sample=j=>sh.rows.slice(sh.hdr+1).map(r=>r[j]).filter(Boolean).slice(0,3).join(" · ");
+  const cols=Array.from({length:w},(_,j)=>j);
+  p.innerHTML=`<p class="cat">Import · step 1 of 2</p><h2 class="wh">Check the columns</h2><p class="hint">${esc(impSource())} · ${IMP.sheets.length>1?IMP.sheets.length+" sheets":esc(IMP.name)}</p>
+   ${IMP.sheets.length>1?`<div class="seg" id="impSeg">${IMP.sheets.map((s,i)=>`<button type="button" data-sh="${i}" aria-pressed="${i===IMP.cur}">${esc(s.name)}</button>`).join("")}</div><label class="chkrow"><input type="checkbox" id="impOn"${sh.on?" checked":""}> Include this sheet (${Math.max(0,sh.rows.length-(sh.hdr+1))} rows)</label>`:""}
+   <label class="chkrow"><input type="checkbox" id="impHdr"${sh.hdr>=0?" checked":""}> First row contains column names</label>
+   <div class="mapT">${cols.map(j=>`<div class="mapRow"><div class="mapH"><b>${esc(names[j]||"Column "+(j+1))}</b><small>${esc(sample(j))||"(empty)"}</small></div>
+     <select data-col="${j}" aria-label="Meaning of ${esc(names[j]||"column "+(j+1))}"><option value="">Ignore</option>${HFIELDS.map(([k,l])=>`<option value="${k}"${inv[j]===k?" selected":""}>${l}</option>`).join("")}</select></div>`).join("")}</div>
+   <p class="hint" id="impWarn"></p>
+   <div class="pair"><button type="button" class="primary" id="impNext">Next: review</button><button type="button" id="impBack2">Back</button></div>`;
+  openSheet();$("impBack2").onclick=goBack;
+  p.querySelectorAll("[data-sh]").forEach(b=>b.onclick=()=>{IMP.cur=+b.dataset.sh;impMap();});
+  if($("impOn"))$("impOn").onchange=e=>{sh.on=e.target.checked;};
+  $("impHdr").onchange=e=>{sh.hdr=e.target.checked?(sh.hdr0>=0?sh.hdr0:0):-1;if(!e.target.checked)sh.map=sh.map;impMap();};
+  p.querySelectorAll("[data-col]").forEach(s=>s.onchange=()=>{const j=+s.dataset.col;Object.keys(sh.map).forEach(k=>{if(sh.map[k]===j)delete sh.map[k];});if(s.value){Object.keys(sh.map).forEach(k=>{if(k===s.value)delete sh.map[k];});sh.map[s.value]=j;}impMap2(sh);});
+  const impMap2=sh=>{const ok=sh.map.t!==undefined||sh.map.a!==undefined;$("impWarn").textContent=ok?"":"Choose at least a Title or an Artist column.";$("impNext").disabled=!ok&&IMP.sheets.every(s=>!s.on||(s.map.t===undefined&&s.map.a===undefined));};impMap2(sh);
+  $("impNext").onclick=()=>{IMP.sel=new Set();IMP.drafts=impAllDrafts();if(!IMP.drafts.length){report("err","Nothing to import","No usable rows were found with these columns.",[],"Check the column choices and the “first row” option.");return;}
+    IMP.drafts.forEach(d=>{if(d.status==="new"||d.status==="maybe")IMP.sel.add(d.i);});subView(()=>impReview());};}
+function impReview(){const p=$("detail");if(!IMP.drafts.length||IMP.sheets.every(s=>s.free)&&!IMP.drafts.length){IMP.drafts=impAllDrafts();IMP.drafts.forEach(d=>{if(d.status==="new"||d.status==="maybe")IMP.sel.add(d.i);});}
+  CUR=impReview;const D=IMP.drafts,n=D.length,cnt=s=>D.filter(d=>d.status===s).length,lim=Math.min(n,IMP.show);
+  const row=d=>{const dis=d.status==="invalid",tag=d.status==="dup"?`<span class="chip">Already there</span>`:d.status==="maybe"?`<span class="chip warn">Check</span>`:d.status==="invalid"?`<span class="chip warn">Skipped</span>`:"";
+    return `<li class="item"><label class="pk"><input type="checkbox" data-pk="${d.i}"${IMP.sel.has(d.i)?" checked":""}${dis?" disabled":""}><span class="meta"><b>${esc(d.t||"(no title)")}</b><small>${esc([d.a,d.y,d.l,d.fmt].filter(Boolean).join(" · "))}</small>${d.why||d.bad?`<small>${esc(d.why||d.bad)}</small>`:""}</span></label>${tag}</li>`;};
+  p.innerHTML=`<p class="cat">Import · step 2 of 2</p><h2 class="wh">Review ${n} row${n!==1?"s":""}</h2>
+   <p class="hint">${cnt("new")} new · ${cnt("maybe")} to check · ${cnt("dup")} already in your library or repeated · ${cnt("invalid")} unusable. Rows already in your library are left unchecked.</p>
+   <div class="seg" id="impTgt"><button type="button" data-tg="col" aria-pressed="${IMP.target==="col"}">Add to Collection</button><button type="button" data-tg="wish" aria-pressed="${IMP.target==="wish"}">Add to Wishlist</button></div>
+   <div class="pickBar"><span id="pkN"></span><span class="pkB"><button type="button" class="small" id="pkAll">Select all</button><button type="button" class="small" id="pkNone">Select none</button></span></div>
+   <ul class="list pick">${D.slice(0,lim).map(row).join("")}</ul>${n>lim?`<button type="button" class="wide" id="impMore">Show ${Math.min(300,n-lim)} more (${n-lim} not shown, selection still applies)</button>`:""}
+   <div class="pair pickAct"><button type="button" class="primary" id="pkGo"></button><button type="button" id="pkNo">Back</button></div>`;
+  openSheet();const upd=()=>{$("pkN").textContent=IMP.sel.size+" of "+n+" selected";$("pkGo").textContent="Import ("+IMP.sel.size+")";$("pkGo").disabled=!IMP.sel.size;};upd();
+  p.querySelectorAll("[data-pk]").forEach(c=>c.onchange=()=>{c.checked?IMP.sel.add(+c.dataset.pk):IMP.sel.delete(+c.dataset.pk);upd();});
+  p.querySelectorAll("[data-tg]").forEach(b=>b.onclick=()=>{IMP.target=b.dataset.tg;p.querySelectorAll("[data-tg]").forEach(o=>o.setAttribute("aria-pressed",o===b));});
+  $("pkAll").onclick=()=>{D.forEach(d=>{if(d.status!=="invalid")IMP.sel.add(d.i);});impReview();};$("pkNone").onclick=()=>{IMP.sel.clear();impReview();};
+  if($("impMore"))$("impMore").onclick=()=>{IMP.show+=300;impReview();};$("pkNo").onclick=goBack;
+  $("pkGo").onclick=()=>doImport();}
+function doImport(){const chosen=IMP.drafts.filter(d=>IMP.sel.has(d.i)&&d.status!=="invalid"),tgt=IMP.target==="wish"?S.wish:S.col,now=Date.now(),added=[],skipped=IMP.drafts.filter(d=>!IMP.sel.has(d.i));
+  undoable("Collection import: "+chosen.length+" album"+(chosen.length!==1?"s":""));let nb=0;
+  chosen.forEach((d,k)=>{const x={id:"i"+now.toString(36)+k,a:d.a||"Unknown artist",t:d.t,at:d.at||0,src:"import"};
+    if(d.y)x.y=d.y;if(d.l)x.l=d.l;if(d.cat)x.cat=d.cat;if(d.dg)x.dgid=+d.dg;if(d.perf&&d.perf!==d.a)x.perf=d.perf;
+    const note=[d.f,d.n].filter(Boolean).join(" · ");if(note)x.note=note;
+    const gg=d.g?(GENRES.includes(d.g)?d.g:mapGenre([d.g],[])):"";if(gg)x.g=gg;
+    if(/^\d{8}$|^\d{12,13}$/.test(d.bc)&&!S.codes[d.bc]){S.codes[d.bc]=x.id;nb++;}
+    tgt.push(x);added.push({t:x.t+" — "+x.a,id:x.id,why:"Added"});});
+  save();render();
+  const items=added.concat(skipped.map(d=>({t:(d.t||"(no title)")+(d.a?" — "+d.a:"")+": "+(d.why||d.bad||"left unchecked"),id:""})));
+  const dg=chosen.filter(d=>d.dg).length;
+  report(chosen.length?"ok":"info",chosen.length?"Import complete":"Nothing imported",chosen.length+" album"+(chosen.length!==1?"s":"")+" added to your "+(IMP.target==="wish"?"wishlist":"collection")+(skipped.length?"; "+skipped.length+" row"+(skipped.length!==1?"s":"")+" not imported.":"."),items,
+    chosen.length?"Next, in Tools: "+(dg?"“Complete from Discogs” fetches the track lists ("+dg+" albums have a Discogs ID); ":"")+"“Find covers and info” adds covers; “Recognise movements and pieces” identifies classical works."+(nb?" "+nb+" barcode"+(nb!==1?"s were":" was")+" linked.":""):"Nothing was changed.");
+  IMP.drafts=[];IMP.sheets=[];closeSheet();}
+// --- fill imported albums from Discogs (tracks, genre) when a Discogs ID is known ---
+const dgTodo=()=>ALL().filter(x=>x.dgid&&!tracksOf(x).length&&!(x.dgT>=2));
+async function dgFill(list){if(!list||!list.length)return;if(!navigator.onLine){report("err","No Internet connection","Discogs cannot be reached.",[],"Connect to the Internet and try again.");return;}
+  const m=$("impDgMsg"),fail=[],ok=[];let n=0;try{DGF.lock=await navigator.wakeLock?.request("screen");}catch(e){}DGF.run=true;
+  for(const x of list){if(!DGF.run)break;if(m)m.textContent=`Fetching… ${n}/${list.length}. Keep the app open (about 1 album per second).`;
+    try{const f=await dgRelease(x.dgid);if(f.discs&&f.discs.length>1){x.discs=f.discs;x.box=true;delete x.tr;}else x.tr=f.tr||[];if(f.newWorks)Object.assign(S.works,f.newWorks);
+      if(!x.g&&f.g)x.g=f.g;if(!x.y&&f.y)x.y=f.y;if(!x.l&&f.l)x.l=f.l;if(!x.cat&&f.cat)x.cat=f.cat;if(f.perf&&!x.perf)x.perf=f.perf;attachWorks(x,null);x.dgT=2;ok.push({t:x.t+" — "+x.a+": "+tracksOf(x).length+" tracks",id:x.id,why:tracksOf(x).length+" tracks added from Discogs"});}
+    catch(e){fail.push({t:x.t+" — "+x.a+": "+(e.message||"error"),id:x.id,why:e.message||"Error"});if(/token|rate limit/i.test(e.message||""))break;await sleep(1500);}
+    n++;if(n%10===0)save();}
+  DGF.run=false;try{DGF.lock&&DGF.lock.release();}catch(e){}save();render();renderToolsCounts();if(m)m.textContent="";
+  report(ok.length?(fail.length?"warn":"ok"):"err","Discogs completion "+(n<list.length?"stopped":"complete"),ok.length+" of "+n+" album"+(n!==1?"s":"")+" completed.",fail.concat(ok),fail.length?"Albums that failed keep their imported data; run it again later.":"Open an album to see its track list.");}
+const DGF={run:false,lock:null};
+function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("info","Discogs token needed","Completing albums from Discogs uses your personal Discogs token.",[],"Add it in Settings → Discogs, then try again.");return;}
+  const t=dgTodo();if(!t.length){report("info","Nothing to complete","No imported album with a Discogs ID is missing its track list.");return;}
+  pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
+$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
+
+const APPV="0.54.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
