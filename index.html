@@ -418,6 +418,33 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 /* Windows are centred on screen (not stuck to the bottom) */
 .overlay{align-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
 .sheet{max-height:calc(100dvh - 32px);border-radius:10px;border-bottom:1px solid var(--dk,var(--line));padding-bottom:20px}
+
+/* Scan window: modal, must be closed to do anything else */
+.scanov{position:fixed;inset:0;z-index:50;background:rgba(10,12,12,.55);display:flex;justify-content:center;align-items:stretch}
+.scanov>.panel{width:100%;max-width:560px;border-radius:0;overflow-y:auto;overscroll-behavior:contain;padding:12px 16px calc(24px + env(safe-area-inset-bottom));animation:none}
+@media (min-width:600px){.scanov{align-items:center;padding:24px}.scanov>.panel{max-height:calc(100dvh - 48px);border-radius:14px}}
+.scanhead{display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;margin:-12px -16px 0;padding:12px 16px 8px;background:inherit;z-index:2}
+.scanhead h2{margin:0;font-size:1.15rem}
+.scanhead button{width:38px;height:38px;padding:0;border-radius:50%;font-size:1rem;flex:none}
+body.scanning{overflow:hidden}
+.srcbadge{font-size:.72rem;color:var(--muted)}
+.weblinks{display:flex;flex-wrap:wrap;gap:8px}.weblinks a{font-size:.9rem}
+/* Track editor: one row per track */
+.tehead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.tehead .seg{margin:0}
+.telist{display:flex;flex-direction:column}
+.tedisc{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin:12px 0 2px;display:flex;justify-content:space-between;align-items:center}
+.ter{display:grid;grid-template-columns:1.7em minmax(0,1fr) 4.6em 2.4em;gap:6px;align-items:start;padding:7px 0;border-bottom:1px solid var(--line)}
+.ter .ten{padding-top:9px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;font-size:.9rem}
+.ter .tef{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ter input[type=text]{padding:8px 9px;font-size:.95rem}
+.ter input.teW{font-size:.85rem;padding:6px 9px;color:var(--muted)}
+.ter input.teD{text-align:center;padding-left:4px;padding-right:4px;font-variant-numeric:tabular-nums}
+.ter .teM{width:2.4em;height:2.4em;padding:0;border-radius:8px;font-size:1.1rem;line-height:1}
+.teacts{grid-column:2/-1;display:flex;flex-wrap:wrap;gap:6px}
+.teacts button{padding:6px 10px;font-size:.82rem}
+.teacts .del{color:#d9534f}
+.teadd{display:flex;gap:8px;margin-top:10px}.teadd button{flex:1}
 </style>
 </head>
 <body>
@@ -430,8 +457,9 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 <details class="win todoWin" id="todoCard" hidden><summary class="wtitle"><span>To do</span><span class="tdN" id="todoTot"></span><span class="arr" aria-hidden="true">▸</span></summary><div class="wbody"><ul class="list" id="todoList"></ul></div></details>
 <section class="recent" id="recent" hidden><h2>Recently added</h2><div class="rrow" id="recentRow"></div></section>
 
-<section class="panel" id="scanPanel" hidden>
-  <div class="seg" id="scanMode" role="group" aria-label="Scan mode"><button type="button" data-sm="add" aria-pressed="true">Add or look up</button><button type="button" data-sm="inv" aria-pressed="false">Link barcodes to my albums</button></div>
+<div class="scanov" id="scanOv" hidden role="dialog" aria-modal="true" aria-label="Scan"><section class="panel" id="scanPanel">
+  <div class="scanhead"><h2>Scan an album</h2><button type="button" id="scanX" aria-label="Close">✕</button></div>
+  <div class="seg" id="scanMode" role="group" aria-label="Scan mode"><button type="button" data-sm="add" aria-pressed="true">Add / look up</button><button type="button" data-sm="inv" aria-pressed="false">Link barcodes</button></div>
   <div class="invbar" id="invBar" hidden><span id="invTxt"></span><button type="button" class="small" id="invStop">Done</button></div>
   <div class="camwrap" id="camWrap" hidden><video id="cam" playsinline muted></video></div>
   <p class="hint" id="camMsg"></p>
@@ -439,11 +467,11 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
   <input id="ean" class="ean" type="text" inputmode="numeric" autocomplete="off" placeholder="0 28947 79123 4" maxlength="20">
   <div class="row"><button class="primary" id="eanGo" type="button">Check</button><button id="eanClose" type="button">Close</button></div>
   <button type="button" id="photoRead">No barcode? Read the cover from a photo</button>
-  <div class="row catrow"><input id="catno" type="text" autocomplete="off" spellcheck="false" placeholder="Catalog no. or Discogs / MusicBrainz link" aria-label="Catalog number or link"><button type="button" id="catGo">Discogs</button></div>
+  <div class="row catrow"><input id="catno" type="text" autocomplete="off" spellcheck="false" placeholder="Catalog no., title or link" aria-label="Search by catalog number, artist and title, or link"><button type="button" id="catGo">Search</button></div>
   <p class="hint" id="eanMsg">EAN-13 (Europe, 13 digits) or UPC-A (US, 12 digits).</p>
   <div id="demoCodes"></div>
   <div id="eanResult"></div>
-</section>
+</section></div>
 
 <div class="stick" id="stick">
   <label for="q">Collection lookup</label>
@@ -774,7 +802,7 @@ function subView(fn){if(sheetOpen&&CUR){const f=CUR,sc=$("sheet").scrollTop,op=[
 function goBack(){if(BACK.length)history.back();else closeSheet();}
 function openSheet(){const o=$("overlay");if(!sheetOpen){history.pushState({sheet:1},"");sheetOpen=true;BACK=[];}o.hidden=false;document.body.classList.add("locked");$("sheet").scrollTop=0;}
 function closeSheet(fromPop){if(!sheetOpen)return;const n=BACK.length;sheetOpen=false;BACK=[];CUR=null;backUi();$("overlay").hidden=true;if($("settings").hidden)document.body.classList.remove("locked");if(!fromPop)history.go(-(n+1));else if(n)history.go(-n);}
-window.addEventListener("popstate",()=>{if(!$("settings").hidden){closeSettings(true);return;}if(!$("shooter").hidden){finishShoot(null);if(sheetOpen)history.pushState({sheet:1},"");return;}if(sheetOpen){if(BACK.length){const f=BACK.pop();f();backUi();return;}closeSheet(true);}});
+window.addEventListener("popstate",()=>{if(!$("settings").hidden){closeSettings(true);return;}if(!$("shooter").hidden){finishShoot(null);if(sheetOpen)history.pushState({sheet:1},"");return;}if(sheetOpen){if(BACK.length){const f=BACK.pop();f();backUi();return;}closeSheet(true);return;}if(scanOpen)closeScan(true);});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("shooter").hidden)finishShoot(null);else closeSheet();}});
 const wLabel=w=>{const o=WORKS()[w];return o?o.t+(o.cat?", "+o.cat:""):"";};
 const isWish=id=>S.wish.some(x=>x.id===id);
@@ -1079,7 +1107,7 @@ $("q").addEventListener("input",()=>{clearTimeout(qT);qT=setTimeout(render,120);
 const TB=$("toolbox");let classic=(()=>{try{return localStorage.getItem("classic")||"art";}catch(e){return "art";}})();
 const goTab=t=>{if($("q").value){$("q").value="";}tab=t;render();const top=$("stick").offsetTop;if(scrollY>top)scrollTo({top:top-4});};
 $("tabCol").onclick=()=>goTab("col");$("tabWish").onclick=()=>goTab("wish");$("tabComp").onclick=()=>goTab(classic);$("tabTools").onclick=()=>goTab("tools");
-$("navScan").onclick=()=>{scrollTo({top:0,behavior:"smooth"});if($("scanPanel").hidden)$("scanBtn").click();};
+$("navScan").onclick=()=>openScan();
 
 // ---------- Caméra ----------
 let stream=null,detector=null,scanning=false;
@@ -1095,8 +1123,15 @@ async function loop(){if(!scanning)return;try{const r=await detector.detect($("c
 // ---------- SCAN ----------
 function demoButtons(){$("demoCodes").innerHTML=S.demo?`<p class="hint">Demo codes, tap one to simulate a scan:</p><div class="codes">`+CAT.map(x=>`<button type="button" data-code="${x.ean}" title="${esc(x.t)}">${fmtEan(x.ean)}</button>`).join("")+`</div>`:"";}
 $("demoCodes").onclick=e=>{const b=e.target.closest("[data-code]");if(b){stopCam();$("ean").value=b.dataset.code;check();}};
-$("scanBtn").onclick=()=>{$("scanPanel").hidden=false;$("eanResult").innerHTML="";$("ean").value="";demoButtons();startCam();};
-$("eanClose").onclick=()=>{stopCam();$("scanPanel").hidden=true;stopInventory();};
+// La fenêtre de scan est modale : elle reste au-dessus de tout jusqu'à ce qu'on la ferme (✕, Close ou retour Android)
+let scanOpen=false;
+function openScan(opt){opt=opt||{};const fresh=!scanOpen;
+  if(fresh){scanOpen=true;$("scanOv").hidden=false;document.body.classList.add("scanning");history.pushState({scan:1},"");$("scanPanel").scrollTop=0;}
+  if(opt.reset!==false&&fresh){$("eanResult").innerHTML="";$("ean").value="";$("eanMsg").className="hint";$("eanMsg").textContent="EAN-13 (Europe, 13 digits) or UPC-A (US, 12 digits).";demoButtons();}
+  if(opt.cam!==false&&!stream)startCam();}
+function closeScan(fromPop){if(!scanOpen)return;scanOpen=false;stopCam();stopInventory();$("scanOv").hidden=true;document.body.classList.remove("scanning");if(!fromPop)history.back();}
+$("scanBtn").onclick=()=>openScan();
+$("eanClose").onclick=()=>closeScan();$("scanX").onclick=()=>closeScan();
 $("ean").addEventListener("keydown",e=>{if(e.key==="Enter")check();});
 $("eanGo").onclick=()=>{stopCam();check();};
 let cur="";
@@ -1131,7 +1166,7 @@ function ownedWorks(f){const W=Object.assign({},WORKS(),f.newWorks||{}),V=versio
   tracksOf(f).forEach(t=>{if(typeof t==="string"||!t.w||!W[t.w])return;const id=workId(t.w,W),vs=V[id];if(vs&&vs.length&&!out.has(id))out.set(id,{t:W[t.w].t,c:canonC(W[t.w].c),own:vs.filter(e=>e.own).length,wish:vs.filter(e=>!e.own).length});});
   return [...out.values()];}
 function nextBtn(){return `<button type="button" class="next" data-next="1">Scan the next one</button>`;}
-$("eanResult").addEventListener("click",e=>{if(e.target.closest("[data-next]")){$("eanResult").innerHTML="";$("ean").value="";$("eanMsg").textContent="";cur="";startCam();$("scanPanel").scrollIntoView({behavior:"smooth"});}});
+$("eanResult").addEventListener("click",e=>{if(e.target.closest("[data-next]")){$("eanResult").innerHTML="";$("ean").value="";$("eanMsg").textContent="";cur="";startCam();$("scanPanel").scrollTop=0;}});
 function showFound(out,f,src,c){const box=discsOf(f).length>1,dup=sameDisc(f),ow=ownedWorks(f);
   out.innerHTML=(dup?`<div class="verdict own"><strong>Possible duplicate</strong><span>${esc(dup.t)} · ${esc(dup.a)}${isWish(dup.id)?" (on your wishlist)":""} — different edition or barcode?</span><button type="button" class="small" id="seeDup">View my entry</button>${c?`<button type="button" class="small primary" id="dupCode">Same album: link barcode</button>`:""}</div>`
       :`<div class="verdict wish"><strong>Not in your collection</strong><span>Found (${src}):</span></div>`)+
@@ -1342,17 +1377,26 @@ async function dgRelease(id){const d=await dgGet("releases/"+id);
   if(ks.length>1){a.discs=ks.map(k=>({tr:discs[k]}));a.box=true;}else a.tr=ks.length?discs[ks[0]]:[];
   return a;}
 $("catGo").onclick=async()=>{stopCam();const q=$("catno").value.trim(),out=$("eanResult");cur="";if(isLink(q)){importLink(q);return;}
-  if(!q){out.innerHTML=`<p class="hint err">Enter the catalog number printed on the spine or back of the CD.</p>`;return;}
-  if(!dgKey()){out.innerHTML=`<p class="hint err">Catalog number search requires Discogs. <button type="button" class="linklike" data-gokey="1">Add a Discogs token</button></p>`;return;}
-  out.innerHTML=`<p class="hint">Searching Discogs…</p>`;
-  try{let rs=await dgSearch({catno:q});if(!rs.length)rs=await dgSearch({q});
-    if(!rs.length){out.innerHTML=`<div class="verdict wish"><strong>No results</strong><span>Try without spaces or dashes, or read the cover from a photo.</span></div>`;return;}
-    out.innerHTML=`<p class="hint">${rs.length} result${rs.length!==1?"s":""}. Select the correct one:</p>`+rs.map((r,i)=>`<button type="button" class="pick" data-i="${i}">${r.thumb?`<img src="${esc(r.thumb)}" alt="">`:""}<span><b>${esc(r.title)}</b><br><small>${esc([(r.label||[])[0],r.catno,r.year,(r.format||[]).join(", ")].filter(Boolean).join(" · "))}</small></span></button>`).join("");
-    out.querySelectorAll(".pick").forEach(btn=>btn.onclick=async()=>{const r=rs[+btn.dataset.i];out.innerHTML=`<p class="hint">Loading…</p>`;
-      try{const f=await dgRelease(r.id);const code=(r.barcode||[]).map(x=>x.replace(/\D/g,"")).find(x=>x.length===13||x.length===12)||"";
-        const id=code&&S.codes[code];if(id&&byId(id)){openDetail(id);out.innerHTML="";return;}
-        showFound(out,f,"Discogs",code);}catch(e){out.innerHTML=`<p class="hint err">${esc(e.message)}</p>`;}});
-  }catch(e){out.innerHTML=`<p class="hint err">${esc(e.message)}</p>`;}};
+  if(!q){out.innerHTML=`<p class="hint err">Enter a catalog number (printed on the spine or back), or an artist and a title.</p>`;return;}
+  const web=`<p class="hint">Not found? Search the web, then paste the Discogs or MusicBrainz page link here.</p><div class="weblinks"><a href="https://www.google.com/search?q=${encodeURIComponent(q+" CD")}" target="_blank" rel="noopener">Google</a><a href="https://www.discogs.com/search/?q=${encodeURIComponent(q)}&type=release" target="_blank" rel="noopener">Discogs</a><a href="https://musicbrainz.org/search?query=${encodeURIComponent(q)}&type=release" target="_blank" rel="noopener">MusicBrainz</a></div>`;
+  if(!navigator.onLine){out.innerHTML=`<p class="hint err">No Internet connection: the search could not be run.</p>`;return;}
+  out.innerHTML=`<p class="hint">Searching MusicBrainz${dgKey()?" and Discogs":""}…</p>`;
+  const res=[],errs=[],seen=new Set(),catq=q.replace(/"/g,"");
+  const addMb=rs=>(rs||[]).forEach(r=>{if(seen.has(r.id))return;seen.add(r.id);res.push({src:"MusicBrainz",id:r.id,t:r.title,code:(r.barcode||"").replace(/\D/g,""),
+    sub:[credit(r["artist-credit"]),((r["label-info"]||[]).find(l=>l.label)||{label:{}}).label.name,((r["label-info"]||[]).find(l=>l["catalog-number"])||{})["catalog-number"],(r.date||"").slice(0,4),r.country,(r.media||[]).map(m=>m.format).filter(Boolean)[0]].filter(Boolean).join(" · "),
+    img:"https://coverartarchive.org/release/"+r.id+"/front-250"});});
+  try{addMb((await mbGet("release/?query="+encodeURIComponent('catno:"'+catq+'"')+"&limit=10")).releases);
+    if(!res.length&&/\s|-/.test(catq))addMb((await mbGet("release/?query="+encodeURIComponent('catno:"'+catq.replace(/[\s-]+/g,"")+'"')+"&limit=10")).releases);
+    if(!res.length&&/[a-z]{3}/i.test(q))addMb((await mbGet("release/?query="+encodeURIComponent(luc(q)||q)+"&limit=10")).releases);}catch(e){errs.push("MusicBrainz: "+e.message);}
+  if(dgKey()){try{let rs=await dgSearch({catno:q});if(!rs.length)rs=await dgSearch({q});rs.forEach(r=>res.push({src:"Discogs",id:r.id,t:r.title,code:(r.barcode||[]).map(x=>x.replace(/\D/g,"")).find(x=>x.length===13||x.length===12)||"",
+    sub:[(r.label||[])[0],r.catno,r.year,(r.format||[]).join(", ")].filter(Boolean).join(" · "),img:r.thumb||""}));}catch(e){errs.push("Discogs: "+e.message);}}
+  const errH=errs.length?`<p class="hint err">${esc(errs.join(" · "))}</p>`:"";
+  if(!res.length){out.innerHTML=`<div class="verdict wish"><strong>No results</strong><span>Nothing found on MusicBrainz${dgKey()?" or Discogs":""} for “${esc(q)}”.</span></div>${errH}${web}`;return;}
+  out.innerHTML=`<p class="hint">${res.length} result${res.length!==1?"s":""}. Select the correct one:</p>${errH}`+res.map((r,i)=>`<button type="button" class="pick" data-i="${i}">${r.img?`<img src="${esc(r.img)}" alt="" onerror="this.style.visibility='hidden'">`:""}<span><b>${esc(r.t)}</b><br><small>${esc(r.sub)}</small><br><small class="srcbadge">${r.src}</small></span></button>`).join("")+web;
+  out.querySelectorAll(".pick").forEach(btn=>btn.onclick=async()=>{const r=res[+btn.dataset.i];out.innerHTML=`<p class="hint">Loading…</p>`;
+    try{const code=r.code&&(r.code.length===13||r.code.length===12)?r.code:"";const id=code&&S.codes[code];if(id&&byId(id)){openDetail(id);out.innerHTML="";return;}
+      let f;if(r.src==="Discogs")f=await dgRelease(r.id);else{f=await mbRelease(r.id);if(f.img&&!(await imgOk(f.img)))f.img="";}
+      showFound(out,f,r.src,code);}catch(e){out.innerHTML=`<p class="hint err">Loading failed: ${esc(e.message)}</p>`;}});};
 $("catno").addEventListener("keydown",e=>{if(e.key==="Enter")$("catGo").click();});
 
 // ---------- Fiches ----------
@@ -1619,9 +1663,62 @@ function parseLines(txt,mainC){const byCd={},works={};
   const ks=Object.keys(byCd).sort((a,b)=>a-b);return {discs:ks.map(k=>({tr:byCd[k]})),works};}
 function applyTracks(n,parsed){delete n.tr;delete n.discs;delete n.box;Object.assign(S.works,parsed.works);
   if(parsed.discs.length>1){n.discs=parsed.discs;n.box=true;}else n.tr=parsed.discs.length?parsed.discs[0].tr:[];}
-function trackEditor(host,txt,mainC,hint){host.innerHTML=`<label for="rC">Compositeur principal (facultatif)</label><input id="rC" type="text" value="${esc(mainC)}">
-  <label for="rP">Tracks</label><p class="hint">${hint||""}One line per track: <code>n | work | movement | duration</code>. Put the composer before the work if it differs from the main one. <code>CD2</code> at the start of a line for the 2nd disc.</p>
-  <textarea id="rP" class="edit">${esc(txt)}</textarea>`;}
+// Éditeur de pistes : une ligne par piste (titre, œuvre, durée), synchronisé avec le format texte (#rP) lu par parseLines
+const TE={rows:[],open:-1};
+function teParse(txt){let cd=1;return String(txt||"").split("\n").map(s=>s.trim()).filter(Boolean).map(l=>{let c=1;const m=l.match(/^CD\s*(\d+)\s+/i);if(m){c=+m[1];l=l.slice(m[0].length);}
+  let p=l.split("|").map(s=>s.trim()),d="";
+  if(p.length===1)p=[p[0].replace(/^\d+[.)\s-]+/,"")];else{if(/^\d*$/.test(p[0]))p.shift();if(p.length>1&&(DUR.test(p[p.length-1])||p[p.length-1]===""))d=p.pop().replace(/["]/g,"").replace(/['′.]/,":");}
+  const r={cd:c,c:"",o:"",t:"",d};if(p.length>=3){r.c=p[0];r.o=p[1];r.t=p.slice(2).join(" / ");}else if(p.length===2){r.o=p[0];r.t=p[1];}else r.t=p[0]||"";return r;});}
+const teClean=s=>String(s||"").replace(/\|/g,"/").replace(/\s+/g," ").trim();
+function teDur(v){v=String(v||"").trim().replace(/[.'′,h ]/g,":");if(/^\d{3,4}$/.test(v))v=v.slice(0,-2)+":"+v.slice(-2);const m=v.match(/^(?:(\d+):)?(\d{1,2}):(\d{1,2})$/);if(!m)return v;return (m[1]?m[1]+":"+m[2].padStart(2,"0"):String(+m[2]))+":"+m[3].padStart(2,"0");}
+function teSync(){const mainC=($("rC")||{}).value||"",cnt={},objs=[];
+  TE.rows.forEach(r=>{const o=teClean(r.o),t=teClean(r.t);if(!o&&!t)return;cnt[r.cd]=(cnt[r.cd]||0)+1;objs.push({cd:r.cd,n:cnt[r.cd],compositeur:teClean(r.c),oeuvre:o,titre:t,duree:teDur(r.d)});});
+  const ta=$("rP");if(ta)ta.value=linesFrom(objs,mainC.trim());}
+function teMulti(){return TE.rows.some(r=>r.cd>1);}
+function teDraw(focus){const L=$("teList");if(!L)return;const W=[...new Set(TE.rows.map(r=>teClean(r.o)).filter(Boolean))];
+  let h=`<datalist id="teWorks">${W.map(w=>`<option value="${esc(w)}">`).join("")}</datalist>`,lastCd=0,n=0;const multi=teMulti();
+  if(!TE.rows.length)h+=`<p class="hint">No tracks yet. Tap “Add track”.</p>`;
+  TE.rows.forEach((r,i)=>{if(r.cd!==lastCd){n=0;lastCd=r.cd;if(multi)h+=`<div class="tedisc"><span>Disc ${r.cd}</span></div>`;}n++;
+    const op=TE.open===i,showC=r.c||r.showC;
+    h+=`<div class="ter" data-i="${i}"><span class="ten">${n}</span><div class="tef">
+      <input type="text" class="teT" data-k="t" value="${esc(r.t)}" placeholder="Title or movement" enterkeyhint="next" autocomplete="off" aria-label="Track ${n} title">
+      <input type="text" class="teW" data-k="o" value="${esc(r.o)}" placeholder="Work (optional)" list="teWorks" enterkeyhint="next" autocomplete="off" aria-label="Track ${n} work">
+      ${showC?`<input type="text" class="teW" data-k="c" value="${esc(r.c)}" placeholder="Composer, if different from the main one" autocomplete="off" aria-label="Track ${n} composer">`:""}</div>
+      <input type="text" class="teD" data-k="d" value="${esc(r.d)}" placeholder="0:00" inputmode="numeric" enterkeyhint="next" autocomplete="off" aria-label="Track ${n} duration">
+      <button type="button" class="teM" data-act="menu" aria-label="Track ${n} options" aria-expanded="${op}">⋯</button>
+      ${op?`<div class="teacts"><button type="button" data-act="up">↑ Up</button><button type="button" data-act="down">↓ Down</button><button type="button" data-act="ins">+ Insert below</button>${showC?"":`<button type="button" data-act="comp">Composer</button>`}<button type="button" class="del" data-act="del">Delete</button></div>`:""}</div>`;});
+  L.innerHTML=h;
+  if(focus){const el=L.querySelector(`.ter[data-i="${focus.i}"] [data-k="${focus.k||"t"}"]`);if(el){el.focus();try{el.setSelectionRange(el.value.length,el.value.length);}catch(e){}}}}
+function teAdd(at,cd,work){const prev=TE.rows[at-1];const r={cd:cd||(prev?prev.cd:1),c:prev&&work?prev.c:"",o:work||"",t:"",d:""};TE.rows.splice(at,0,r);TE.open=-1;teSync();teDraw({i:at,k:"t"});}
+function teWire(){const L=$("teList");
+  L.addEventListener("input",e=>{const el=e.target.closest("[data-k]");if(!el)return;const i=+el.closest(".ter").dataset.i;TE.rows[i][el.dataset.k]=el.value;teSync();});
+  L.addEventListener("focusout",e=>{const el=e.target.closest('[data-k="d"]');if(!el)return;const i=+el.closest(".ter").dataset.i,v=teDur(el.value);if(v!==el.value){el.value=v;TE.rows[i].d=v;teSync();}});
+  L.addEventListener("keydown",e=>{if(e.key!=="Enter")return;const el=e.target.closest("[data-k]");if(!el)return;e.preventDefault();const i=+el.closest(".ter").dataset.i,k=el.dataset.k;
+    if(k==="t"){if(i===TE.rows.length-1||TE.rows[i+1].cd!==TE.rows[i].cd)teAdd(i+1,TE.rows[i].cd,teClean(TE.rows[i].o));else teDraw({i:i+1,k:"t"});}
+    else if(k==="o"||k==="c")teDraw({i,k:"d"});else if(k==="d"){if(i===TE.rows.length-1||TE.rows[i+1].cd!==TE.rows[i].cd)teAdd(i+1,TE.rows[i].cd,teClean(TE.rows[i].o));else teDraw({i:i+1,k:"t"});}});
+  L.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const i=+b.closest(".ter").dataset.i,R=TE.rows,a=b.dataset.act;
+    if(a==="menu"){TE.open=TE.open===i?-1:i;teDraw();return;}
+    if(a==="del"){R.splice(i,1);TE.open=-1;}
+    else if(a==="ins"){teAdd(i+1,R[i].cd,teClean(R[i].o));return;}
+    else if(a==="comp"){R[i].showC=true;teDraw({i,k:"c"});return;}
+    else if(a==="up"&&i>0){if(R[i-1].cd!==R[i].cd)R[i].cd=R[i-1].cd;else{[R[i-1],R[i]]=[R[i],R[i-1]];TE.open=i-1;}}
+    else if(a==="down"&&i<R.length-1){if(R[i+1].cd!==R[i].cd)R[i].cd=R[i+1].cd;else{[R[i+1],R[i]]=[R[i],R[i+1]];TE.open=i+1;}}
+    teSync();teDraw();});}
+function trackEditor(host,txt,mainC,hint){let mode="list";try{mode=localStorage.getItem("te-mode")||"list";}catch(e){}
+  host.innerHTML=`<label for="rC">Main composer (optional)</label><input id="rC" type="text" value="${esc(mainC)}" placeholder="Used for every track unless another one is set">
+  <div class="tehead"><label>Tracks</label><div class="seg" role="group" aria-label="Editing mode"><button type="button" data-tm="list" aria-pressed="${mode==="list"}">List</button><button type="button" data-tm="text" aria-pressed="${mode==="text"}">Text</button></div></div>
+  <div id="teBox"><div class="telist" id="teList"></div><div class="teadd"><button type="button" id="teAddT">+ Add track</button><button type="button" id="teAddD">+ Add disc</button></div>
+   <p class="hint">Enter moves to the next track and creates it when needed, keeping the same work. Durations: type 345 for 3:45.</p></div>
+  <div id="teTxt"><p class="hint">${hint||""}Paste or type one line per track: <code>n | work | movement | duration</code>. Put the composer before the work if it differs from the main one. <code>CD2</code> at the start of a line for the 2nd disc.</p>
+  <textarea id="rP" class="edit">${esc(txt)}</textarea></div>`;
+  TE.rows=teParse(txt);TE.open=-1;teWire();
+  const setMode=(m,init)=>{mode=m;try{localStorage.setItem("te-mode",m);}catch(e){}host.querySelectorAll("[data-tm]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.tm===m));
+    $("teBox").hidden=m!=="list";$("teTxt").hidden=m!=="text";if(m==="list"){TE.rows=teParse($("rP").value);TE.open=-1;teDraw();}else if(init!==true)teSync();};
+  host.querySelectorAll("[data-tm]").forEach(b=>b.onclick=()=>{if(b.dataset.tm!==mode)setMode(b.dataset.tm);});
+  $("rC").addEventListener("input",()=>{if(mode==="list")teSync();});
+  $("teAddT").onclick=()=>{const last=TE.rows[TE.rows.length-1];teAdd(TE.rows.length,last?last.cd:1,last?teClean(last.o):"");};
+  $("teAddD").onclick=()=>{const mx=TE.rows.reduce((m,r)=>Math.max(m,r.cd),0);teAdd(TE.rows.length,TE.rows.length?mx+1:1,"");};
+  setMode(mode,true);}
 function showRead(r){const tx=readTarget&&byId(readTarget),out=$("readOut");
   out.innerHTML=`<label for="rT">CD title</label><input id="rT" type="text" value="${esc(r.titre||(tx&&tx.t)||"")}">
    <label for="rA">Artist</label><input id="rA" type="text" value="${esc(r.artiste||(tx&&tx.a)||"")}">
@@ -1964,7 +2061,7 @@ async function fetchLink(s){const L=parseLink(s);if(!L)throw new Error("Link not
   else{let id=L.id;if(L.kind==="release-group"){const r=await mbGet("release?release-group="+id+"&limit=1");id=(r.releases||[])[0]&&r.releases[0].id;if(!id)throw new Error("No edition in this MusicBrainz group.");}
     f=await mbRelease(id);if(f.img&&!(await imgOk(f.img)))f.img="";}
   return {f,src:L.src};}
-async function importLink(s){const out=$("eanResult");$("scanPanel").hidden=false;stopCam();cur="";out.innerHTML=`<p class="hint">Loading the album from the link…</p>`;scrollTo({top:0,behavior:"smooth"});
+async function importLink(s){const out=$("eanResult");openScan({cam:false,reset:false});stopCam();cur="";out.innerHTML=`<p class="hint">Loading the album from the link…</p>`;$("scanPanel").scrollTop=0;
   try{const {f,src}=await fetchLink(s);showFound(out,f,src,"");}catch(e){out.innerHTML=`<p class="hint err">${esc(e.message)}</p>`;}}
 
 
@@ -2227,7 +2324,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.61.0";$("hVer").textContent="v"+APPV;
+const APPV="0.62.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2320,7 +2417,9 @@ function openSplit(id){const x=byId(id),p=$("detail"),ds=discsOf(x);
 
 // ---------- Mode inventaire : scanner ses propres CD pour leur associer le code-barres ----------
 let INV=false;
-function startInventory(){closeSettings();closeSheet();INV=true;smUi();$("scanPanel").hidden=false;$("invBar").hidden=false;$("eanResult").innerHTML="";$("ean").value="";invCount();scrollTo({top:0,behavior:"smooth"});startCam();}
+function startInventory(){const nav=!$("settings").hidden||sheetOpen;closeSettings();closeSheet();
+  const go=()=>{INV=true;smUi();openScan({cam:false,reset:false});$("invBar").hidden=false;$("eanResult").innerHTML="";$("ean").value="";invCount();$("scanPanel").scrollTop=0;if(!stream)startCam();};
+  if(nav)setTimeout(go,350);else go();}
 function smUi(){document.querySelectorAll("#scanMode [data-sm]").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.sm==="inv")===INV));}
 function stopInventory(){INV=false;smUi();$("invBar").hidden=true;$("eanResult").innerHTML="";}
 function invCount(){const all=[...S.col,...S.wish],n=all.filter(x=>!codesOf(x.id).length).length;$("invTxt").innerHTML=`<b>Linking mode</b> · scan albums one at a time. ${n} album${n!==1?"s":""} without a barcode.`;}
