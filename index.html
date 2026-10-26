@@ -387,7 +387,7 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 #todoList{background:var(--win);border:1px solid;border-color:var(--sh) var(--hi) var(--hi) var(--sh);border-radius:3px;padding:0 10px}
 #todoList .go{color:var(--muted);font-size:1.3rem;margin-left:4px}
 @keyframes flash{0%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:inset 1px 1px var(--hi),inset -1px -1px var(--sh),2px 3px 0 rgba(0,0,0,.14)}}.win.flash{animation:flash 1.4s ease-out}
-.toolbox .win{scroll-margin-top:140px}.fmtrow{display:flex;flex-direction:column;gap:6px;margin:6px 0;padding:0 2px}.fmtrow .seg{margin:0;display:flex;flex-wrap:wrap;align-self:flex-start}.fmtrow .seg small{opacity:.7;margin-left:3px}.advd{margin:10px 0}.advd>summary{cursor:pointer;font-weight:600;padding:10px 4px;color:var(--muted)}.advd>.win{margin-top:8px}.cmpl .item{padding:8px 10px}.cmpl .item.done{opacity:.6;cursor:default}.cmpl .item[aria-checked="true"]{box-shadow:inset 4px 0 0 var(--accent);background:var(--surface)}.cmpl .item[aria-checked="true"] b::after{content:" ✓";color:var(--accent)}#cmpScope{width:100%;margin:4px 0 8px}.stp{display:flex;align-items:center;gap:8px;margin:4px 0}
+.toolbox .win{scroll-margin-top:140px}.fmtrow{display:flex;flex-direction:column;gap:6px;margin:6px 0;padding:0 2px}.fmtrow .seg{margin:0;display:flex;flex-wrap:wrap;align-self:flex-start}.fmtrow .seg small{opacity:.7;margin-left:3px}#seeNoGenre{display:none}.cmpl small{display:block;color:var(--muted);font-size:.8rem}.advd{margin:10px 0}.advd>summary{cursor:pointer;font-weight:600;padding:10px 4px;color:var(--muted)}.advd>.win{margin-top:8px}.cmpl .item{padding:8px 10px}.cmpl .item.done{opacity:.6;cursor:default}.cmpl .item[aria-checked="true"]{box-shadow:inset 4px 0 0 var(--accent);background:var(--surface)}.cmpl .item[aria-checked="true"] b::after{content:" ✓";color:var(--accent)}#cmpScope{width:100%;margin:4px 0 8px}.stp{display:flex;align-items:center;gap:8px;margin:4px 0}
 .cfield{display:flex;gap:8px}.cfield input{flex:1;min-width:0}.cfield button{flex:none;padding:0 14px}
 #shooter.bc #shootGo,#shooter.bc #shootGal,#shooter.bc #shootFmt{display:none}#shooter.bc .shootBar{justify-content:center}
 .sheet .back{position:absolute;top:5px;left:6px;width:30px;height:22px;border-radius:2px;font-size:.85rem;line-height:1;padding:0;z-index:2}
@@ -477,11 +477,13 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 <button type="button" class="setItem" id="selGo"><b>Select several albums</b><small>Edit in bulk: format, genre, move, trash, box set. Filter by format or genre first.</small></button>
 <button type="button" class="setItem" id="tbGroup"><b>Group into box sets</b><small id="tbGroupN">Automatic suggestions</small></button>
 </div></section>
-<details class="advd" id="tw-adv"><summary>Individual steps</summary>
-<section class="win" id="tw-cover"><div class="wtitle">Covers and info</div><div class="wbody"><section class="enr" id="enr"><button type="button" class="x2" id="enrX" aria-label="Hide">✕</button><p id="enrTxt"></p><button type="button" class="primary" id="enrGo">Start search</button></section><button type="button" class="setItem" id="gGo"><b>Classify genres</b><small>Automatic, via AI or Discogs</small></button><p class="hint" id="gMsg"></p>
+<details class="advd" id="tw-adv"><summary>Advanced tools</summary>
+<p class="hint">Fine control for covers and genres. Everything else is done from “Complete my library” above.</p>
+<section class="win" id="tw-cover"><div class="wtitle">Covers</div><div class="wbody"><section class="enr" id="enr"><button type="button" class="x2" id="enrX" aria-label="Hide">✕</button><p id="enrTxt"></p><button type="button" class="primary" id="enrGo">Start search</button></section><button type="button" class="setItem" id="gGo"><b>Classify genres</b><small>Automatic, via AI or Discogs</small></button><p class="hint" id="gMsg"></p>
 <button type="button" class="wide" id="seeNoGenre">Show albums without a genre</button>
 </div></section>
-<section class="win" id="tw-code"><div class="wtitle">Barcodes</div><div class="wbody">
+</details>
+<div hidden id="legacyTools"><section class="win" id="tw-code"><div class="wtitle">Barcodes</div><div class="wbody">
 <p class="hint" id="twCodeTxt"></p>
 <button type="button" class="setItem" id="cbGo"><b>Fetch likely barcodes</b><small>For albums with an identified edition</small></button><p class="hint" id="cbMsg"></p>
 <button type="button" class="wide" id="seeNoCode">Show albums without a barcode</button>
@@ -493,7 +495,7 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 <section class="win" id="tw-org"><div class="wtitle">Classical music</div><div class="wbody">
 <button type="button" class="setItem" id="mvGo"><b>Recognise movements and pieces</b><small id="mvN">Links each track to its MusicBrainz work</small></button><p class="hint" id="mvMsg"></p>
 </div></section>
-</details>
+</div>
 <section class="win" id="tw-hist"><div class="wtitle">History</div><div class="wbody">
 <button type="button" class="setItem" id="rptsOpen"><b>Reports</b><small>Full results of past operations, with links to the albums concerned</small></button>
 <button type="button" class="setItem" id="logOpen"><b>Activity log</b><small>All actions, manual and automatic</small></button>
@@ -2167,17 +2169,17 @@ function albumActions(xs,after){const nW=xs.filter(x=>isWish(x.id)).length,nC=xs
 const CMP={run:false,lock:null,st:{tracks:true,cover:true,genre:true,format:true,codes:true,mv:true}};
 const gapsOf=x=>{const g=[];if(!hasCover(x))g.push("cover");if(!tracksOf(x).length)g.push("tracks");if(!genreOf(x))g.push("genre");if(!x.fmt)g.push("format");return g;};
 const cmpScope=()=>{try{return localStorage.getItem("cmp-scope")||"gaps";}catch(e){return "gaps";}};
-const CMP_SC=[["gaps","Any missing information"],["cover","Without cover"],["tracks","Without track list"],["genre","Without genre"],["format","Without format"],["code","Without barcode"],["import","Added by import"],["all","My whole library"]];
-const cmpList=sc=>{const t=TODOS.find(x=>x[0]===sc);return ALL().filter(sc==="all"?()=>true:sc==="import"?x=>x.src==="import":sc==="gaps"?x=>gapsOf(x).length:t?t[2]:()=>false);};
+const CMP_SC=[["gaps","Everything missing","cover, track list, genre or format"],["cover","Without cover"],["tracks","Without track list"],["genre","Without genre"],["format","Without format"],["code","Without barcode"],["mv","Classical albums to link","recognise movements and pieces"],["import","Added by import"],["all","My whole library"]];
+const cmpList=sc=>{if(sc==="mv")return mvTodo();const t=TODOS.find(x=>x[0]===sc);return ALL().filter(sc==="all"?()=>true:sc==="import"?x=>x.src==="import":sc==="gaps"?x=>gapsOf(x).length:t?t[2]:()=>false);};
 const CMP_CNT=()=>Object.fromEntries(CMP_SC.map(([k])=>[k,cmpList(k).length]));
 const CMP_STEPKEY={cover:"cover",tracks:"tracks",genre:"genre",format:"format",code:"codes"};
 const CMP_STEPS=[["tracks","Track lists"],["cover","Covers"],["genre","Genre"],["format","Format (CD, vinyl…)"],["codes","Likely barcodes"],["mv","Classical movements"]];
 function cmpUi(){const n=ALL().length,c=CMP_CNT(),sc=cmpScope(),mv=(typeof mvTodo==="function"?mvTodo().length:0);
   $("cmpTxt").innerHTML=!n?"Your library is empty. Import a collection or scan an album first.":c.gaps?`<b>${c.gaps}</b> of ${n} albums are missing some information.`:`All ${n} albums are complete ✓`;
-  $("cmpList").innerHTML=CMP_SC.map(([k,l])=>`<li class="item tap${c[k]||k==="all"?"":" done"}" role="radio" data-cg="${k}" aria-checked="${sc===k}"><div class="meta"><b>${l}</b></div><span class="count">${c[k]||(k==="all"?0:"✓")}</span></li>`).join("");
+  $("cmpList").innerHTML=CMP_SC.map(([k,l,s])=>`<li class="item tap${c[k]||k==="all"?"":" done"}" role="radio" data-cg="${k}" aria-checked="${sc===k}"><div class="meta"><b>${l}</b>${s?`<small>${s}</small>`:""}</div><span class="count">${c[k]||(k==="all"?0:"✓")}</span></li>`).join("");
   $("cmpList").querySelectorAll("[data-cg]").forEach(li=>li.onclick=()=>{if(li.classList.contains("done"))return;try{localStorage.setItem("cmp-scope",li.dataset.cg);}catch(e){}cmpUi();});
-  const cnt=c[sc]||0;$("cmpGo").disabled=(!n||!cnt)&&!CMP.run;if(!CMP.run)$("cmpGo").textContent=cnt?"Choose and complete ("+cnt+" album"+(cnt!==1?"s":"")+")":"Nothing to complete";}
-$("cmpGo").onclick=()=>{if(CMP.run){CMP.run=false;return;}const sc=cmpScope(),l=cmpList(sc);if(!l.length)return;completeStart(l,sc);};
+  const cnt=c[sc]||0;$("cmpGo").disabled=(!n||!cnt)&&!CMP.run&&!MV.run;if(!CMP.run&&!MV.run)$("cmpGo").textContent=cnt?"Choose and complete ("+cnt+" album"+(cnt!==1?"s":"")+")":"Nothing to complete";}
+$("cmpGo").onclick=()=>{if(CMP.run||MV.run){CMP.run=false;MV.run=false;return;}const sc=cmpScope(),l=cmpList(sc);if(!l.length)return;if(sc==="mv"){openMvConfirm();return;}completeStart(l,sc);};
 function completeStart(list,sc){if(CMP.run)return;if(!list.length)return;const sk=CMP_STEPKEY[sc];CMP.st=sk?{tracks:false,cover:false,genre:false,format:false,codes:false,mv:false,[sk]:true}:{tracks:true,cover:true,genre:true,format:true,codes:true,mv:true};
   if(!navigator.onLine){report("err","No Internet connection","MusicBrainz and Discogs cannot be reached.",[],"Connect to the Internet and try again.");return;}
   const st=()=>CMP.st;
@@ -2223,7 +2225,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("selGo").onclick=()=>{goTab("col");SEL=[];render();};$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.59.0";$("hVer").textContent="v"+APPV;
+const APPV="0.60.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2368,10 +2370,10 @@ $("cbGo").onclick=()=>{if(CB.run){CB.run=false;return;}const t=cbTodo();if(!t.le
 const MV={run:false};
 const mvTodo=()=>ALL().filter(x=>!(x.mvT>=2)&&(x.mbid||codesOf(x.id).length)&&isClassical(x)&&tracksOf(x).some(t=>typeof t!=="string"&&t.w&&!t.mw));
 function mvUi(){const n=mvTodo().length,s=$("mvN");if(s&&!MV.run)s.textContent=n?n+" classical album"+(n!==1?"s":"")+" to link (edition or barcode known)":"All albums with a known edition are linked ✓";}
-async function linkMovements(list){if(MV.run){MV.run=false;return;}const todo=list||mvTodo(),m=$("mvMsg");
+async function linkMovements(list){if(MV.run){MV.run=false;return;}const todo=list||mvTodo(),m=$("cmpMsg");
   if(!todo.length){report("info","Nothing to link","Every classical album with a known edition or barcode is already linked to MusicBrainz.",[],"Albums without a matched edition can be identified first with “Choose the right edition” in their entry.");return;}
   if(!navigator.onLine){report("err","No Internet connection","MusicBrainz cannot be reached.",[],"Connect to the Internet and try again.");return;}
-  MV.run=true;$("mvGo").querySelector("b").textContent="Stop";let n=0,ok=0,nt=0;const fail=[],done=[];try{MV.lock=await navigator.wakeLock?.request("screen");}catch(e){}
+  MV.run=true;$("mvGo").querySelector("b").textContent="Stop";$("cmpGo").textContent="Stop";let n=0,ok=0,nt=0;const fail=[],done=[];try{MV.lock=await navigator.wakeLock?.request("screen");}catch(e){}
   for(const x of todo){if(!MV.run)break;const txt=`Linking… ${n}/${todo.length} albums · ${nt} tracks identified. Keep the app open (about 1 album per second).`;m.textContent=txt;if($("mvGo2"))$("mvGo2").textContent="Linking "+n+"/"+todo.length+"… (stop)";
     try{let rid=x.mbid;const ds=discsOf(x);
       if(!rid){for(const c of codesOf(x.id)){const r=await mbGet("release/?query=barcode:"+c+"&limit=5");const f=(r.releases||[]).find(o=>o.barcode===c&&+o["track-count"]===tracksOf(x).length);if(f){rid=f.id;break;}}}
@@ -2394,7 +2396,7 @@ async function linkMovements(list){if(MV.run){MV.run=false;return;}const todo=li
       else fail.push({t:x.t+": no work information on MusicBrainz",id:x.id,why:"No work information on MusicBrainz for this edition"});
     }catch(e){fail.push({t:x.t+": "+(e.message||"error"),id:x.id,why:e.message||"Error"});await sleep(2000);}
     n++;if(n%10===0)save();}
-  const stopped=!MV.run;MV.run=false;try{MV.lock&&MV.lock.release();}catch(e){}$("mvGo").querySelector("b").textContent="Recognise movements and pieces";
+  const stopped=!MV.run;MV.run=false;try{MV.lock&&MV.lock.release();}catch(e){}$("mvGo").querySelector("b").textContent="Recognise movements and pieces";m.textContent="";try{cmpUi();}catch(e){}
   logA("Movements linked to MusicBrainz: "+nt+" tracks in "+ok+" albums","","auto");save();render();mvUi();m.textContent=`${ok} album${ok!==1?"s":""} linked, ${nt} tracks identified.`;
   report(ok?(fail.length?"warn":"ok"):"err",stopped&&n<todo.length?"Linking stopped":"Linking complete",`${ok} of ${n} album${n!==1?"s":""} linked; ${nt} tracks now identified by their MusicBrainz work (movement, prelude, etc.). ${fail.length} not linked.`,
     fail.concat(done),fail.length?"Not linked albums are listed first; tap one to open it. They keep the automatic recognition from their titles. Check their edition with “Choose the right edition”, then run this again.":"Open a work in the Classical tab to see each movement and its versions.");}
