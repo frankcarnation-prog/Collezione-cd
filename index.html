@@ -387,7 +387,7 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 #todoList{background:var(--win);border:1px solid;border-color:var(--sh) var(--hi) var(--hi) var(--sh);border-radius:3px;padding:0 10px}
 #todoList .go{color:var(--muted);font-size:1.3rem;margin-left:4px}
 @keyframes flash{0%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:inset 1px 1px var(--hi),inset -1px -1px var(--sh),2px 3px 0 rgba(0,0,0,.14)}}.win.flash{animation:flash 1.4s ease-out}
-.toolbox .win{scroll-margin-top:140px}.advd{margin:10px 0}.advd>summary{cursor:pointer;font-weight:600;padding:10px 4px;color:var(--muted)}.advd>.win{margin-top:8px}.cmpl .item{padding:8px 10px}.cmpl .item.done{opacity:.6}#cmpScope{width:100%;margin:4px 0 8px}.stp{display:flex;align-items:center;gap:8px;margin:4px 0}
+.toolbox .win{scroll-margin-top:140px}.fmtrow{display:flex;flex-direction:column;gap:6px;margin:6px 0;padding:0 2px}.fmtrow .seg{margin:0;display:flex;flex-wrap:wrap;align-self:flex-start}.fmtrow .seg small{opacity:.7;margin-left:3px}.advd{margin:10px 0}.advd>summary{cursor:pointer;font-weight:600;padding:10px 4px;color:var(--muted)}.advd>.win{margin-top:8px}.cmpl .item{padding:8px 10px}.cmpl .item.done{opacity:.6}#cmpScope{width:100%;margin:4px 0 8px}.stp{display:flex;align-items:center;gap:8px;margin:4px 0}
 .cfield{display:flex;gap:8px}.cfield input{flex:1;min-width:0}.cfield button{flex:none;padding:0 14px}
 #shooter.bc #shootGo,#shooter.bc #shootGal,#shooter.bc #shootFmt{display:none}#shooter.bc .shootBar{justify-content:center}
 .sheet .back{position:absolute;top:5px;left:6px;width:30px;height:22px;border-radius:2px;font-size:.85rem;line-height:1;padding:0;z-index:2}
@@ -431,6 +431,7 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 <section class="recent" id="recent" hidden><h2>Recently added</h2><div class="rrow" id="recentRow"></div></section>
 
 <section class="panel" id="scanPanel" hidden>
+  <div class="seg" id="scanMode" role="group" aria-label="Scan mode"><button type="button" data-sm="add" aria-pressed="true">Add or look up</button><button type="button" data-sm="inv" aria-pressed="false">Link barcodes to my albums</button></div>
   <div class="invbar" id="invBar" hidden><span id="invTxt"></span><button type="button" class="small" id="invStop">Done</button></div>
   <div class="camwrap" id="camWrap" hidden><video id="cam" playsinline muted></video></div>
   <p class="hint" id="camMsg"></p>
@@ -447,7 +448,7 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 <div class="stick" id="stick">
   <label for="q">Collection lookup</label>
   <input id="q" type="search" placeholder="Artist, album, composer or performer" autocomplete="off">
-  <div class="sortbar" id="sortBar"><span id="sortCount"></span><button type="button" class="small" id="ncChip" hidden></button><button type="button" class="small" id="selBtn">Select</button><label for="sortSel">Sort</label><select id="genreSel" aria-label="Filter by genre or format"></select><select id="sortSel" aria-label="Sort order"><option value="recent">Date added (newest)</option><option value="artist">Artist (A–Z)</option><option value="title">Title (A–Z)</option><option value="year">Year (newest)</option></select></div>
+  <div class="sortbar" id="sortBar"><span id="sortCount"></span><button type="button" class="small" id="ncChip" hidden></button><button type="button" class="small" id="selBtn">Select</button><label for="sortSel">Sort</label><select id="genreSel" aria-label="Filter by genre"></select><select id="sortSel" aria-label="Sort order"><option value="recent">Date added (newest)</option><option value="artist">Artist (A–Z)</option><option value="title">Title (A–Z)</option><option value="year">Year (newest)</option></select></div>
 </div>
 
 
@@ -455,6 +456,7 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 
 
 <div class="ghint" id="gHint" hidden><span>Some albums have no genre.</span><button type="button" class="wide" id="gGo2">Classify automatically</button></div>
+<div class="fmtrow" id="fmtRow" hidden><div class="seg" id="fmtSeg"></div><div class="seg" id="vtSeg" hidden></div></div>
 <ul class="list" id="list"></ul>
 <nav class="tabs bnav" role="tablist" aria-label="Sections">
   <button role="tab" id="tabCol" aria-selected="true" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg>Collection</button>
@@ -473,9 +475,8 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 </div></section>
 <section class="win" id="tw-alb"><div class="wtitle">Albums</div><div class="wbody">
 <button type="button" class="setItem" id="impGo"><b>Import a collection</b><small>CSV (Discogs, CLZ…), Excel or a pasted list</small></button>
-<button type="button" class="setItem" id="bulkGo"><b>Act on a group of albums</b><small>Pick a group (no cover, vinyl, imported…), then act on it</small></button>
+<button type="button" class="setItem" id="selGo"><b>Select several albums</b><small>Edit in bulk: format, genre, move, trash, box set. Filter by format or genre first.</small></button>
 <button type="button" class="setItem" id="tbGroup"><b>Group into box sets</b><small id="tbGroupN">Automatic suggestions</small></button>
-<button type="button" class="setItem" id="invOpen"><b>Barcode inventory</b><small>Scan your CDs to enable offline recognition</small></button>
 </div></section>
 <details class="advd" id="tw-adv"><summary>Individual steps</summary>
 <section class="win" id="tw-cover"><div class="wtitle">Covers and info</div><div class="wbody"><section class="enr" id="enr"><button type="button" class="x2" id="enrX" aria-label="Hide">✕</button><p id="enrTxt"></p><button type="button" class="primary" id="enrGo">Start search</button></section><button type="button" class="setItem" id="gGo"><b>Classify genres</b><small>Automatic, via AI or Discogs</small></button><p class="hint" id="gMsg"></p>
@@ -887,19 +888,29 @@ function openBoxer(ids){let order=ids.filter(byId).sort((a,b)=>byId(a).t.localeC
   draw();openSheet();}
 let LIMIT=60,qT=0,lastView="";
 $("more").addEventListener("click",e=>{if(e.target.closest("#moreBtn")){LIMIT+=120;render();}});
-function render(){$("list").classList.remove("toolsMode");$("more").hidden=true;$("more").innerHTML="";genreSelUi();todoUi();const view=tab+"|"+$("q").value;if(view!==lastView){LIMIT=60;lastView=view;}renderRecent();selUi();
+const getFV=()=>{try{return localStorage.getItem("fmt-view")||"";}catch(e){return "";}};
+const setFV=v=>{try{localStorage.setItem("fmt-view",v);}catch(e){}};
+function fmtRowUi(q){const row=$("fmtRow"),arr=tab==="wish"?S.wish:S.col,fc={};arr.forEach(x=>{const k=fmtKey(x);fc[k]=(fc[k]||0)+1;if(k.includes("|"))fc[k.split("|")[0]]=(fc[k.split("|")[0]]||0)+1;});
+  const known=FMTS.filter(f=>fc[f]);let fv=getFV();if(fv&&!fc[fv]){fv="";setFV("");}
+  row.hidden=!!q||(tab!=="col"&&tab!=="wish")||!known.length;if(row.hidden)return;
+  const opts=[["","All",arr.length]].concat(known.map(f=>[f,f,fc[f]]),fc["?"]?[["?","No format",fc["?"]]]:[]);
+  $("fmtSeg").innerHTML=opts.map(([k,l,n])=>`<button type="button" data-fv="${esc(k)}" aria-pressed="${(fv.split("|")[0])===k}">${esc(l)} <small>${n}</small></button>`).join("");
+  const vts=fv.startsWith("Vinyl")?VTS.filter(v=>fc["Vinyl|"+v]):[];$("vtSeg").hidden=vts.length<2;
+  if(vts.length>1)$("vtSeg").innerHTML=[["Vinyl","All vinyl"]].concat(vts.map(v=>["Vinyl|"+v,v])).map(([k,l])=>`<button type="button" data-fv="${esc(k)}" aria-pressed="${fv===k}">${esc(l)}</button>`).join("");
+  row.querySelectorAll("[data-fv]").forEach(b=>b.onclick=()=>{setFV(b.dataset.fv);render();});}
+function render(){$("list").classList.remove("toolsMode");$("more").hidden=true;$("more").innerHTML="";genreSelUi();todoUi();const view=tab+"|"+$("q").value;if(view!==lastView){LIMIT=60;lastView=view;}renderRecent();if(SEL&&tab!=="col"&&tab!=="wish")SEL=null;selUi();
   const q=norm($("q").value.trim()),ul=$("list");
   if(TB.parentNode!==$("tbHolder"))$("tbHolder").appendChild(TB);
   ["Col","Wish","Comp","Tools"].forEach(k=>$("tab"+k).setAttribute("aria-selected",!q&&(tab===k.toLowerCase()||(k==="Comp"&&(tab==="perf"||tab==="art")))));
   homeTodo();
   $("sortBar").hidden=!q&&(tab==="comp"||tab==="perf"||tab==="art"||tab==="tools");
-  if(!q&&tab==="tools"){renderTools();return;}
-  if(!q&&(tab==="comp"||tab==="perf"||tab==="art")){if(tab==="comp")renderComposers();else if(tab==="perf")renderPerformers();else renderArtists();
+  if(!q&&tab==="tools"){$("fmtRow").hidden=true;renderTools();return;}
+  if(!q&&(tab==="comp"||tab==="perf"||tab==="art")){$("fmtRow").hidden=true;if(tab==="comp")renderComposers();else if(tab==="perf")renderPerformers();else renderArtists();
     $("list").insertAdjacentHTML("afterbegin",`<li class="subseg"><div class="seg"><button type="button" data-cl="art" aria-pressed="${tab==="art"}">Artists</button><button type="button" data-cl="comp" aria-pressed="${tab==="comp"}">Composers</button><button type="button" data-cl="perf" aria-pressed="${tab==="perf"}">Performers</button></div></li>`);
     $("list").querySelectorAll("[data-cl]").forEach(bt=>bt.onclick=()=>{classic=bt.dataset.cl;try{localStorage.setItem("classic",classic);}catch(e){}tab=classic;render();});return;}
-  $("sortBar").hidden=false;$("sortSel").hidden=$("selBtn").hidden=!!q;
+  $("sortBar").hidden=false;$("sortSel").hidden=$("selBtn").hidden=!!q;fmtRowUi(q);
   let rows=q?S.col.filter(x=>matches(x,q)).map(x=>[x,"own"]).concat(S.wish.filter(x=>matches(x,q)).map(x=>[x,"wish"])):(tab==="col"?S.col.map(x=>[x,"own"]):S.wish.map(x=>[x,"wish"]));
-  const gf=getGF();if(!q&&gf)rows=rows.filter(([x])=>gf.startsWith("fmt:")?(k=>k===gf.slice(4)||k.startsWith(gf.slice(4)+"|"))(fmtKey(x)):(genreOf(x)||"?")===gf);$("gHint").hidden=!(!q&&gf==="?"&&(tab==="col"||tab==="wish"));
+  const fv=getFV();if(!q&&fv)rows=rows.filter(([x])=>(k=>k===fv||k.startsWith(fv+"|"))(fmtKey(x)));const gf=getGF();if(!q&&gf)rows=rows.filter(([x])=>gf.startsWith("fmt:")?(k=>k===gf.slice(4)||k.startsWith(gf.slice(4)+"|"))(fmtKey(x)):(genreOf(x)||"?")===gf);$("gHint").hidden=!(!q&&gf==="?"&&(tab==="col"||tab==="wish"));
   const tdf=TODOS.find(t=>t[0]===TODOF);if(!q&&tdf&&tab==="col")rows=rows.filter(([x])=>tdf[2](x));$("ncChip").hidden=!(!q&&tdf&&tab==="col");if(tdf)$("ncChip").textContent=tdf[1]+" ✕";
   if(!q){const by=getSort(),idx=new Map(rows.map((r,i)=>[r[0],i])),AK=new Map(),TK=new Map();
     rows.forEach(([x])=>{AK.set(x,norm(x.a).replace(/^(the|les|le|la|l')\s+/,""));TK.set(x,norm(x.t));});const artKey=x=>AK.get(x),tk=x=>TK.get(x);
@@ -992,11 +1003,9 @@ function mapGenre(gs,ss){const g=(gs||[]).map(s=>String(s).toLowerCase()),s=(ss|
   if(/folk|world|country/.test(all))return "Folk / World";if(/rock|punk|grunge|indie/.test(all))return "Rock";if(/pop/.test(all))return "Pop";return "";}
 const genreOf=x=>x.g||(isClassical(x)?"Classical":"");
 const getGF=()=>{try{return localStorage.getItem("genre-filter")||"";}catch(e){return "";}};
-function genreSelUi(){const all=[...S.col,...S.wish],cnt={},fc={};all.forEach(x=>{const g=genreOf(x)||"?";cnt[g]=(cnt[g]||0)+1;const k=fmtKey(x);fc[k]=(fc[k]||0)+1;if(k.includes("|"))fc[k.split("|")[0]]=(fc[k.split("|")[0]]||0)+1;});const cur=getGF();
-  const fo=[...FMTS.filter(f=>fc[f]).flatMap(f=>[[f,f]].concat(f==="Vinyl"?VTS.filter(v=>fc["Vinyl|"+v]).map(v=>["Vinyl|"+v,"Vinyl "+v]):[])),...(fc["?"]?[["?","Format not set"]]:[])];
-  $("genreSel").innerHTML=`<option value="">All albums</option><optgroup label="Genre">`+GENRES.filter(g=>cnt[g]).map(g=>`<option value="${esc(g)}">${esc(g)} (${cnt[g]})</option>`).join("")+
-    Object.keys(cnt).filter(g=>g!=="?"&&!GENRES.includes(g)).sort().map(g=>`<option value="${esc(g)}">${esc(g)} (${cnt[g]})</option>`).join("")+(cnt["?"]?`<option value="?">Unclassified (${cnt["?"]})</option>`:"")+`</optgroup>`+
-    (fo.length>1||fc["?"]!==all.length?`<optgroup label="Format">`+fo.map(([k,l])=>`<option value="fmt:${esc(k)}">${esc(l)} (${fc[k]})</option>`).join("")+`</optgroup>`:"");
+function genreSelUi(){const all=[...S.col,...S.wish],cnt={};all.forEach(x=>{const g=genreOf(x)||"?";cnt[g]=(cnt[g]||0)+1;});const cur=getGF();
+  $("genreSel").innerHTML=`<option value="">All genres</option>`+GENRES.filter(g=>cnt[g]).map(g=>`<option value="${esc(g)}">${esc(g)} (${cnt[g]})</option>`).join("")+
+    Object.keys(cnt).filter(g=>g!=="?"&&!GENRES.includes(g)).sort().map(g=>`<option value="${esc(g)}">${esc(g)} (${cnt[g]})</option>`).join("")+(cnt["?"]?`<option value="?">Unclassified (${cnt["?"]})</option>`:"");
   $("genreSel").value=cur;if($("genreSel").value!==cur)$("genreSel").value="";}
 $("genreSel").onchange=e=>{try{localStorage.setItem("genre-filter",e.target.value);}catch(err){}render();};
 // Classement automatique : l'IA (si une clé est enregistrée) classe 60 disques par appel ; sinon Discogs, disque par disque
@@ -2155,13 +2164,6 @@ function albumActions(xs,after){const nW=xs.filter(x=>isWish(x.id)).length,nC=xs
     if(k==="Move to trash"){askSheet("Move "+N+" to trash?","They can be recovered from History → Trash.","Move to trash",()=>{undoable(N+" moved to trash");xs.forEach(x=>{toTrash(x,"del",{own:!isWish(x.id),codes:Object.keys(S.codes).filter(c=>S.codes[c]===x.id)});});const del=new Set(xs.map(x=>x.id));S.col=S.col.filter(y=>!del.has(y.id));S.wish=S.wish.filter(y=>!del.has(y.id));for(const c in S.codes)if(del.has(S.codes[c]))delete S.codes[c];after();save();render();toast(N+" moved to trash");});return;}
     const toW=k==="Move to wishlist",mv=xs.filter(x=>isWish(x.id)!==toW),del=new Set(mv.map(x=>x.id));undoable(mv.length+" album"+(mv.length!==1?"s":"")+" moved to "+(toW?"wishlist":"collection"));
     S.col=S.col.filter(y=>!del.has(y.id));S.wish=S.wish.filter(y=>!del.has(y.id));mv.forEach(x=>{if(!toW)x.at=Date.now();(toW?S.wish:S.col).push(x);});after();save();render();toast(mv.length+" album"+(mv.length!==1?"s":"")+" moved to your "+(toW?"wishlist":"collection"));});}
-// --- Tools: pick a group of albums, then act on it ---
-const SCOPES=[["My whole library",()=>true],["Collection only",x=>!isWish(x.id)],["Wishlist only",x=>isWish(x.id)],["Without cover",x=>!hasCover(x)],["Without track list",x=>!tracksOf(x).length],["Without genre",x=>!genreOf(x)],["Without format",x=>!x.fmt],["Without barcode",x=>!codesOf(x.id).length&&!hasPCode(x)],["Added by import",x=>x.src==="import"],["Classical",x=>isClassical(x)],["CD",x=>x.fmt==="CD"],["Vinyl",x=>x.fmt==="Vinyl"],["Cassette",x=>x.fmt==="Cassette"],["Box sets",x=>!!x.box]];
-function bulkStart(){const all=ALL();if(!all.length){report("info","No albums","Your library is empty.");return;}
-  const sc=SCOPES.map(([l,f])=>[l,all.filter(f).length]).filter(([l,n],i)=>n>0&&(i===0||n<all.length));
-  chooseSheet("Albums","Which albums?","Choose a group, then untick any you want to leave out.",sc.map(([l,n])=>[l,n+" album"+(n!==1?"s":"")]),o=>{const f=SCOPES.find(s=>s[0]===o[0])[1],list=all.filter(f);
-    pickAlbums({op:"bulk",cat:"Albums",title:o[0],list,go:"Next",skipMemo:true,pre:()=>true,sub:x=>[fmtLabel(x),genreOf(x)].filter(Boolean).join(" · "),intro:"Untick the albums to leave out, then choose what to do with the rest."},l=>albumActions(l));});}
-
 // ---------- Complete my library: one pipeline for covers, tracks, genre, format and barcodes ----------
 const CMP={run:false,lock:null,st:{tracks:true,cover:true,genre:true,format:true,codes:true,mv:true}};
 const gapsOf=x=>{const g=[];if(!hasCover(x))g.push("cover");if(!tracksOf(x).length)g.push("tracks");if(!genreOf(x))g.push("genre");if(!x.fmt)g.push("format");return g;};
@@ -2220,9 +2222,9 @@ const DGF={run:false,lock:null};
 function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("info","Discogs token needed","Completing albums from Discogs uses your personal Discogs token.",[],"Add it in Settings → Discogs, then try again.");return;}
   const t=dgTodo();if(!t.length){report("info","Nothing to complete","No imported album with a Discogs ID is missing its track list.");return;}
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
-$("fmtGo").onclick=fmtBulk;$("bulkGo").onclick=bulkStart;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
+$("fmtGo").onclick=fmtBulk;$("selGo").onclick=()=>{goTab("col");SEL=[];render();};$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.57.0";$("hVer").textContent="v"+APPV;
+const APPV="0.58.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2235,7 +2237,7 @@ function openTodo(){closeSettings();closeSheet();goTab("tools");return;const p=$
   p.innerHTML=`<p class="cat">Incomplete</p><h2 class="wh">Missing information</h2><p class="hint">Select a line to list the albums concerned, then complete them one by one from their entry.</p>
    <ul class="list">${TODOS.map(([k,lab,f])=>{const n=all.filter(f).length;return `<li class="item tap${n?"":" done"}" data-todo="${k}"><div class="meta"><b>${lab}</b><small>${n?n+" album"+(n!==1?"s":""):"Up to date ✓"}</small></div>${n?`<span class="count">${n}</span>`:""}</li>`;}).join("")}</ul>
    ${(()=>{const n=groupSuggestions().length;return `<ul class="list"><li class="item tap${n?"":" done"}" id="tdGroup"><div class="meta"><b>To group into box sets</b><small>${n?n+" suggestion"+(n!==1?"s":""):"No suggestions ✓"}</small></div>${n?`<span class="count">${n}</span>`:""}</li></ul>`;})()}
-   <div class="row"><button type="button" id="tdInv">Barcode inventory</button></div>
+   <div class="row"><button type="button" id="tdInv">Link a barcode by scanning</button></div>
    <div class="row"><button type="button" id="tdEnr">Find covers and info</button><button type="button" id="tdGen">Classify genres</button></div><p class="hint" id="tdMsg"></p>`;
   openSheet();p.querySelectorAll("[data-todo]").forEach(li=>li.onclick=()=>{if(li.classList.contains("done"))return;if(li.dataset.todo==="auto"){openReview();return;}TODOF=li.dataset.todo;$("q").value="";tab="col";closeSheet();render();setTimeout(()=>$("stick").scrollIntoView({behavior:"smooth"}),50);});
   if($("tdGroup"))$("tdGroup").onclick=()=>{if(!$("tdGroup").classList.contains("done"))openGroupSugg();};
@@ -2315,9 +2317,10 @@ function openSplit(id){const x=byId(id),p=$("detail"),ds=discsOf(x);
 
 // ---------- Mode inventaire : scanner ses propres CD pour leur associer le code-barres ----------
 let INV=false;
-function startInventory(){closeSettings();closeSheet();INV=true;$("scanPanel").hidden=false;$("invBar").hidden=false;$("eanResult").innerHTML="";$("ean").value="";invCount();scrollTo({top:0,behavior:"smooth"});startCam();}
-function stopInventory(){INV=false;$("invBar").hidden=true;$("eanResult").innerHTML="";}
-function invCount(){const all=[...S.col,...S.wish],n=all.filter(x=>!codesOf(x.id).length).length;$("invTxt").innerHTML=`<b>Inventory mode</b> · scan CDs one at a time. ${n} album${n!==1?"s":""} without a barcode.`;}
+function startInventory(){closeSettings();closeSheet();INV=true;smUi();$("scanPanel").hidden=false;$("invBar").hidden=false;$("eanResult").innerHTML="";$("ean").value="";invCount();scrollTo({top:0,behavior:"smooth"});startCam();}
+function smUi(){document.querySelectorAll("#scanMode [data-sm]").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.sm==="inv")===INV));}
+function stopInventory(){INV=false;smUi();$("invBar").hidden=true;$("eanResult").innerHTML="";}
+function invCount(){const all=[...S.col,...S.wish],n=all.filter(x=>!codesOf(x.id).length).length;$("invTxt").innerHTML=`<b>Linking mode</b> · scan albums one at a time. ${n} album${n!==1?"s":""} without a barcode.`;}
 function rankFor(info){const all=[...S.col,...S.wish].filter(x=>!codesOf(x.id).length);
   if(!info)return [];return all.map(x=>{const s=2*overlap(info.t||"",x.t)+overlap(x.t,info.t||"")+overlap(info.a||"",x.a+" "+(x.perf||"")+" "+x.t)+(info.n&&tracksOf(x).length&&Math.abs(info.n-tracksOf(x).length)<=1?.5:0);return {x,s};})
     .filter(e=>e.s>.6).sort((a,b)=>b.s-a.s).slice(0,5).map(e=>e.x);}
@@ -2338,7 +2341,7 @@ async function invHandle(c){const out=$("eanResult"),id=S.codes[c];
     $("invSkip").onclick=()=>{$("ean").value="";out.innerHTML="";startCam();};
     $("invQ").oninput=()=>{const q=norm($("invQ").value.trim());if(q.length<2)return;const list=[...S.col,...S.wish].filter(x=>matches(x,q)).slice(0,8);const v=$("invQ").value;out.innerHTML=draw(list);$("invQ").value=v;$("invQ").focus();bind();};};
   bind();}
-$("invStop").onclick=stopInventory;$("invOpen").onclick=startInventory;
+$("invStop").onclick=stopInventory;document.querySelectorAll("#scanMode [data-sm]").forEach(b=>b.onclick=()=>{if(b.dataset.sm==="inv")startInventory();else{stopInventory();stopCam();$("eanResult").innerHTML="";$("ean").value="";startCam();}});
 $("autoCodes").checked=autoCodes();$("autoCodes").onchange=e=>{try{localStorage.setItem("auto-codes",e.target.checked?"1":"0");}catch(err){}};
 
 
@@ -2359,7 +2362,7 @@ async function fetchCodesAll(list){if(CB.run){CB.run=false;return;}const m=$("cb
     n++;if(n%10===0)save();}
   CB.run=false;try{CB.lock&&CB.lock.release();}catch(e){}$("cbGo").querySelector("b").textContent="Fetch likely barcodes now";
   logA("Likely barcodes fetched: "+f+" of "+n+" albums","","auto");save();render();
-  m.textContent=`Complete: ${f} likely barcode${f!==1?"s":""} added from ${n} albums queried. Remaining editions have no online barcode (common for older CDs); use the inventory instead.`;renderToolsCounts();toast(f+" likely barcodes added");}
+  m.textContent=`Complete: ${f} likely barcode${f!==1?"s":""} added from ${n} albums queried. Remaining editions have no online barcode (common for older CDs); use the barcode button in the middle and choose “Link barcodes to my albums”.`;renderToolsCounts();toast(f+" likely barcodes added");}
 $("cbGo").onclick=()=>{if(CB.run){CB.run=false;return;}const t=cbTodo();if(!t.length){fetchCodesAll([]);return;}if(!navigator.onLine){$("cbMsg").textContent="No Internet connection.";return;}
   pickAlbums({op:"cb",cat:"Barcodes",title:"Fetch likely barcodes",list:t,go:"Start",intro:"Choose the albums whose likely barcode should be fetched from MusicBrainz or Discogs (about 1 second each; keep the app open). Likely barcodes are only suggestions: they are confirmed the first time you scan the real one."},l=>fetchCodesAll(l));};
 // ---------- Movements and pieces from MusicBrainz (for albums added before 0.51) ----------
