@@ -375,7 +375,7 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 /* sort bar: count + Select on the first row, genre and sort side by side on the second */
 .sortbar{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:8px}
 .sortbar #sortCount{grid-column:1;grid-row:1}
-.sortbar #selBtn{grid-column:2;grid-row:1;justify-self:end}
+.sortbar #selBtn{grid-column:2;grid-row:1;justify-self:end;margin:0}
 .sortbar #genreSel{grid-column:1;grid-row:2}
 .sortbar #sortSel{grid-column:2;grid-row:2}
 .sortbar #ncChip{grid-column:1/-1;grid-row:3;justify-self:start}
@@ -429,7 +429,11 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 body.scanning{overflow:hidden}
 .srcbadge{font-size:.72rem;color:var(--muted)}
 .weblinks{display:flex;flex-wrap:wrap;gap:8px}.weblinks a{font-size:.9rem}
-.estl{margin:4px 0 6px}.lowc{color:var(--wish);font-weight:600}.disclaim{font-size:.82rem;color:var(--muted);border-left:3px solid var(--wish);padding:6px 10px;margin:8px 0;background:var(--wish-bg)}
+.estl{margin:4px 0 6px}
+.cert{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.25) inset}.cert.c2{background:#2e9d4a}.cert.c1{background:#e0a000}.cert.c0{background:#c8372d}
+.list .item{position:relative}.list .item>.cert{position:absolute;top:8px;right:8px}
+.grpH{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 4px 4px;font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink);list-style:none}.grpH small{flex-basis:100%;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)}
+.certL{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.85rem;color:var(--muted);margin:4px 0 8px}.certL b{color:var(--ink)}.lowc{color:var(--wish);font-weight:600}.disclaim{font-size:.82rem;color:var(--muted);border-left:3px solid var(--wish);padding:6px 10px;margin:8px 0;background:var(--wish-bg)}
 .pkConf{display:flex;gap:8px;align-items:flex-start;margin:10px 0;font-size:.9rem}.pkConf input{margin-top:3px}.disc1{font-size:.75rem;color:var(--muted)}.pkSide{display:flex;flex-direction:column;align-items:flex-end;margin:0 8px;white-space:nowrap;font-size:.9rem}.pkSide small{font-size:.75rem;color:var(--muted)}.pkSide small.lowc{color:var(--wish)}#pkSort{max-width:190px}.estp{font-weight:700;color:var(--ink)}.estl button{margin-left:6px}.dgattr{color:var(--accent);font-size:.82rem}
 .money{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:6px 0;font-size:.9rem;color:var(--muted)}.money .mlab{min-width:58px;text-transform:uppercase;font-size:.75rem;letter-spacing:.06em}
 .money select{flex:1 1 140px;min-width:0;max-width:220px}.money .srcO{flex:1 1 120px;min-width:0}.mdate{font-size:.75rem}.condRow{display:flex;flex-wrap:wrap;gap:8px 16px;margin:8px 0 4px;font-size:.9rem;color:var(--muted)}.condRow label{display:flex;flex-direction:column;gap:4px}
@@ -514,7 +518,7 @@ small.best{color:var(--wish);font-weight:600}
 <div class="stick" id="stick">
   <label for="q">Collection lookup</label>
   <input id="q" type="search" placeholder="Artist, album, composer or performer" autocomplete="off">
-  <div class="sortbar" id="sortBar"><span id="sortCount"></span><button type="button" class="small" id="ncChip" hidden></button><button type="button" class="small" id="selBtn">Select</button><label for="sortSel">Sort</label><select id="genreSel" aria-label="Filter by genre"></select><select id="sortSel" aria-label="Sort order"><option value="recent">Date added (newest)</option><option value="artist">Artist (A–Z)</option><option value="title">Title (A–Z)</option><option value="year">Year (newest)</option><option value="value">Value (highest)</option><option value="paid">Price paid (highest)</option></select></div>
+  <div class="sortbar" id="sortBar"><span id="sortCount"></span><button type="button" class="small" id="ncChip" hidden></button><button type="button" class="small" id="selBtn">Select</button><label for="sortSel">Sort</label><select id="genreSel" aria-label="Filter by genre"></select><select id="sortSel" aria-label="Sort order"><option value="recent">Date added (newest)</option><option value="artist">Artist (A–Z)</option><option value="title">Title (A–Z)</option><option value="year">Year (newest)</option><option value="value">Value (highest)</option><option value="paid">Price paid (highest)</option><option value="cert">Edition certainty (least sure first)</option></select></div>
 </div>
 
 
@@ -986,14 +990,15 @@ function render(){$("list").classList.remove("toolsMode");$("more").hidden=true;
     rows.forEach(([x])=>{AK.set(x,norm(x.a).replace(/^(the|les|le|la|l')\s+/,""));TK.set(x,norm(x.t));});const artKey=x=>AK.get(x),tk=x=>TK.get(x);
     const cmp={recent:(a,b)=>(b.at||0)-(a.at||0)||idx.get(b)-idx.get(a),artist:(a,b)=>artKey(a).localeCompare(artKey(b),"fr")||tk(a).localeCompare(tk(b),"fr"),
       title:(a,b)=>tk(a).localeCompare(tk(b),"fr",{numeric:true}),value:(a,b)=>moneyOf(b,"value")-moneyOf(a,"value")||artKey(a).localeCompare(artKey(b),"fr"),
-      paid:(a,b)=>moneyOf(b,"paid")-moneyOf(a,"paid")||artKey(a).localeCompare(artKey(b),"fr"),year:(a,b)=>(+b.y||0)-(+a.y||0)||artKey(a).localeCompare(artKey(b),"fr")}[by];
+      paid:(a,b)=>moneyOf(b,"paid")-moneyOf(a,"paid")||artKey(a).localeCompare(artKey(b),"fr"),cert:(a,b)=>certOf(a)-certOf(b)||artKey(a).localeCompare(artKey(b),"fr"),year:(a,b)=>(+b.y||0)-(+a.y||0)||artKey(a).localeCompare(artKey(b),"fr")}[by];
     rows.sort((r1,r2)=>cmp(r1[0],r2[0]));$("sortCount").textContent=rows.length+" album"+(rows.length!==1?"s":"");}
   const CODE={};for(const k in S.codes)if(!CODE[S.codes[k]])CODE[S.codes[k]]=k;
   const total=rows.length;if(q)$("sortCount").textContent=total+" result"+(total!==1?"s":"");window.VISIDS=rows.map(r=>r[0].id);rows=rows.slice(0,LIMIT);
   $("more").hidden=total<=LIMIT;$("more").innerHTML=total>LIMIT?`<button type="button" id="moreBtn">Show more (${total-LIMIT} more)</button>`:"";
-  ul.innerHTML=rows.length?rows.map(([x,k])=>{const c=CODE[x.id],cu=coverUrl(x);
-    return `<li class="item tap${SEL?(SEL.includes(x.id)?" picked":" pickable"):""}" data-open="${x.id}">${SEL?`<span class="chk" aria-hidden="true">${SEL.includes(x.id)?SEL.indexOf(x.id)+1:""}</span>`:""}${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${fmtLabel(x)?" · "+esc(fmtLabel(x)):""}${x.cond?" · "+esc(x.cond):""}${genreOf(x)&&genreOf(x)!=="Classical"?" · "+esc(genreOf(x)):""}${x.box?" · Box set "+discsOf(x).length+" CDs":" · "+tracksOf(x).length+" tracks"}</small>${(getSort()==="value"||getSort()==="paid")&&k!=="wish"&&moneyOf(x,getSort())?`<small class="best">${getSort()==="paid"?"Paid ":"Value "}${fmtPrice(moneyOf(x,getSort()))}${getSort()==="value"&&!(x.val>0)?" (Discogs estimate)":""}</small>`:""}${k==="wish"&&bestOffer(x)?`<small class="best">From ${fmtPrice(bestOffer(x).p)} · ${esc(shopName(bestOffer(x).u))}</small>`:""}${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
-    (k==="own"?(q?`<span class="chip own">Owned</span>`:""):`<button class="small" data-buy="${x.id}" type="button">Purchased</button><button class="small" data-del="${x.id}" type="button" aria-label="Remove from wishlist">✕</button>`)+`</li>`}).join("")
+  const byC=!q&&getSort()==="cert",CN=[0,0,0];if(byC)window.VISIDS.forEach(id=>{const y=byId(id);if(y)CN[certOf(y)]++;});let lastC=-1;
+  ul.innerHTML=rows.length?rows.map(([x,k])=>{const c=CODE[x.id],cu=coverUrl(x),cc=certOf(x),hd=byC&&cc!==lastC?`<li class="grpH"><span class="cert c${cc}"></span>${CERT[cc][0]} (${CN[cc]})<small>${CERT[cc][1]}</small></li>`:"";lastC=cc;
+    return hd+`<li class="item tap${SEL?(SEL.includes(x.id)?" picked":" pickable"):""}" data-open="${x.id}">${SEL?`<span class="chk" aria-hidden="true">${SEL.includes(x.id)?SEL.indexOf(x.id)+1:""}</span>`:""}${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${fmtLabel(x)?" · "+esc(fmtLabel(x)):""}${x.cond?" · "+esc(x.cond):""}${genreOf(x)&&genreOf(x)!=="Classical"?" · "+esc(genreOf(x)):""}${x.box?" · Box set "+discsOf(x).length+" CDs":" · "+tracksOf(x).length+" tracks"}</small>${(getSort()==="value"||getSort()==="paid")&&k!=="wish"&&moneyOf(x,getSort())?`<small class="best">${getSort()==="paid"?"Paid ":"Value "}${fmtPrice(moneyOf(x,getSort()))}${getSort()==="value"&&!(x.val>0)?" (Discogs estimate)":""}</small>`:""}${k==="wish"&&bestOffer(x)?`<small class="best">From ${fmtPrice(bestOffer(x).p)} · ${esc(shopName(bestOffer(x).u))}</small>`:""}${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
+    (k==="own"?(q?`<span class="chip own">Owned</span>`:""):`<button class="small" data-buy="${x.id}" type="button">Purchased</button><button class="small" data-del="${x.id}" type="button" aria-label="Remove from wishlist">✕</button>`)+`<span class="cert c${cc}" title="Edition: ${CERT[cc][0]}" aria-label="Edition: ${CERT[cc][0]}"></span></li>`}).join("")
     :`<li class="empty">${q?"No matching album.":(tab==="col"?"Your collection is empty. Use SCAN to add your first album.":"Your wishlist is empty.")}</li>`;}
 // ---------- Format (CD, Vinyl…) ----------
 const FMTS=["CD","Vinyl","Cassette","Other"],VTS=["LP","10\"","7\"","EP"];
@@ -1524,6 +1529,16 @@ function openMerge(w){const W=WORKS(),o=W[w],V=versions(),gid=workId(w,W),comp=n
   const draw=()=>{const q=norm($("mgQ").value);$("mgL").innerHTML=opts.filter(e=>!q||norm(wLabel(e.t)).includes(q)).map(e=>`<li class="item tap" data-t="${esc(e.t)}"><div class="meta"><b>${esc(wLabel(e.t))}</b><small>${e.n} version${e.n!==1?"s":""}</small></div></li>`).join("")||`<li class="empty">No other work by this composer.</li>`;
     $("mgL").querySelectorAll("[data-t]").forEach(n=>n.onclick=()=>{S.wl=S.wl||{};S.wl[w]=n.dataset.t;if(S.wsp)delete S.wsp[w];save();toast("Works merged");render();goBack();});};
   $("mgQ").oninput=draw;draw();}
+// ---------- Edition certainty ----------
+// sure: barcode confirmed AND matched to an online edition (MusicBrainz or Discogs), match not awaiting confirmation — or Discogs edition carrying your barcode
+// fairly sure: only one of the two, a likely barcode, or an automatic match still to confirm
+// not sure: no barcode and no online edition (typed or imported without a match)
+const CERT=[["Not sure","No barcode and no online edition: scan it or choose its edition"],["Fairly sure","Barcode or online edition, not both (or a match to confirm)"],["Sure","Barcode confirmed and matched to an online edition"]];
+function certOf(x){const bc=codesOf(x.id).length>0,ed=!!(x.mbid||x.dgid),pend=!!(x.auto&&x.enr!=="manual");
+  if((bc&&ed&&!pend)||(x.est&&x.est.q==="sure"))return 2;if(bc||ed||hasPCode(x))return 1;return 0;}
+function certWhy(x){const bc=codesOf(x.id).length>0,ed=x.mbid?"MusicBrainz":x.dgid?"Discogs":"",pend=!!(x.auto&&x.enr!=="manual"),c=certOf(x);
+  const what=[bc?"barcode confirmed":hasPCode(x)?"likely barcode, to confirm on first scan":"no barcode",ed?"edition matched on "+ed+(pend?" automatically (to confirm)":""):"no online edition"].join(" · ");
+  return `<p class="certL"><span class="cert c${c}"></span><b>Edition: ${CERT[c][0]}</b> — ${what}</p>`;}
 // ---------- Wishlist: check prices in stores ----------
 // Opens the store's own search (barcode when the store finds products by barcode, otherwise artist + title). Store domain follows the device language.
 // ---------- Condition and value ----------
@@ -1643,7 +1658,7 @@ function openDetail(id){const x=byId(id);if(!x)return;CUR=()=>openDetail(id);con
   p.innerHTML=`<div class="detail"><div class="sleeve${cu?"":" nocov"}">${cu?`<img src="${cu}" alt="Cover of ${esc(x.t)}" onerror="this.remove()">`:"No cover"}</div>
    <div class="meta"><h2>${esc(x.t)}</h2><p class="by">${esc(x.a)}</p>
    ${x.perf&&norm(firstPerf(x.perf))!==norm(x.a)?`<p class="by">${esc(firstPerf(x.perf))}</p>`:""}<p class="facts">${fmtLabel(x)?`<span>${esc(fmtLabel(x))}</span>`:""}${x.box?`<span>Coffret ${discsOf(x).length} ${x.fmt==="Vinyl"?"discs":"CD"}</span>`:""}${x.l?`<span>${esc(x.l)}</span>`:""}${x.y?`<span>${esc(x.y)}</span>`:""}${x.g?`<span>${esc(x.g)}</span>`:""}</p>
-   <div class="seg" role="group" aria-label="Status"><button type="button" data-st="own" aria-pressed="${own}">Owned</button><button type="button" data-st="wish" aria-pressed="${!own}">Wishlist</button></div>
+   ${certWhy(x)}<div class="seg" role="group" aria-label="Status"><button type="button" data-st="own" aria-pressed="${own}">Owned</button><button type="button" data-st="wish" aria-pressed="${!own}">Wishlist</button></div>
    ${own?`<div class="copiesRow"><span>Copies</span><button type="button" class="small" data-cp="-1" aria-label="One less">−</button><b>${x.copies||1}</b><button type="button" class="small" data-cp="1" aria-label="One more">+</button></div>`:""}${condValHtml(x,own)}${own?"":storeLinks(x,id)}
    ${(()=>{const cs=codesOf(id),ps=Object.keys(S.pcodes||{}).filter(k=>S.pcodes[k]===id);return cs.length||ps.length?`<p>${cs.map(k=>`<span class="code">${fmtEan(k)}</span>`).join(" ")}${ps.map(k=>`<span class="code prob" title="Likely barcode">${fmtEan(k)} ?</span>`).join(" ")}</p>`:"";})()}${x.cat?`<p class="hint">Catalog no.: ${esc(x.cat)}</p>`:""}${x.fd?`<p class="hint">${esc(x.fd)}</p>`:""}${x.note?`<p class="note">${esc(x.note)}</p>`:""}${x.at?`<p class="hint">Added on ${new Date(x.at).toLocaleDateString("en-GB")}</p>`:""}
    <div class="row acts"><button type="button" class="primary" id="detEdit">Edit</button><button type="button" id="coverBtn">${hasCover(x)?"Cover…":"Add a cover"}</button></div>
@@ -2558,7 +2573,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.76.0";$("hVer").textContent="v"+APPV;
+const APPV="0.77.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
