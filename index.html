@@ -2578,7 +2578,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.78.0";$("hVer").textContent="v"+APPV;
+const APPV="0.78.1";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2798,7 +2798,7 @@ const valTodo=()=>S.col.filter(x=>!(x.val>0)&&!estFresh(x)&&!(x.est&&x.est.miss&
 // Format to price: the album's own, otherwise the format of most of the collection (≥ 80 %)
 function wantFmt(x){if(x.fmt)return x.fmt;const c={};let n=0;S.col.forEach(y=>{if(y.fmt){c[y.fmt]=(c[y.fmt]||0)+1;n++;}});const top=Object.keys(c).sort((a,b)=>c[b]-c[a])[0];return top&&c[top]>=.8*n&&n>=5?top:"";}
 const fmtOk=(want,fmts)=>!want||!fmts.length||fmts.some(f=>want==="CD"?/\bCD|SACD|CDr\b/i.test(f):want==="Vinyl"?/vinyl|\bLP\b|12"|7"|10"/i.test(f):want==="Cassette"?/cass/i.test(f):true); // albums with your own value are not asked
-function valUi(){const n=valTodo().length,b=$("valN");if(!b||VAL.run)return;b.textContent=n?`${n} album${n!==1?"s":""} without a value of yours`:"Every album has a value or a current estimate"+(reTodo().length?` · ${reTodo().length} with a value can be re-estimated`:"");
+function valUi(){const n=valTodo().length,b=$("valN");if(!b||VAL.run)return;b.textContent=n?`${n} album${n!==1?"s":""} without a value of yours`:"Every album has a value or a current estimate"+(reTodo().length?` · ${reTodo().length} with a value can be re-estimated`:"");if(n)b.textContent+=reTodo().length?` · ${reTodo().length} with a value can be re-estimated`:"";
   const k=keepTodo().length,kb=$("valKeepN");if(kb)kb.textContent=k?`${k} current estimate${k!==1?"s":""} (valid until 6 h after the estimate) can become your values`:"No current estimate to keep (they are shown for 6 hours)";$("valKeep").hidden=!k;}
 const BCS={},bcSearch=c=>BCS[c]||(BCS[c]=dgSearch({barcode:c}).catch(e=>{delete BCS[c];throw e;})); // one Discogs barcode search per code and session
 async function dgIdFor(x){if(x.dgid)return x.dgid;
@@ -2832,25 +2832,25 @@ async function estimateOne(x,mode){const want=wantFmt(x),code=codesOf(x.id)[0];
   if(sg){x.est={p:sg.p,k:"sugg",c:sg.c,dg:id,q,v:2,at:Date.now()};return "ok";}
   const lp=rel.lowest_price;x.est={p:lp>0?Math.round(lp*100)/100:0,k:"low",n:rel.num_for_sale||0,dg:id,q,v:2,at:Date.now()};return x.est.p?"ok":"none";}
 // Choice of scope before the album list
-const reTodo=()=>S.col.filter(x=>x.val>0&&!estFresh(x)&&canEst(x));
+const reTodo=()=>S.col.filter(x=>x.val>0&&canEst(x));
 function valMode(todo){const p=$("detail"),sure=todo.filter(x=>codesOf(x.id).length),re=reTodo();CUR=()=>valMode(todo);
   p.innerHTML=`<p class="cat">Value</p><h2 class="wh">Estimate values</h2><p>Which albums should be priced on the Discogs marketplace?</p>
    <button type="button" class="setItem" id="vmSafe"><b>Sure editions only (${sure.length})</b><small>Albums with a barcode, priced only when Discogs has the edition carrying that barcode. Fewer albums, reliable prices, fewer requests.</small></button>
-   <button type="button" class="setItem" id="vmAll"><b>All albums (${todo.length})</b><small>Also albums without a barcode or whose edition cannot be verified. More albums priced, some on another edition: each estimate shows how sure it is.</small></button>
+   <button type="button" class="setItem" id="vmAll"><b>All albums without a value (${todo.length})</b><small>Also albums without a barcode or whose edition cannot be verified. More albums priced, some on another edition: each estimate shows how sure it is.</small></button>
    <button type="button" class="setItem" id="vmRe"><b>Re-estimate albums that have a value (${re.length})</b><small>Get a fresh Discogs estimate to compare with your values. Nothing is replaced: you then choose what to keep.</small></button>`;
   const go=(mode,l)=>{closeSheet();setTimeout(()=>pickAlbums({op:"val",cat:"Value",title:mode==="safe"?"Estimate values — sure editions":"Estimate values — all albums",list:l,go:"Start",
     intro:`Choose the albums to price${dgKey()?"":" (without a Discogs token, only albums already linked to Discogs or MusicBrainz can be priced, and more slowly)"}. Count about ${Math.max(1,Math.round(l.length*(dgKey()?2.3:4)/60))} min for ${l.length} albums; the app must stay open. Unchecked albums stay unchecked next time.`},sel=>estimateValues(sel,mode)),350);};
   $("vmSafe").onclick=()=>{if(!sure.length){toast("No album with a barcode left to price");return;}go("safe",sure);};$("vmAll").onclick=()=>{if(!todo.length){toast("Every album without a value has a current estimate");return;}go("all",todo);};
   $("vmRe").onclick=()=>{if(!re.length){toast("No album with a value to re-estimate");return;}closeSheet();setTimeout(()=>pickAlbums({op:"valre",cat:"Value",title:"Re-estimate albums that have a value",list:re,go:"Re-estimate",skipMemo:true,
-    pre:x=>x.valSrc==="Discogs",confirm:"I understand: re-estimating does not change my values; I will choose what to keep.",
+    pre:x=>x.valSrc==="Discogs"&&!estFresh(x),confirm:"I understand: re-estimating does not change my values; I will choose what to keep.",
     extra:`<p class="disclaim">A new estimate is only shown next to your value, for 6 hours (Discogs rule). Your values stay as they are. Values you set from another source (shop, gift, own estimate…) are never replaced automatically: only “Use as my value” on the entry can change them. Values previously kept from Discogs can be updated afterwards with “Keep estimates as my values”, where you check each one. Discogs estimates are indicative asking prices, not guaranteed; Album Ledger is not responsible for decisions based on them.</p>`,
-    intro:"Choose the albums to re-estimate. Values that came from Discogs are checked; values you set from another source are unchecked — check them only to compare.",
-    sub:x=>"value "+fmtPrice(x.val)+" · "+(x.valSrc||"no source")},sel=>estimateValues(sel,"all",true)),350);};
+    intro:"Choose the albums to re-estimate. Values that came from Discogs are checked; values you set from another source, and albums estimated less than 6 hours ago, are unchecked — check them only if you want a new comparison.",
+    sub:x=>"value "+fmtPrice(x.val)+" · "+(x.valSrc||"no source")+(estFresh(x)?" · estimated less than 6 h ago":"")},sel=>estimateValues(sel,"all",true)),350);};
   openSheet();$("sheet").scrollTop=0;}
 async function estimateValues(list,mode,re){const m=t=>{$("valMsg").textContent=t;};
   if(VAL.run){VAL.stop=true;m("Stopping after the current album…");return;}
   if(!navigator.onLine){m("No Internet connection.");return;}
-  const todo=valTodo();if(!todo.length&&!reTodo().length&&!Array.isArray(list)){m("Nothing to estimate: every album has a value of yours or a current estimate.");return;}
+  const todo=valTodo();
   if(!Array.isArray(list)){valMode(todo);return;}
   VAL.run=true;VAL.stop=false;$("valGo").querySelector("b").textContent="Stop the estimate";let done=0;const r={ok:0,none:0,miss:0,fmt:0,skip:0,unsure:0,err:0};
   for(const x of list){if(VAL.stop)break;$("valN").textContent=`${done}/${list.length} · ${r.ok} priced${r.none?" · "+r.none+" not for sale":""}${r.miss+r.fmt+r.unsure?" · "+(r.miss+r.fmt+r.unsure)+" not found":""} · ${x.t}`;
