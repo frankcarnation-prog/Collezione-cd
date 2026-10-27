@@ -518,7 +518,7 @@ small.best{color:var(--wish);font-weight:600}
 <div class="stick" id="stick">
   <label for="q">Collection lookup</label>
   <input id="q" type="search" placeholder="Artist, album, composer or performer" autocomplete="off">
-  <div class="sortbar" id="sortBar"><span id="sortCount"></span><button type="button" class="small" id="ncChip" hidden></button><button type="button" class="small" id="selBtn">Select</button><label for="sortSel">Sort</label><select id="genreSel" aria-label="Filter by genre"></select><select id="sortSel" aria-label="Sort order"><option value="recent">Date added (newest)</option><option value="artist">Artist (A–Z)</option><option value="title">Title (A–Z)</option><option value="year">Year (newest)</option><option value="value">Value (highest)</option><option value="paid">Price paid (highest)</option><option value="cert">Edition certainty (least sure first)</option></select></div>
+  <div class="sortbar" id="sortBar"><span id="sortCount"></span><button type="button" class="small" id="ncChip" hidden></button><button type="button" class="small" id="selBtn">Select</button><label for="sortSel">Sort</label><select id="genreSel" aria-label="Filter by genre"></select><select id="sortSel" aria-label="Sort order"><option value="recent">Date added (newest)</option><option value="artist">Artist (A–Z)</option><option value="title">Title (A–Z)</option><option value="year">Year (newest)</option><option value="value">Value (highest)</option><option value="paid">Price paid (highest)</option><option value="cert">Edition certainty (least sure first)</option><option value="certd">Edition certainty (most sure first)</option></select></div>
 </div>
 
 
@@ -907,7 +907,7 @@ const verRows=vs=>vs.map(e=>`<li class="item tap" data-open="${e.x.id}"><img cla
 // Display title for a group: prefer one with a catalogue number, then a reasonably long one (not a bare "Symphony No. 5")
 function repScore(o){const t=(o&&o.t)||"";return (catKey(t)?1000:0)+Math.min(t.length,80)-(t.length>80?t.length-80:0);}
 function renderStats(){const cds=S.col.reduce((n,x)=>n+discsOf(x).length,0);
-  $("stats").textContent=S.col.length+" album"+(S.col.length!==1?"s":"")+(cds>S.col.length?" ("+cds+" CDs)":"")+" · "+S.wish.length+" on wishlist"+colValue();
+  $("stats").innerHTML=S.col.length+" album"+(S.col.length!==1?"s":"")+(cds>S.col.length?" ("+cds+" CDs)":"")+" · "+S.wish.length+" on wishlist"+colValue();
   $("demoTag").hidden=!S.demo;}
 
 // ---------- Listes ----------
@@ -990,12 +990,12 @@ function render(){$("list").classList.remove("toolsMode");$("more").hidden=true;
     rows.forEach(([x])=>{AK.set(x,norm(x.a).replace(/^(the|les|le|la|l')\s+/,""));TK.set(x,norm(x.t));});const artKey=x=>AK.get(x),tk=x=>TK.get(x);
     const cmp={recent:(a,b)=>(b.at||0)-(a.at||0)||idx.get(b)-idx.get(a),artist:(a,b)=>artKey(a).localeCompare(artKey(b),"fr")||tk(a).localeCompare(tk(b),"fr"),
       title:(a,b)=>tk(a).localeCompare(tk(b),"fr",{numeric:true}),value:(a,b)=>moneyOf(b,"value")-moneyOf(a,"value")||artKey(a).localeCompare(artKey(b),"fr"),
-      paid:(a,b)=>moneyOf(b,"paid")-moneyOf(a,"paid")||artKey(a).localeCompare(artKey(b),"fr"),cert:(a,b)=>certOf(a)-certOf(b)||artKey(a).localeCompare(artKey(b),"fr"),year:(a,b)=>(+b.y||0)-(+a.y||0)||artKey(a).localeCompare(artKey(b),"fr")}[by];
+      paid:(a,b)=>moneyOf(b,"paid")-moneyOf(a,"paid")||artKey(a).localeCompare(artKey(b),"fr"),cert:(a,b)=>certOf(a)-certOf(b)||artKey(a).localeCompare(artKey(b),"fr"),certd:(a,b)=>certOf(b)-certOf(a)||artKey(a).localeCompare(artKey(b),"fr"),year:(a,b)=>(+b.y||0)-(+a.y||0)||artKey(a).localeCompare(artKey(b),"fr")}[by];
     rows.sort((r1,r2)=>cmp(r1[0],r2[0]));$("sortCount").textContent=rows.length+" album"+(rows.length!==1?"s":"");}
   const CODE={};for(const k in S.codes)if(!CODE[S.codes[k]])CODE[S.codes[k]]=k;
   const total=rows.length;if(q)$("sortCount").textContent=total+" result"+(total!==1?"s":"");window.VISIDS=rows.map(r=>r[0].id);rows=rows.slice(0,LIMIT);
   $("more").hidden=total<=LIMIT;$("more").innerHTML=total>LIMIT?`<button type="button" id="moreBtn">Show more (${total-LIMIT} more)</button>`:"";
-  const byC=!q&&getSort()==="cert",CN=[0,0,0];if(byC)window.VISIDS.forEach(id=>{const y=byId(id);if(y)CN[certOf(y)]++;});let lastC=-1;
+  const byC=!q&&(getSort()==="cert"||getSort()==="certd"),CN=[0,0,0];if(byC)window.VISIDS.forEach(id=>{const y=byId(id);if(y)CN[certOf(y)]++;});let lastC=-1;
   ul.innerHTML=rows.length?rows.map(([x,k])=>{const c=CODE[x.id],cu=coverUrl(x),cc=certOf(x),hd=byC&&cc!==lastC?`<li class="grpH"><span class="cert c${cc}"></span>${CERT[cc][0]} (${CN[cc]})<small>${CERT[cc][1]}</small></li>`:"";lastC=cc;
     return hd+`<li class="item tap${SEL?(SEL.includes(x.id)?" picked":" pickable"):""}" data-open="${x.id}">${SEL?`<span class="chk" aria-hidden="true">${SEL.includes(x.id)?SEL.indexOf(x.id)+1:""}</span>`:""}${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${fmtLabel(x)?" · "+esc(fmtLabel(x)):""}${x.cond?" · "+esc(x.cond):""}${genreOf(x)&&genreOf(x)!=="Classical"?" · "+esc(genreOf(x)):""}${x.box?" · Box set "+discsOf(x).length+" CDs":" · "+tracksOf(x).length+" tracks"}</small>${(getSort()==="value"||getSort()==="paid")&&k!=="wish"&&moneyOf(x,getSort())?`<small class="best">${getSort()==="paid"?"Paid ":"Value "}${fmtPrice(moneyOf(x,getSort()))}${getSort()==="value"&&!(x.val>0)?" (Discogs estimate)":""}</small>`:""}${k==="wish"&&bestOffer(x)?`<small class="best">From ${fmtPrice(bestOffer(x).p)} · ${esc(shopName(bestOffer(x).u))}</small>`:""}${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
     (k==="own"?(q?`<span class="chip own">Owned</span>`:""):`<button class="small" data-buy="${x.id}" type="button">Purchased</button><button class="small" data-del="${x.id}" type="button" aria-label="Remove from wishlist">✕</button>`)+`<span class="cert c${cc}" title="Edition: ${CERT[cc][0]}" aria-label="Edition: ${CERT[cc][0]}"></span></li>`}).join("")
@@ -1555,8 +1555,13 @@ const valOf=x=>x.val>0?x.val:(estFresh(x)&&x.est.p>0?x.est.p:0); // used for sor
 const moneyOf=(x,k)=>k==="paid"?(x.paid||0):(isWish(x.id)?((bestOffer(x)||{}).p||0):valOf(x));
 const money=v=>Math.round(v).toLocaleString()+" "+CURS;
 // header total: your own values only (Discogs prices cannot be kept)
-function colValue(){let t=0,n=0,pd=0;S.col.forEach(x=>{const k=x.copies||1;if(x.val>0){t+=x.val*k;n++;}if(x.paid>0)pd+=x.paid*k;});
-  return (n?" · Value ≈ "+money(t)+(n<S.col.length?" ("+n+" priced)":""):"")+(pd?" · paid "+money(pd):"");}
+// how sure a value is: a value from Discogs is as sure as the edition it was taken from; a value you set from another source counts as sure
+const valQ=x=>x.valSrc==="Discogs"?(x.valQ!=null?x.valQ:certOf(x)):2;
+const QN={sure:2,likely:1,guess:0};
+function colValue(){let t=0,n=0,pd=0,w=0;S.col.forEach(x=>{const k=x.copies||1;if(x.val>0){t+=x.val*k;w+=x.val*k*valQ(x);n++;}if(x.paid>0)pd+=x.paid*k;});
+  if(!n)return pd?" · paid "+money(pd):"";
+  const sc=w/(2*t),c=sc>=.8?2:sc>=.5?1:0,tip=`Value certainty: ${CERT[c][0]} — ${Math.round(sc*100)}% (weighted by value: sure editions and your own figures count fully, unverified Discogs editions half, guessed ones not at all)`;
+  return ` · Value ≈ ${money(t)} <span class="cert c${c}" title="${esc(tip)}" aria-label="${esc(tip)}"></span>${n<S.col.length?" ("+n+" priced)":""}${pd?" · paid "+money(pd):""}`;}
 const dgAttr=x=>{const id=(x.est&&x.est.dg)||x.dgid;return `<a class="dgattr" href="https://www.discogs.com/${id?"release/"+id:""}" target="_blank" rel="noopener">Data provided by Discogs</a>`;};
 const canEst=x=>!!(x.dgid||x.mbid||codesOf(x.id).length||(x.est&&x.est.dg));
 function estLine(x){const e=x.est;
@@ -1583,7 +1588,7 @@ function bindCond(x){const c=$("cond");if(c)c.onchange=()=>{if(c.value)x.cond=c.
     const sl=$(k+"Src"),o=$(k+"SrcO");
     sl.onchange=()=>{if(sl.value==="*"){o.hidden=false;o.focus();return;}o.hidden=true;o.value="";if(sl.value)x[k+"Src"]=sl.value;else delete x[k+"Src"];save();toast(lab+" source: "+(sl.value||"not set"));};
     o.onchange=()=>{const t=o.value.trim();if(t)x[k+"Src"]=t;else delete x[k+"Src"];save();toast(lab+" source: "+(t||"not set"));};});
-  const u=$("useEst");if(u)u.onclick=()=>{x.val=x.est.p;x.valSrc="Discogs";x.valAt=Date.now();save();render();renderStats();openDetail(x.id);toast("Value saved: "+fmtPrice(x.val)+" (Discogs)");};
+  const u=$("useEst");if(u)u.onclick=()=>{x.val=x.est.p;x.valSrc="Discogs";x.valQ=QN[x.est.q]??1;x.valAt=Date.now();save();render();renderStats();openDetail(x.id);toast("Value saved: "+fmtPrice(x.val)+" (Discogs)");};
   const r=$("refEst");if(r)r.onclick=async()=>{if(!navigator.onLine){toast("No Internet connection.");return;}r.disabled=true;r.textContent="Asking Discogs…";
     try{const k=await estimateOne(x);save();if(byId(x.id)&&CUR)openDetail(x.id);if(k==="miss"||k==="fmt")toast("No matching edition on Discogs");}catch(e){r.disabled=false;r.textContent="Get the current Discogs price";toast(e.message);}};}
 let SHARE_LINK=""; // shop page the current search came from: saved on the wish it leads to
@@ -2573,7 +2578,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.77.0";$("hVer").textContent="v"+APPV;
+const APPV="0.78.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2793,7 +2798,7 @@ const valTodo=()=>S.col.filter(x=>!(x.val>0)&&!estFresh(x)&&!(x.est&&x.est.miss&
 // Format to price: the album's own, otherwise the format of most of the collection (≥ 80 %)
 function wantFmt(x){if(x.fmt)return x.fmt;const c={};let n=0;S.col.forEach(y=>{if(y.fmt){c[y.fmt]=(c[y.fmt]||0)+1;n++;}});const top=Object.keys(c).sort((a,b)=>c[b]-c[a])[0];return top&&c[top]>=.8*n&&n>=5?top:"";}
 const fmtOk=(want,fmts)=>!want||!fmts.length||fmts.some(f=>want==="CD"?/\bCD|SACD|CDr\b/i.test(f):want==="Vinyl"?/vinyl|\bLP\b|12"|7"|10"/i.test(f):want==="Cassette"?/cass/i.test(f):true); // albums with your own value are not asked
-function valUi(){const n=valTodo().length,b=$("valN");if(!b||VAL.run)return;b.textContent=n?`${n} album${n!==1?"s":""} without a value of yours`:"Every album has a value or a current estimate";
+function valUi(){const n=valTodo().length,b=$("valN");if(!b||VAL.run)return;b.textContent=n?`${n} album${n!==1?"s":""} without a value of yours`:"Every album has a value or a current estimate"+(reTodo().length?` · ${reTodo().length} with a value can be re-estimated`:"");
   const k=keepTodo().length,kb=$("valKeepN");if(kb)kb.textContent=k?`${k} current estimate${k!==1?"s":""} (valid until 6 h after the estimate) can become your values`:"No current estimate to keep (they are shown for 6 hours)";$("valKeep").hidden=!k;}
 const BCS={},bcSearch=c=>BCS[c]||(BCS[c]=dgSearch({barcode:c}).catch(e=>{delete BCS[c];throw e;})); // one Discogs barcode search per code and session
 async function dgIdFor(x){if(x.dgid)return x.dgid;
@@ -2827,18 +2832,25 @@ async function estimateOne(x,mode){const want=wantFmt(x),code=codesOf(x.id)[0];
   if(sg){x.est={p:sg.p,k:"sugg",c:sg.c,dg:id,q,v:2,at:Date.now()};return "ok";}
   const lp=rel.lowest_price;x.est={p:lp>0?Math.round(lp*100)/100:0,k:"low",n:rel.num_for_sale||0,dg:id,q,v:2,at:Date.now()};return x.est.p?"ok":"none";}
 // Choice of scope before the album list
-function valMode(todo){const p=$("detail"),sure=todo.filter(x=>codesOf(x.id).length);CUR=()=>valMode(todo);
+const reTodo=()=>S.col.filter(x=>x.val>0&&!estFresh(x)&&canEst(x));
+function valMode(todo){const p=$("detail"),sure=todo.filter(x=>codesOf(x.id).length),re=reTodo();CUR=()=>valMode(todo);
   p.innerHTML=`<p class="cat">Value</p><h2 class="wh">Estimate values</h2><p>Which albums should be priced on the Discogs marketplace?</p>
    <button type="button" class="setItem" id="vmSafe"><b>Sure editions only (${sure.length})</b><small>Albums with a barcode, priced only when Discogs has the edition carrying that barcode. Fewer albums, reliable prices, fewer requests.</small></button>
    <button type="button" class="setItem" id="vmAll"><b>All albums (${todo.length})</b><small>Also albums without a barcode or whose edition cannot be verified. More albums priced, some on another edition: each estimate shows how sure it is.</small></button>
-   <p class="hint">Albums to which you gave a value yourself are never priced.</p>`;
+   <button type="button" class="setItem" id="vmRe"><b>Re-estimate albums that have a value (${re.length})</b><small>Get a fresh Discogs estimate to compare with your values. Nothing is replaced: you then choose what to keep.</small></button>`;
   const go=(mode,l)=>{closeSheet();setTimeout(()=>pickAlbums({op:"val",cat:"Value",title:mode==="safe"?"Estimate values — sure editions":"Estimate values — all albums",list:l,go:"Start",
     intro:`Choose the albums to price${dgKey()?"":" (without a Discogs token, only albums already linked to Discogs or MusicBrainz can be priced, and more slowly)"}. Count about ${Math.max(1,Math.round(l.length*(dgKey()?2.3:4)/60))} min for ${l.length} albums; the app must stay open. Unchecked albums stay unchecked next time.`},sel=>estimateValues(sel,mode)),350);};
-  $("vmSafe").onclick=()=>{if(!sure.length){toast("No album with a barcode to price");return;}go("safe",sure);};$("vmAll").onclick=()=>go("all",todo);openSheet();$("sheet").scrollTop=0;}
-async function estimateValues(list,mode){const m=t=>{$("valMsg").textContent=t;};
+  $("vmSafe").onclick=()=>{if(!sure.length){toast("No album with a barcode left to price");return;}go("safe",sure);};$("vmAll").onclick=()=>{if(!todo.length){toast("Every album without a value has a current estimate");return;}go("all",todo);};
+  $("vmRe").onclick=()=>{if(!re.length){toast("No album with a value to re-estimate");return;}closeSheet();setTimeout(()=>pickAlbums({op:"valre",cat:"Value",title:"Re-estimate albums that have a value",list:re,go:"Re-estimate",skipMemo:true,
+    pre:x=>x.valSrc==="Discogs",confirm:"I understand: re-estimating does not change my values; I will choose what to keep.",
+    extra:`<p class="disclaim">A new estimate is only shown next to your value, for 6 hours (Discogs rule). Your values stay as they are. Values you set from another source (shop, gift, own estimate…) are never replaced automatically: only “Use as my value” on the entry can change them. Values previously kept from Discogs can be updated afterwards with “Keep estimates as my values”, where you check each one. Discogs estimates are indicative asking prices, not guaranteed; Album Ledger is not responsible for decisions based on them.</p>`,
+    intro:"Choose the albums to re-estimate. Values that came from Discogs are checked; values you set from another source are unchecked — check them only to compare.",
+    sub:x=>"value "+fmtPrice(x.val)+" · "+(x.valSrc||"no source")},sel=>estimateValues(sel,"all",true)),350);};
+  openSheet();$("sheet").scrollTop=0;}
+async function estimateValues(list,mode,re){const m=t=>{$("valMsg").textContent=t;};
   if(VAL.run){VAL.stop=true;m("Stopping after the current album…");return;}
   if(!navigator.onLine){m("No Internet connection.");return;}
-  const todo=valTodo();if(!todo.length){m("Nothing to estimate: every album has a value of yours or a current estimate.");return;}
+  const todo=valTodo();if(!todo.length&&!reTodo().length&&!Array.isArray(list)){m("Nothing to estimate: every album has a value of yours or a current estimate.");return;}
   if(!Array.isArray(list)){valMode(todo);return;}
   VAL.run=true;VAL.stop=false;$("valGo").querySelector("b").textContent="Stop the estimate";let done=0;const r={ok:0,none:0,miss:0,fmt:0,skip:0,unsure:0,err:0};
   for(const x of list){if(VAL.stop)break;$("valN").textContent=`${done}/${list.length} · ${r.ok} priced${r.none?" · "+r.none+" not for sale":""}${r.miss+r.fmt+r.unsure?" · "+(r.miss+r.fmt+r.unsure)+" not found":""} · ${x.t}`;
@@ -2849,15 +2861,16 @@ async function estimateValues(list,mode){const m=t=>{$("valMsg").textContent=t;}
   const msg=`${r.ok} album${r.ok!==1?"s":""} priced${r.ok?` (${qn("sure")} barcode match, ${qn("likely")} not verified, ${qn("guess")} guessed)`:""} · ${r.none} with no copy for sale · ${r.miss} not found on Discogs${r.unsure?" · "+r.unsure+" whose barcode is on no Discogs edition (left out)":""}${r.fmt?" · "+r.fmt+" whose format (CD, vinyl…) has no edition on Discogs":""}${r.err?" · "+r.err+" failed (retry later)":""}${VAL.stop?" · stopped at "+done+"/"+list.length:""}.`;m(msg);
   report(r.err&&!r.ok?"err":"ok",VAL.stop?"Estimate stopped":"Values estimated",msg,[],"The estimate is the Discogs suggested price for the album's condition when your Discogs seller settings allow it, otherwise the lowest price currently asked (any condition, shipping not included). It is an indication, not a sale price. Discogs allows showing it for 6 hours only: to keep it, use “Keep estimates as my values” (Tools → Value), or “Use as my value” on an entry. Data provided by Discogs.");}
 $("valGo").onclick=()=>estimateValues();
-const keepTodo=()=>S.col.filter(x=>!(x.val>0)&&estFresh(x)&&x.est.p>0);
+const keepTodo=()=>S.col.filter(x=>estFresh(x)&&x.est.p>0&&(!(x.val>0)||(x.valSrc==="Discogs"&&x.val!==x.est.p))); // never a value you set from another source
 $("valKeep").onclick=()=>{const l=keepTodo();if(!l.length){valUi();return;}
   const ep=x=>x.est.p,few=x=>x.est.k!=="sugg"&&x.est.n<3,sure=x=>x.est.q==="sure";
   pickAlbums({op:"valkeep",cat:"Value",title:"Keep estimates as my values",list:l,go:"Keep",skipMemo:true,pre:x=>!few(x)&&sure(x),
     confirm:"I have read this notice: the values I keep are my own choice.",extra:`<p class="disclaim">Discogs estimates are indicative only. They reflect asking prices on the Discogs marketplace at the time of the estimate, for the edition the app matched, which may differ from yours. Prices change constantly. Album Ledger does not guarantee their accuracy, never updates a kept value, and cannot be held responsible for any decision (buying, selling, insuring…) based on it. Keeping an estimate is your own choice: it is recorded as your value, which you can change at any time.</p>`,
-    intro:"Check each estimate before keeping it: the checked ones become your own value (source: Discogs, today’s date) and will not update by themselves. Only estimates on an edition confirmed by your barcode, with at least 3 copies for sale, are checked: open the others (›) to check the edition before keeping them. Albums that already have a value of yours are not listed.",
+    intro:"Check each estimate before keeping it: the checked ones become your own value (source: Discogs, today’s date) and will not update by themselves. Only estimates on an edition confirmed by your barcode, with at least 3 copies for sale, are checked: open the others (›) to check the edition before keeping them. Albums whose value you set from another source are not listed; a value previously kept from Discogs is shown as “now …” and is replaced only if checked.",
+    sub:x=>x.val>0?"now "+fmtPrice(x.val)+" (Discogs, "+new Date(x.valAt||0).toLocaleDateString()+")":"",
     side:x=>`<b>${fmtPrice(ep(x))}</b><small class="${few(x)?"lowc":""}">${x.est.k==="sugg"?"suggested":x.est.n+" for sale"}</small><small class="${sure(x)?"":"lowc"}">${Q_LAB[x.est.q]||Q_LAB.likely}</small>`,
     sorts:[["Price: highest first",(a,b)=>ep(b)-ep(a)],["Price: lowest first",(a,b)=>ep(a)-ep(b)],["Least sure first",(a,b)=>"sure likely guess".indexOf(b.est.q||"likely")-"sure likely guess".indexOf(a.est.q||"likely")||ep(b)-ep(a)],["Fewest copies for sale first",(a,b)=>(a.est.n||0)-(b.est.n||0)||ep(b)-ep(a)],["Title (A–Z)",(a,b)=>a.t.localeCompare(b.t)]]},
-    sel=>{undoable("Discogs estimates kept as values");sel.forEach(x=>{x.val=x.est.p;x.valSrc="Discogs";x.valAt=Date.now();});save();render();renderStats();valUi();
+    sel=>{undoable("Discogs estimates kept as values");sel.forEach(x=>{x.val=x.est.p;x.valSrc="Discogs";x.valQ=QN[x.est.q]??1;x.valAt=Date.now();});save();render();renderStats();valUi();
       report("ok","Values saved",`${sel.length} album${sel.length!==1?"s":""} now have a value of yours (source: Discogs).`,sel.map(x=>({id:x.id,t:x.t+" — "+fmtPrice(x.val)})));});};
 setInterval(()=>{if(purgeEst()){save();renderStats();}},10*60e3);
 function renderToolsCounts(){try{valUi();}catch(e){}try{cmpUi();}catch(e){}try{const n=fmtTodo().length;$("fmtN").textContent=n?n+" album"+(n!==1?"s":"")+" without a format (CD, vinyl…)":"All albums have a format";}catch(e){}try{mvUi();}catch(e){}const all=ALL(),noc=all.filter(x=>!codesOf(x.id).length),pc=noc.filter(hasPCode).length,ed=noc.filter(x=>!hasPCode(x)&&(x.mbid||x.dgid)).length,q=cbTodo().length;
