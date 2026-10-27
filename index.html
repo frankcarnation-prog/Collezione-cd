@@ -2580,7 +2580,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.79.1";$("hVer").textContent="v"+APPV;
+const APPV="0.79.2";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2889,24 +2889,28 @@ function receiptUi(){const p=$("detail");CUR=receiptUi;
   p.innerHTML=`<p class="cat">Value</p><h2 class="wh">Import a purchase receipt</h2><p>Open the invoice (PDF or email), select all the text, copy it and paste it here.</p><textarea id="rcTxt" rows="8" placeholder="Paste the receipt text" style="width:100%"></textarea><div class="pair pickAct"><button type="button" class="primary" id="rcRead">Read receipt</button><button type="button" id="rcNo">Cancel</button></div>`;
   openSheet();$("rcNo").onclick=()=>closeSheet();
   $("rcRead").onclick=()=>{const R=parseReceipt($("rcTxt").value);if(!R.items.length){toast("No article line found: paste the whole invoice text");return;}receiptReview(R);};}
-function receiptReview(R){const p=$("detail"),all=S.col.slice().sort((a,b)=>a.t.localeCompare(b.t));CUR=()=>receiptReview(R);
+function receiptReview(R){const p=$("detail"),all=S.col.slice().sort((a,b)=>norm(a.a||"~").localeCompare(norm(b.a||"~"))||norm(a.t).localeCompare(norm(b.t)));CUR=()=>receiptReview(R);
   const sum=R.items.reduce((a,i)=>a+i.p*i.q,0),ok=R.total!=null&&Math.abs(sum+R.ship-(R.disc||0)-R.total)<.01;
   R.items.forEach(i=>{const k=rcKey(i.t),ex=all.filter(x=>rcKey(x.t)===k),pa=k.length>=4?all.filter(x=>{const y=rcKey(x.t);return y!==k&&y.length>=4&&(y.includes(k)||k.includes(y));}):[];i.c=ex.concat(pa);i.m=ex.length===1?ex[0].id:"";i.on=!!i.m&&!(ex[0].paid>0);});
-  const lab=x=>x.t+" — "+(x.a||"?")+(x.y?" ("+x.y+")":"");
+  const lab=x=>(x.a||"?")+" — "+x.t+(x.y?" ("+x.y+")":"");
   p.innerHTML=`<p class="cat">Value</p><h2 class="wh">Receipt${R.inv?" "+esc(R.inv):""}</h2>
    <p><b>${R.items.length}</b> articles · ${fmtPrice(sum)}${R.ship?" + shipping "+fmtPrice(R.ship):""}${R.disc?" − voucher "+fmtPrice(R.disc):""}${R.total!=null?` · receipt total ${fmtPrice(R.total)} ${ok?"✓":"— does not match, check the lines"}`:""}</p>
    ${R.ship>0?`<label class="pkConf"><input type="checkbox" id="rcShip" checked> Spread shipping over the articles (proportional to price)</label>`:""}${R.disc>0?`<label class="pkConf"><input type="checkbox" id="rcDisc" checked> Spread the voucher over the articles (Paid = what you really paid)</label>`:""}
-   <ul class="list pick" id="rcL">${R.items.map((i,n)=>`<li class="item"><label class="pk"><input type="checkbox" data-rc="${n}"${i.on?" checked":""}><span class="meta"><b>${esc(i.t)}</b><select data-rm="${n}" style="max-width:100%"><option value="">— not in my collection / choose —</option>${(i.c.length?i.c:all).map(x=>`<option value="${esc(x.id)}"${x.id===i.m?" selected":""}>${esc(lab(x))}</option>`).join("")}</select><small data-rw="${n}"></small></span></label><span class="pkSide"><b>${fmtPrice(i.p)}</b></span></li>`).join("")}</ul>
+   <ul class="list pick" id="rcL">${R.items.map((i,n)=>`<li class="item"><label class="pk"><input type="checkbox" data-rc="${n}"${i.on?" checked":""}><span class="meta"><b>${esc(i.t)}</b><input type="search" data-rs="${n}" placeholder="Search my albums (artist or title)" style="width:100%;margin:4px 0"><select data-rm="${n}" style="max-width:100%"><option value="">— not in my collection / choose —</option>${(i.c.length?i.c:all).map(x=>`<option value="${esc(x.id)}"${x.id===i.m?" selected":""}>${esc(lab(x))}</option>`).join("")}</select><small data-rw="${n}"></small></span></label><span class="pkSide"><b>${fmtPrice(i.p)}</b></span></li>`).join("")}</ul>
    <div class="pair pickAct"><button type="button" class="primary" id="rcGo2"></button><button type="button" id="rcNo2">Cancel</button></div>`;
   const upd=()=>{let c=0;p.querySelectorAll("[data-rm]").forEach(s=>{const n=+s.dataset.rm;R.items[n].m=s.value;const x=byId(s.value),w=p.querySelector(`[data-rw="${n}"]`),ck=p.querySelector(`[data-rc="${n}"]`);w.textContent=x&&x.paid>0?"already has Paid "+fmtPrice(x.paid)+(x.paidSrc?" ("+x.paidSrc+")":"")+": checked = replace":"";if(!x)ck.checked=false;if(ck.checked)c++;});$("rcGo2").textContent="Set Paid ("+c+")";$("rcGo2").classList.toggle("off",!c);};
   p.querySelectorAll("[data-rm]").forEach(s=>s.onchange=()=>{const n=+s.dataset.rm,ck=p.querySelector(`[data-rc="${n}"]`),x=byId(s.value);if(x&&!(x.paid>0))ck.checked=true;upd();});
   p.querySelectorAll("[data-rc]").forEach(ck=>ck.onchange=()=>{if(ck.checked&&!R.items[+ck.dataset.rc].m){ck.checked=false;toast("Choose the album first");}upd();});
+  p.querySelectorAll("[data-rs]").forEach(inp=>inp.oninput=()=>{const n=+inp.dataset.rs,i=R.items[n],s=p.querySelector(`[data-rm="${n}"]`),w=norm(inp.value).split(/\s+/).filter(Boolean);
+    let l=w.length?all.filter(x=>{const h=norm((x.a||"")+" "+x.t);return w.every(k=>h.includes(k));}):(i.c.length?i.c:all);const more=l.length>60;l=l.slice(0,60);const cur=byId(s.value);if(cur&&!l.includes(cur))l.unshift(cur);
+    s.innerHTML=`<option value="">— not in my collection / choose —</option>`+l.map(x=>`<option value="${esc(x.id)}"${cur&&x.id===cur.id?" selected":""}>${esc(lab(x))}</option>`).join("")+(more?`<option disabled>… type more to narrow</option>`:"");
+    if(w.length&&l.length===1&&!cur){s.value=l[0].id;s.onchange();}});
   upd();$("rcNo2").onclick=()=>closeSheet();
   $("rcGo2").onclick=()=>{const rows=[...p.querySelectorAll("[data-rc]")].filter(c=>c.checked&&R.items[+c.dataset.rc].m).map(c=>R.items[+c.dataset.rc]);if(!rows.length){toast("Nothing selected: choose an album for at least one line");return;}
     const ids=rows.map(r=>r.m),d=ids.filter((m,k)=>ids.indexOf(m)!==k);if(d.length){toast("Two lines point to the same album: “"+byId(d[0]).t+"”");return;}
     const sh=($("rcShip")&&$("rcShip").checked?R.ship:0)-($("rcDisc")&&$("rcDisc").checked?R.disc:0),base=rows.reduce((a,r)=>a+r.p,0);undoable("Paid set from a receipt");
     rows.forEach(r=>{const x=byId(r.m);x.paid=Math.round((r.p+(base?sh*r.p/base:0))*100)/100;x.paidSrc="momox";x.paidAt=R.date;});save();render();renderStats();
-    report("ok","Paid set from receipt",`${rows.length} album${rows.length!==1?"s":""} now have a Paid price${sh?" (shipping/voucher included)":""}.`,rows.map(r=>({id:r.m,t:byId(r.m).t+" — "+fmtPrice(byId(r.m).paid)})));};}
+    report("ok","Paid set from receipt",`${rows.length} album${rows.length!==1?"s":""} now have a Paid price${sh?" (shipping/voucher included)":""}.`,rows.map(r=>({id:r.m,t:byId(r.m).t+" — "+fmtPrice(byId(r.m).paid)})),"",()=>closeSheet());};}
 $("rcGo").onclick=()=>receiptUi();
 setInterval(()=>{if(purgeEst()){save();renderStats();}},10*60e3);
 function renderToolsCounts(){try{valUi();}catch(e){}try{cmpUi();}catch(e){}try{const n=fmtTodo().length;$("fmtN").textContent=n?n+" album"+(n!==1?"s":"")+" without a format (CD, vinyl…)":"All albums have a format";}catch(e){}try{mvUi();}catch(e){}const all=ALL(),noc=all.filter(x=>!codesOf(x.id).length),pc=noc.filter(hasPCode).length,ed=noc.filter(x=>!hasPCode(x)&&(x.mbid||x.dgid)).length,q=cbTodo().length;
