@@ -492,7 +492,7 @@ body.scanning{overflow:hidden}
   <div class="camwrap" id="camWrap" hidden><video id="cam" playsinline muted></video></div>
   <p class="hint" id="camMsg"></p>
   <label for="ean">Or type the barcode</label>
-  <input id="ean" class="ean" type="text" inputmode="numeric" enterkeyhint="search" autocomplete="off" placeholder="0 28947 79123 4" maxlength="20">
+  <input id="ean" class="ean" type="text" inputmode="numeric" enterkeyhint="search" autocomplete="off" placeholder="0 28947 79123 4">
   <p class="hint" id="eanMsg">Checked automatically once all digits are entered (12 or 13).</p>
   <details class="scanmore" id="scanMore"><summary>No barcode? More options</summary>
     <button type="button" id="photoRead">Read the cover from a photo</button>
@@ -1165,7 +1165,9 @@ $("scanBtn").onclick=()=>openScan();
 $("scanX").onclick=()=>closeScan();
 const EAN_HINT="Checked automatically once all digits are entered (12 or 13).";
 // Saisie manuelle : vérification automatique dès que le code est complet (pas de bouton « Check »)
-let eanT;$("ean").addEventListener("input",()=>{clearTimeout(eanT);const c=$("ean").value.replace(/\D/g,"");
+const notCode=v=>/https?:\/\/|www\.|[a-z]{3}/i.test(v);
+function eanToSearch(){const raw=$("ean").value.trim();$("ean").value="";$("eanMsg").className="hint";$("eanMsg").textContent=EAN_HINT;stopCam();handleShare("",raw,"");}
+let eanT;$("ean").addEventListener("input",()=>{clearTimeout(eanT);if(notCode($("ean").value)){eanT=setTimeout(eanToSearch,400);return;}const c=$("ean").value.replace(/\D/g,"");
   if((c.length===12||c.length===13)&&validEan(c))eanT=setTimeout(()=>{stopCam();check();},250);
   else if(c.length===13){$("eanMsg").className="hint err";$("eanMsg").textContent="Invalid check digit. Please verify the code.";}
   else{$("eanMsg").className="hint";$("eanMsg").textContent=EAN_HINT;}});
@@ -1180,7 +1182,7 @@ function resetScan(){SBACK=[];$("eanResult").innerHTML="";$("ean").value="";$("e
 function scanBackDo(){if(SBACK.length){const f=SBACK.pop();f();scanUi();$("scanPanel").scrollTop=0;}else resetScan();}
 $("scanBack").onclick=scanBackDo;
 let cur="",LOOK={};
-async function check(){
+async function check(){if(notCode($("ean").value)){eanToSearch();return;}
   const c=$("ean").value.replace(/\D/g,""),out=$("eanResult"),msg=$("eanMsg");
   if(c.length!==8&&(c.length<12||c.length>13)){msg.className="hint err";msg.textContent="Expected 8, 12 or 13 digits ("+c.length+" entered).";out.innerHTML="";return;}
   msg.className="hint";msg.textContent=validEan(c)?"Valid code: "+fmtEan(c):"Invalid check digit. Please verify the code.";
@@ -1457,10 +1459,12 @@ $("catGo").onclick=async()=>{stopCam();const q=$("catno").value.trim(),out=$("ea
   const addMb=rs=>(rs||[]).forEach(r=>{if(seen.has(r.id))return;seen.add(r.id);res.push({src:"MusicBrainz",id:r.id,t:r.title,code:(r.barcode||"").replace(/\D/g,""),
     sub:[credit(r["artist-credit"]),((r["label-info"]||[]).find(l=>l.label)||{label:{}}).label.name,((r["label-info"]||[]).find(l=>l["catalog-number"])||{})["catalog-number"],(r.date||"").slice(0,4),r.country,(r.media||[]).map(m=>m.format).filter(Boolean)[0]].filter(Boolean).join(" · "),
     img:"https://coverartarchive.org/release/"+r.id+"/front-250"});});
-  try{addMb((await mbGet("release/?query="+encodeURIComponent('catno:"'+catq+'"')+"&limit=10")).releases);
+  const asin=SHARE_ASIN;SHARE_ASIN="";if(asin){try{addMb((await mbGet("release/?query="+encodeURIComponent("asin:"+asin)+"&limit=10")).releases);}catch(e){errs.push("MusicBrainz: "+e.message);}}
+  const exact=res.length>0; // the store's product id matched an edition: no need for a text search
+  if(!exact)try{addMb((await mbGet("release/?query="+encodeURIComponent('catno:"'+catq+'"')+"&limit=10")).releases);
     if(!res.length&&/\s|-/.test(catq))addMb((await mbGet("release/?query="+encodeURIComponent('catno:"'+catq.replace(/[\s-]+/g,"")+'"')+"&limit=10")).releases);
     if(!res.length&&/[a-z]{3}/i.test(q))addMb((await mbGet("release/?query="+encodeURIComponent(luc(q)||q)+"&limit=10")).releases);}catch(e){errs.push("MusicBrainz: "+e.message);}
-  if(dgKey()){try{let rs=await dgSearch({catno:q});if(!rs.length)rs=await dgSearch({q});rs.forEach(r=>res.push({src:"Discogs",id:r.id,t:r.title,code:(r.barcode||[]).map(x=>x.replace(/\D/g,"")).find(x=>x.length===13||x.length===12)||"",
+  if(dgKey()&&!exact){try{let rs=await dgSearch({catno:q});if(!rs.length)rs=await dgSearch({q});rs.forEach(r=>res.push({src:"Discogs",id:r.id,t:r.title,code:(r.barcode||[]).map(x=>x.replace(/\D/g,"")).find(x=>x.length===13||x.length===12)||"",
     sub:[(r.label||[])[0],r.catno,r.year,(r.format||[]).join(", ")].filter(Boolean).join(" · "),img:r.thumb||""}));}catch(e){errs.push("Discogs: "+e.message);}}
   const errH=errs.length?`<p class="hint err">${esc(errs.join(" · "))}</p>`:"";
   if(!res.length){out.innerHTML=`<div class="verdict wish"><strong>No results</strong><span>Nothing found on MusicBrainz${dgKey()?" or Discogs":""} for “${esc(q)}”.</span></div>${errH}${web}`;return;}
@@ -1521,13 +1525,19 @@ function shareQuery(t){let s=String(t||"").replace(/https?:\/\/\S+/g," ").replac
     .replace(/\b(audio cd|cd|vinyl|vinyle|lp|cassette|import|neuf|occasion|gebraucht|usato)\b/gi," ")
     .replace(/\s(von|par|by)\s/gi," ").replace(/[()\[\]{}"«»]/g," ").replace(/\s+/g," ").replace(/^[\s:,–-]+|[\s:,–-]+$/g,"");
   return s.slice(0,120);}
+// Product address → words of its slug ("a-ha-hunting-high-and-low-audio-cd-M0B000002L7Y.html" → "a ha hunting high and low")
+function slugQuery(link){let segs=[];try{segs=new URL(link).pathname.split("/").map(x=>{try{return decodeURIComponent(x);}catch(e){return x;}});}catch(e){return "";}
+  const c=segs.map(x=>x.replace(/\.html?$/i,"").replace(/-M0[A-Z0-9]{8,}$/i,"").replace(/^[,_]+/,"")).filter(x=>/[-_+]/.test(x)&&(x.match(/[a-zà-ÿ]{2,}/gi)||[]).length>=2)
+    .sort((a,b)=>b.length-a.length)[0]||"";
+  return shareQuery(c.replace(/[-_+]+/g," "));}
+let SHARE_ASIN="";const asinOf=link=>((String(link||"").match(/(?:\/dp\/|\/gp\/product\/|-M0)(B[0-9A-Z]{9})(?![0-9A-Z])/i)||[])[1]||"").toUpperCase();
 function handleShare(title,text,url){const all=[url,text,title].filter(Boolean).join(" ");
   if(isLink(all)){importLink(all);return;}
   const link=url||((text||"").match(/https?:\/\/\S+/)||[""])[0];let path="";try{path=decodeURIComponent(new URL(link).pathname);}catch(e){}
-  const ean=(path.match(/\d{12,}/g)||[]).map(r=>{for(const n of [13,12])for(let i=0;i+n<=r.length;i++){const c=r.substr(i,n);if(validEan(c))return c;}return "";}).find(Boolean),q=shareQuery(title&&!/^https?:/i.test(title)?title:text);
+  const asin=asinOf(link);const ean=(path.match(/\d{12,}/g)||[]).map(r=>{for(const n of [13,12])for(let i=0;i+n<=r.length;i++){const c=r.substr(i,n);if(validEan(c))return c;}return "";}).find(Boolean),q=shareQuery(title&&!/^https?:/i.test(title)?title:text)||slugQuery(link)||asin;
   openScan({cam:false});stopCam();$("scanMore").open=true;$("catno").value=q;
   if(ean){$("ean").value=ean;check();return;}
-  if(q){$("catGo").click();return;}
+  if(q){SHARE_ASIN=asin;$("catGo").click();return;}
   $("eanResult").innerHTML=`<p class="hint err">No barcode in this link and no title to search. Paste the product title with the link, or type the artist and title above, then Search.</p>`;}
 function openDetail(id){const x=byId(id);if(!x)return;CUR=()=>openDetail(id);const p=$("detail"),cu=coverUrl(x),own=!isWish(id),c=codeOf(id),W=WORKS(),V=versions(),cls=isClassical(x,W);
   const multi=discsOf(x).length>1;
@@ -2456,7 +2466,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.66.0";$("hVer").textContent="v"+APPV;
+const APPV="0.67.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
