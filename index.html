@@ -445,6 +445,33 @@ body.scanning{overflow:hidden}
 .teacts button{padding:6px 10px;font-size:.82rem}
 .teacts .del{color:#d9534f}
 .teadd{display:flex;gap:8px;margin-top:10px}.teadd button{flex:1}
+
+/* v0.63 scan simplifié */
+.scanbk{flex:none;width:auto;min-height:0;padding:4px 10px;font-size:.9rem}
+.scanbk[hidden]{display:none}
+.scanhead h2{flex:1;margin:0}
+#scanIn[hidden]{display:none}
+.scanmore{margin-top:14px;border-top:1px solid var(--line);padding-top:8px}
+.scanmore summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:6px 0}
+.scanmore>button,.scanmore>.row{margin-top:8px}
+.verdict.warn{background:var(--wish-bg);border-left:4px solid #d08a00}
+.verdict.warn strong{color:#b06e00}
+.linkbtn{width:100%;margin-top:8px;background:none;border:0;box-shadow:none;color:var(--accent);text-decoration:underline;min-height:0}
+.lkl{margin-top:8px}.lkl li{list-style:none}
+#lkQ{width:100%}
+.found .srcbadge{margin-top:2px}
+/* page comparative : fenêtre d'édition */
+.cc{cursor:pointer;position:relative}
+.cc .edm{position:absolute;top:4px;right:6px;font-size:.7rem;color:var(--muted)}
+.cc.edited{border-style:solid;box-shadow:inset 0 0 0 1px var(--accent)}
+.cmpbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:-34px 34px 8px 34px;min-height:24px}
+.epop{position:fixed;inset:0;z-index:130;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.epop .box{background:var(--surface,var(--face));color:var(--ink);border:1px solid var(--line);border-radius:10px;width:100%;max-width:480px;max-height:calc(100dvh - 32px);overflow:auto;padding:14px 16px;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.epop h3{margin:0 0 4px;font-size:1.05rem}
+.epop textarea,.epop input{width:100%;box-sizing:border-box;font:inherit}
+.epop textarea{min-height:110px;resize:vertical}
+.epop .tall{min-height:260px}
+.epop img{max-width:100%;max-height:40vh;display:block;margin:8px auto;border-radius:6px}
 </style>
 </head>
 <body>
@@ -458,18 +485,21 @@ body.scanning{overflow:hidden}
 <section class="recent" id="recent" hidden><h2>Recently added</h2><div class="rrow" id="recentRow"></div></section>
 
 <div class="scanov" id="scanOv" hidden role="dialog" aria-modal="true" aria-label="Scan"><section class="panel" id="scanPanel">
-  <div class="scanhead"><h2>Scan an album</h2><button type="button" id="scanX" aria-label="Close">✕</button></div>
-  <div class="seg" id="scanMode" role="group" aria-label="Scan mode"><button type="button" data-sm="add" aria-pressed="true">Add / look up</button><button type="button" data-sm="inv" aria-pressed="false">Link barcodes</button></div>
+  <div class="scanhead"><button type="button" id="scanBack" class="scanbk" aria-label="Back" hidden>‹ Back</button><h2>Scan an album</h2><button type="button" id="scanX" aria-label="Close">✕</button></div>
   <div class="invbar" id="invBar" hidden><span id="invTxt"></span><button type="button" class="small" id="invStop">Done</button></div>
+  <div id="scanIn">
   <div class="camwrap" id="camWrap" hidden><video id="cam" playsinline muted></video></div>
   <p class="hint" id="camMsg"></p>
-  <label for="ean">Barcode (or type it)</label>
-  <input id="ean" class="ean" type="text" inputmode="numeric" autocomplete="off" placeholder="0 28947 79123 4" maxlength="20">
-  <div class="row"><button class="primary" id="eanGo" type="button">Check</button><button id="eanClose" type="button">Close</button></div>
-  <button type="button" id="photoRead">No barcode? Read the cover from a photo</button>
-  <div class="row catrow"><input id="catno" type="text" autocomplete="off" spellcheck="false" placeholder="Catalog no., title or link" aria-label="Search by catalog number, artist and title, or link"><button type="button" id="catGo">Search</button></div>
-  <p class="hint" id="eanMsg">EAN-13 (Europe, 13 digits) or UPC-A (US, 12 digits).</p>
+  <label for="ean">Or type the barcode</label>
+  <input id="ean" class="ean" type="text" inputmode="numeric" enterkeyhint="search" autocomplete="off" placeholder="0 28947 79123 4" maxlength="20">
+  <p class="hint" id="eanMsg">Checked automatically once all digits are entered (12 or 13).</p>
+  <details class="scanmore" id="scanMore"><summary>No barcode? More options</summary>
+    <button type="button" id="photoRead">Read the cover from a photo</button>
+    <div class="row catrow"><input id="catno" type="text" autocomplete="off" spellcheck="false" placeholder="Catalog no., title or link" aria-label="Search by catalog number, artist and title, or link"><button type="button" id="catGo">Search</button></div>
+    <div class="seg" id="scanMode" role="group" aria-label="Scan mode"><button type="button" data-sm="add" aria-pressed="true">One album</button><button type="button" data-sm="inv" aria-pressed="false">Link barcodes in a row</button></div>
+  </details>
   <div id="demoCodes"></div>
+  </div>
   <div id="eanResult"></div>
 </section></div>
 
@@ -793,16 +823,16 @@ const BONUS=/\s*(?:[\[(]\s*(?:bonus(?:\s*track)?|titre bonus|piste bonus)\s*[\])
 const fmtD=s=>s?Math.floor(s/60)+":"+String(Math.round(s%60)).padStart(2,"0"):"";
 // Fiche par-dessus la liste : la page reste derrière, à sa place
 let sheetOpen=false;
-let BACK=[],CUR=null;
-function backUi(){const b=$("sheetBack");if(b)b.hidden=!BACK.length;}
+let BACK=[],CUR=null,SHEETBACK=null,IGNPOP=0;
+function backUi(){const b=$("sheetBack");if(b)b.hidden=!BACK.length&&!scanOpen&&!SHEETBACK;}
 // Going back restores the previous view as it was: open lists and scroll position
 function subView(fn){if(sheetOpen&&CUR){const f=CUR,sc=$("sheet").scrollTop,op=[...$("detail").querySelectorAll("details")].map(d=>d.open);
     BACK.push(()=>{f();const ds=$("detail").querySelectorAll("details");op.forEach((o,i)=>{if(ds[i])ds[i].open=o;});$("sheet").scrollTop=sc;requestAnimationFrame(()=>{$("sheet").scrollTop=sc;});});
     history.pushState({sheet:1,sub:1},"");}fn();backUi();$("sheet").scrollTop=0;}
-function goBack(){if(BACK.length)history.back();else closeSheet();}
+function goBack(){if(BACK.length)history.back();else if(SHEETBACK){const f=SHEETBACK;SHEETBACK=null;f();}else closeSheet();}
 function openSheet(){const o=$("overlay");if(!sheetOpen){history.pushState({sheet:1},"");sheetOpen=true;BACK=[];}o.hidden=false;document.body.classList.add("locked");$("sheet").scrollTop=0;}
-function closeSheet(fromPop){if(!sheetOpen)return;const n=BACK.length;sheetOpen=false;BACK=[];CUR=null;backUi();$("overlay").hidden=true;if($("settings").hidden)document.body.classList.remove("locked");if(!fromPop)history.go(-(n+1));else if(n)history.go(-n);}
-window.addEventListener("popstate",()=>{if(!$("settings").hidden){closeSettings(true);return;}if(!$("shooter").hidden){finishShoot(null);if(sheetOpen)history.pushState({sheet:1},"");return;}if(sheetOpen){if(BACK.length){const f=BACK.pop();f();backUi();return;}closeSheet(true);return;}if(scanOpen)closeScan(true);});
+function closeSheet(fromPop){if(!sheetOpen)return;const n=BACK.length;sheetOpen=false;BACK=[];CUR=null;SHEETBACK=null;backUi();$("overlay").hidden=true;if($("settings").hidden)document.body.classList.remove("locked");if(!fromPop){IGNPOP++;history.go(-(n+1));}else if(n){IGNPOP++;history.go(-n);}}
+window.addEventListener("popstate",()=>{if(IGNPOP){IGNPOP--;return;}if(!$("settings").hidden){closeSettings(true);return;}if(!$("shooter").hidden){finishShoot(null);if(sheetOpen)history.pushState({sheet:1},"");return;}if(sheetOpen){if(BACK.length){const f=BACK.pop();f();backUi();return;}if(SHEETBACK){history.pushState({sheet:1},"");const f=SHEETBACK;SHEETBACK=null;f();backUi();return;}closeSheet(true);return;}if(scanOpen){if(scanHasResult()||SBACK.length){history.pushState({scan:1},"");scanBackDo();return;}closeScan(true);}});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("shooter").hidden)finishShoot(null);else closeSheet();}});
 const wLabel=w=>{const o=WORKS()[w];return o?o.t+(o.cat?", "+o.cat:""):"";};
 const isWish=id=>S.wish.some(x=>x.id===id);
@@ -1124,17 +1154,31 @@ async function loop(){if(!scanning)return;try{const r=await detector.detect($("c
 function demoButtons(){$("demoCodes").innerHTML=S.demo?`<p class="hint">Demo codes, tap one to simulate a scan:</p><div class="codes">`+CAT.map(x=>`<button type="button" data-code="${x.ean}" title="${esc(x.t)}">${fmtEan(x.ean)}</button>`).join("")+`</div>`:"";}
 $("demoCodes").onclick=e=>{const b=e.target.closest("[data-code]");if(b){stopCam();$("ean").value=b.dataset.code;check();}};
 // La fenêtre de scan est modale : elle reste au-dessus de tout jusqu'à ce qu'on la ferme (✕, Close ou retour Android)
-let scanOpen=false;
+var scanOpen=false;
 function openScan(opt){opt=opt||{};const fresh=!scanOpen;
   if(fresh){scanOpen=true;$("scanOv").hidden=false;document.body.classList.add("scanning");history.pushState({scan:1},"");$("scanPanel").scrollTop=0;}
-  if(opt.reset!==false&&fresh){$("eanResult").innerHTML="";$("ean").value="";$("eanMsg").className="hint";$("eanMsg").textContent="EAN-13 (Europe, 13 digits) or UPC-A (US, 12 digits).";demoButtons();}
+  if(opt.reset!==false&&fresh){SBACK=[];$("eanResult").innerHTML="";$("ean").value="";$("eanMsg").className="hint";$("eanMsg").textContent=EAN_HINT;$("scanMore").open=false;demoButtons();}
   if(opt.cam!==false&&!stream)startCam();}
-function closeScan(fromPop){if(!scanOpen)return;scanOpen=false;stopCam();stopInventory();$("scanOv").hidden=true;document.body.classList.remove("scanning");if(!fromPop)history.back();}
+function closeScan(fromPop){if(!scanOpen)return;scanOpen=false;stopCam();stopInventory();$("scanOv").hidden=true;document.body.classList.remove("scanning");if(!fromPop){IGNPOP++;history.back();}}
 $("scanBtn").onclick=()=>openScan();
-$("eanClose").onclick=()=>closeScan();$("scanX").onclick=()=>closeScan();
-$("ean").addEventListener("keydown",e=>{if(e.key==="Enter")check();});
-$("eanGo").onclick=()=>{stopCam();check();};
-let cur="";
+$("scanX").onclick=()=>closeScan();
+const EAN_HINT="Checked automatically once all digits are entered (12 or 13).";
+// Saisie manuelle : vérification automatique dès que le code est complet (pas de bouton « Check »)
+let eanT;$("ean").addEventListener("input",()=>{clearTimeout(eanT);const c=$("ean").value.replace(/\D/g,"");
+  if((c.length===12||c.length===13)&&validEan(c))eanT=setTimeout(()=>{stopCam();check();},250);
+  else if(c.length===13){$("eanMsg").className="hint err";$("eanMsg").textContent="Invalid check digit. Please verify the code.";}
+  else{$("eanMsg").className="hint";$("eanMsg").textContent=EAN_HINT;}});
+$("ean").addEventListener("keydown",e=>{if(e.key==="Enter"){clearTimeout(eanT);stopCam();check();}});
+// Retour dans la fenêtre de scan : revient à l'étape précédente telle qu'elle était, sinon à la caméra
+let SBACK=[];
+const scanHasResult=()=>!INV&&$("eanResult").innerHTML.trim()!=="";
+function scanUi(){const r=scanHasResult();$("scanIn").hidden=r;$("scanBack").hidden=!r&&!SBACK.length;}
+new MutationObserver(scanUi).observe($("eanResult"),{childList:true});
+function scanStep(back,fn){SBACK.push(back);fn();$("scanPanel").scrollTop=0;scanUi();}
+function resetScan(){SBACK=[];$("eanResult").innerHTML="";$("ean").value="";$("eanMsg").className="hint";$("eanMsg").textContent=EAN_HINT;cur="";scanUi();$("scanPanel").scrollTop=0;if(!INV)startCam();}
+function scanBackDo(){if(SBACK.length){const f=SBACK.pop();f();scanUi();$("scanPanel").scrollTop=0;}else resetScan();}
+$("scanBack").onclick=scanBackDo;
+let cur="",LOOK={};
 async function check(){
   const c=$("ean").value.replace(/\D/g,""),out=$("eanResult"),msg=$("eanMsg");
   if(c.length!==8&&(c.length<12||c.length>13)){msg.className="hint err";msg.textContent="Expected 8, 12 or 13 digits ("+c.length+" entered).";out.innerHTML="";return;}
@@ -1145,18 +1189,21 @@ async function check(){
       <div class="row"><button class="primary" type="button" id="pcYes">Confirm</button><button type="button" id="pcSee">View entry</button></div>${nextBtn()}`;
     $("pcSee").onclick=()=>openDetail(px.id);$("pcYes").onclick=()=>{undoable("Barcode linked to “"+px.t+"”");S.codes[c]=px.id;delete S.pcodes[c];save();render();check();};return;}
   if(x){const own=!isWish(x.id);
-    out.innerHTML=`<div class="verdict ${own?"own":"wish"}"><strong>${own?"In your collection":"On your wishlist"}</strong><span>${esc(x.t)} · ${esc(x.a)}</span></div><div class="row"><button type="button" id="seeIt">View entry</button>${own?"":`<button class="primary" id="buyNow" type="button">Mark as purchased</button>`}</div>${nextBtn()}`;
+    out.innerHTML=`<div class="verdict ${own?"own":"wish"}"><strong>${own?"Already in your collection":"Already on your wishlist"}</strong><span>${esc(x.t)} · ${esc(x.a)}</span></div><div class="row"><button type="button" id="seeIt">View entry</button>${own?"":`<button class="primary" id="buyNow" type="button">Mark as purchased</button>`}</div>${nextBtn()}`;
     $("seeIt").onclick=()=>openDetail(x.id);if(!own)$("buyNow").onclick=()=>{buy(x.id);check();};return;}
   let f=S.demo?CAT.find(x=>x.ean===c):null,src="demo catalog",err=null;
-  if(!f){out.innerHTML=`<p class="hint">Searching MusicBrainz…</p>`;
+  if(!f&&LOOK[c]){f=LOOK[c].f;src=LOOK[c].src;}
+  else if(!f){out.innerHTML=`<p class="hint">Searching MusicBrainz…</p>`;
     try{f=await mbLookup(c);src="MusicBrainz";}catch(e){err=e;}
     if(cur!==c)return;
     if(!f&&dgKey()&&navigator.onLine){out.innerHTML=`<p class="hint">Searching Discogs…</p>`;
       try{const rs=await dgSearch({barcode:c});if(rs.length){f=await dgRelease(rs[0].id);src="Discogs";err=null;}}catch(e){err=err||e;}
       if(cur!==c)return;}}
+  if(!err)LOOK[c]={f,src};
   if(f){showFound(out,f,src,c);return;}
   if(err){out.innerHTML=`<div class="verdict wish"><strong>Search failed</strong><span>${esc(err.message)}</span></div>`;manual(out,true);return;}
-  out.innerHTML=`<div class="verdict wish"><strong>Unknown code</strong><span>Not found on MusicBrainz${dgKey()?" or Discogs":""}. Search the catalog number, read the cover from a photo, or enter it by hand.</span></div><button class="primary" type="button" id="readFromUnknown">Read the cover from a photo</button>`;$("readFromUnknown").onclick=openReader;manual(out,true);}
+  out.innerHTML=`<div class="verdict wish"><strong>Unknown code</strong><span>Not found on MusicBrainz${dgKey()?" or Discogs":""}. Search the catalog number, read the cover from a photo, or enter it by hand.</span></div><div class="row"><button class="primary" type="button" id="readFromUnknown">Read the cover from a photo</button></div><div class="row"><button type="button" id="lkUnknown">Link to an album of my collection</button></div><p class="ask">Or enter it by hand</p>`;$("readFromUnknown").onclick=openReader;
+  $("lkUnknown").onclick=()=>scanStep(()=>check(),()=>linkPicker(out,null,"",c));manual(out,true);}
 // Disque déjà présent sous une autre édition ? Œuvres déjà possédées ?
 const tNorm=s=>norm(s).replace(/\[.*?\]|\(.*?\)/g," ").replace(/[^a-z0-9]+/g," ").trim();
 function sameDisc(f){const ft=tNorm(f.t),fa=tNorm(f.a).split(" ").filter(w=>w.length>2);
@@ -1166,27 +1213,47 @@ function ownedWorks(f){const W=Object.assign({},WORKS(),f.newWorks||{}),V=versio
   tracksOf(f).forEach(t=>{if(typeof t==="string"||!t.w||!W[t.w])return;const id=workId(t.w,W),vs=V[id];if(vs&&vs.length&&!out.has(id))out.set(id,{t:W[t.w].t,c:canonC(W[t.w].c),own:vs.filter(e=>e.own).length,wish:vs.filter(e=>!e.own).length});});
   return [...out.values()];}
 function nextBtn(){return `<button type="button" class="next" data-next="1">Scan the next one</button>`;}
-$("eanResult").addEventListener("click",e=>{if(e.target.closest("[data-next]")){$("eanResult").innerHTML="";$("ean").value="";$("eanMsg").textContent="";cur="";startCam();$("scanPanel").scrollTop=0;}});
+$("eanResult").addEventListener("click",e=>{if(e.target.closest("[data-next]"))resetScan();});
 function showFound(out,f,src,c){const box=discsOf(f).length>1,dup=sameDisc(f),ow=ownedWorks(f);
-  out.innerHTML=(dup?`<div class="verdict own"><strong>Possible duplicate</strong><span>${esc(dup.t)} · ${esc(dup.a)}${isWish(dup.id)?" (on your wishlist)":""} — different edition or barcode?</span><button type="button" class="small" id="seeDup">View my entry</button>${c?`<button type="button" class="small primary" id="dupCode">Same album: link barcode</button>`:""}</div>`
-      :`<div class="verdict wish"><strong>Not in your collection</strong><span>Found (${src}):</span></div>`)+
-  `<div class="found"><img src="${coverUrl(f)}" alt="" onerror="this.style.visibility='hidden'"><div class="meta"><b>${esc(f.t)}</b><small>${esc(f.a)}${f.l?" · "+esc(f.l):""}${f.cat?" · "+esc(f.cat):""}${f.y?" · "+f.y:""} · ${box?discsOf(f).length+" CDs · ":""}${tracksOf(f).length} tracks</small></div></div>`+
-  (ow.length?`<div class="already"><strong>Works you already have:</strong><ul>${ow.slice(0,6).map(o=>`<li>${esc(o.t)}${o.c?" <small>("+esc(o.c)+")</small>":""} — ${o.own?o.own+" version"+(o.own!==1?"s":""):""}${o.own&&o.wish?", ":""}${o.wish?o.wish+" on wishlist":""}</li>`).join("")}${ow.length>6?`<li>… and ${ow.length-6} more</li>`:""}</ul></div>`:"")+
-  (dup?`<p class="ask">Action</p><div class="row"><button class="primary" id="addRep" type="button">Compare and update my entry</button></div>
-    <div class="row three"><button id="addCopy" type="button">Add as another copy</button><button id="addCol" type="button">Add as new</button><button id="addNo" type="button">Cancel</button></div>`
-  :`<p class="ask">Add this album?</p><div class="row three"><button class="primary" id="addCol" type="button">To my collection</button><button id="addWish" type="button">To wishlist</button><button id="addNo" type="button">Cancel</button></div>`);
-  if(dup){$("seeDup").onclick=()=>openDetail(dup.id);
-    if($("dupCode"))$("dupCode").onclick=()=>{undoable("Barcode linked to “"+dup.t+"”");S.codes[c]=dup.id;if(S.pcodes)delete S.pcodes[c];save();render();
-      out.innerHTML=`<div class="verdict own"><strong>Barcode linked</strong><span>${esc(dup.t)} · ${esc(dup.a)} — it will now be recognized offline.</span></div>${nextBtn()}`;};
-    // Remplacer : garde l'état, la date d'ajout, la note, les exemplaires et ta photo ; reprend tout le reste
-    $("addRep").onclick=()=>openCompare(dup,f,src,ok=>{closeSheet();if(ok){if(c)S.codes[c]=dup.id;save();render();out.innerHTML=`<div class="verdict own"><strong>Entry updated</strong><span>${esc(dup.t)} · ${esc(dup.a)}</span></div><div class="row"><button type="button" id="seeNew">View entry</button>${nextBtn()}</div>`;$("seeNew").onclick=()=>openDetail(dup.id);}});
+  const dCodes=dup?Object.keys(S.codes).filter(k=>S.codes[k]===dup.id):[],badCode=!!(dup&&c&&dCodes.length&&!dCodes.includes(c));
+  const card=`<div class="found"><img src="${coverUrl(f)}" alt="" onerror="this.style.visibility='hidden'"><div class="meta"><b>${esc(f.t)}</b><small>${esc(f.a)}${f.l?" · "+esc(f.l):""}${f.cat?" · "+esc(f.cat):""}${f.y?" · "+f.y:""} · ${box?discsOf(f).length+" CDs · ":""}${tracksOf(f).length} tracks</small><small class="srcbadge">${esc(src)}</small></div></div>`;
+  const works=ow.length?`<div class="already"><strong>Works you already have:</strong><ul>${ow.slice(0,6).map(o=>`<li>${esc(o.t)}${o.c?" <small>("+esc(o.c)+")</small>":""} — ${o.own?o.own+" version"+(o.own!==1?"s":""):""}${o.own&&o.wish?", ":""}${o.wish?o.wish+" on wishlist":""}</li>`).join("")}${ow.length>6?`<li>… and ${ow.length-6} more</li>`:""}</ul></div>`:"";
+  if(dup){
+    out.innerHTML=(badCode
+      ?`<div class="verdict warn"><strong>Similar album, different barcode</strong><span>${esc(dup.t)} · ${esc(dup.a)}${isWish(dup.id)?" (wishlist)":""}</span><small>Your entry is linked to ${dCodes.map(fmtEan).join(", ")}, the scanned code is ${fmtEan(c)}. It is probably another edition. Compare before linking.</small></div>`
+      :`<div class="verdict own"><strong>Already in your collection?</strong><span>${esc(dup.t)} · ${esc(dup.a)}${isWish(dup.id)?" (wishlist)":""}</span><small>A matching album was found. Compare the details to link ${c?"this barcode":"it"} to your entry.</small></div>`)+card+works+
+      `<div class="row"><button class="primary" id="addRep" type="button">Compare and link to my entry</button></div>
+       <div class="row"><button id="addCol" type="button">Not the same: add as new</button><button id="addCopy" type="button">Another copy</button></div>
+       <button type="button" class="linkbtn" id="addOther">Link to another album of my collection…</button>`;
+    $("addRep").onclick=()=>compareLink(out,dup,f,src,c);
     $("addCopy").onclick=()=>{undoable("2nd copy of “"+dup.t+"”");dup.copies=(dup.copies||1)+1;if(c&&!S.codes[c])S.codes[c]=dup.id;save();render();
       out.innerHTML=`<div class="verdict own"><strong>Copy no. ${dup.copies} saved</strong><span>${esc(dup.t)} · ${esc(dup.a)}</span></div>${nextBtn()}`;};}
-  $("addNo").onclick=()=>{out.innerHTML=`<p class="hint">No album added.</p>`+nextBtn();};
-  const add=w=>{const n=pick(f);delete n.newWorks;addAlbum(n,w,c);if(f.newWorks)Object.assign(S.works,f.newWorks);attachWorks(n,null);save();render();
+  else{
+    out.innerHTML=`<div class="verdict wish"><strong>Not in your collection</strong><span>Found on ${esc(src)}${c?" · "+fmtEan(c):""}</span></div>`+card+works+
+      `<div class="row"><button class="primary" id="addCol" type="button">Add to my collection</button><button id="addWish" type="button">To wishlist</button></div>
+       <div class="row"><button type="button" id="addOther">Link to an album of my collection</button></div>`;
+    $("addWish").onclick=()=>add(true);}
+  $("addOther").onclick=()=>scanStep(()=>showFound(out,f,src,c),()=>linkPicker(out,f,src,c));
+  const add=w=>{const n=pick(f);delete n.newWorks;addAlbum(n,w,c);if(f.newWorks)Object.assign(S.works,f.newWorks);attachWorks(n,null);save();render();SBACK=[];
     out.innerHTML=`<div class="verdict ${w?"wish":"own"}"><strong>${w?"Added to your wishlist":"Added to your collection"}</strong><span>${esc(n.t)} · ${esc(n.a)}</span></div><div class="row"><button type="button" id="seeNew">View entry</button>${nextBtn()}</div>`;
     $("seeNew").onclick=()=>openDetail(n.id);};
-  $("addCol").onclick=()=>add(false);if($("addWish"))$("addWish").onclick=()=>add(true);}
+  $("addCol").onclick=()=>add(false);}
+// Comparer la fiche trouvée avec un album de la collection, puis lier le code-barres
+function compareLink(out,x,f,src,c){openCompare(x,f,src,ok=>{closeSheet();if(!ok)return;if(c){S.codes[c]=x.id;if(S.pcodes)delete S.pcodes[c];}save();render();SBACK=[];
+  out.innerHTML=`<div class="verdict own"><strong>Entry updated${c?" and barcode linked":""}</strong><span>${esc(x.t)} · ${esc(x.a)}</span>${c?`<small>${fmtEan(c)} will now be recognized offline.</small>`:""}</div><div class="row"><button type="button" id="seeNew">View entry</button>${nextBtn()}</div>`;$("seeNew").onclick=()=>openDetail(x.id);});}
+// Choisir l'album de la collection auquel associer le code (avec ou sans fiche trouvée en ligne)
+function linkPicker(out,f,src,c){
+  out.innerHTML=`<p class="ask">Link ${c?fmtEan(c):"this album"} to which album?</p><input id="lkQ" type="search" autocomplete="off" placeholder="Search my collection" aria-label="Search my collection"><ul class="list lkl" id="lkL"></ul>`;
+  const q=$("lkQ"),L=$("lkL"),ref=f?tNorm(f.t+" "+f.a):"";
+  const draw=()=>{const v=tNorm(q.value),ws=v.split(" ").filter(Boolean);
+    let r=[...S.col,...S.wish].filter(x=>!ws.length||ws.every(w=>tNorm(x.t+" "+x.a+" "+(x.perf||"")).includes(w)));
+    if(!ws.length&&ref){const rw=ref.split(" ").filter(w=>w.length>2);r=r.map(x=>[x,rw.filter(w=>tNorm(x.t+" "+x.a+" "+(x.perf||"")).includes(w)).length]).filter(e=>e[1]).sort((m,n)=>n[1]-m[1]).map(e=>e[0]);}
+    L.innerHTML=r.slice(0,40).map(x=>`<li><button type="button" class="pick" data-lk="${x.id}"><img src="${esc(coverUrl(x))}" alt="" onerror="this.style.visibility='hidden'"><span><b>${esc(x.t)}</b><br><small>${esc(x.a)}${x.y?" · "+x.y:""}${codeOf(x.id)?" · "+fmtEan(codeOf(x.id)):""}</small></span></button></li>`).join("")||`<li class="empty">${ws.length?"No album matches.":"Type to search your collection."}</li>`;};
+  q.oninput=draw;draw();
+  L.onclick=e=>{const b=e.target.closest("[data-lk]");if(!b)return;const x=byId(b.dataset.lk);if(!x)return;
+    if(f){compareLink(out,x,f,src,c);return;}
+    undoable("Barcode linked to “"+x.t+"”");S.codes[c]=x.id;if(S.pcodes)delete S.pcodes[c];save();render();SBACK=[];
+    out.innerHTML=`<div class="verdict own"><strong>Barcode linked</strong><span>${esc(x.t)} · ${esc(x.a)}</span><small>${fmtEan(c)} will now be recognized offline.</small></div><div class="row"><button type="button" id="seeNew">View entry</button>${nextBtn()}</div>`;$("seeNew").onclick=()=>openDetail(x.id);};}
 function manual(out,append){out.insertAdjacentHTML("beforeend",`<label for="fa">Artist / composer</label><input id="fa" type="text" autocomplete="off">
   <label for="ft">Album / work and performer</label><input id="ft" type="text" autocomplete="off">
   <div class="row"><button class="primary" id="addCol" type="button">Add to collection</button><button id="addWish" type="button">Add to wishlist</button></div>`);
@@ -1392,11 +1459,11 @@ $("catGo").onclick=async()=>{stopCam();const q=$("catno").value.trim(),out=$("ea
     sub:[(r.label||[])[0],r.catno,r.year,(r.format||[]).join(", ")].filter(Boolean).join(" · "),img:r.thumb||""}));}catch(e){errs.push("Discogs: "+e.message);}}
   const errH=errs.length?`<p class="hint err">${esc(errs.join(" · "))}</p>`:"";
   if(!res.length){out.innerHTML=`<div class="verdict wish"><strong>No results</strong><span>Nothing found on MusicBrainz${dgKey()?" or Discogs":""} for “${esc(q)}”.</span></div>${errH}${web}`;return;}
-  out.innerHTML=`<p class="hint">${res.length} result${res.length!==1?"s":""}. Select the correct one:</p>${errH}`+res.map((r,i)=>`<button type="button" class="pick" data-i="${i}">${r.img?`<img src="${esc(r.img)}" alt="" onerror="this.style.visibility='hidden'">`:""}<span><b>${esc(r.t)}</b><br><small>${esc(r.sub)}</small><br><small class="srcbadge">${r.src}</small></span></button>`).join("")+web;
+  const showList=()=>{out.innerHTML=`<p class="hint">${res.length} result${res.length!==1?"s":""}. Select the correct one:</p>${errH}`+res.map((r,i)=>`<button type="button" class="pick" data-i="${i}">${r.img?`<img src="${esc(r.img)}" alt="" onerror="this.style.visibility='hidden'">`:""}<span><b>${esc(r.t)}</b><br><small>${esc(r.sub)}</small><br><small class="srcbadge">${r.src}</small></span></button>`).join("")+web;
   out.querySelectorAll(".pick").forEach(btn=>btn.onclick=async()=>{const r=res[+btn.dataset.i];out.innerHTML=`<p class="hint">Loading…</p>`;
     try{const code=r.code&&(r.code.length===13||r.code.length===12)?r.code:"";const id=code&&S.codes[code];if(id&&byId(id)){openDetail(id);out.innerHTML="";return;}
       let f;if(r.src==="Discogs")f=await dgRelease(r.id);else{f=await mbRelease(r.id);if(f.img&&!(await imgOk(f.img)))f.img="";}
-      showFound(out,f,r.src,code);}catch(e){out.innerHTML=`<p class="hint err">Loading failed: ${esc(e.message)}</p>`;}});};
+      scanStep(showList,()=>showFound(out,f,r.src,code));}catch(e){out.innerHTML=`<p class="hint err">Loading failed: ${esc(e.message)}</p>`;}});};showList();};
 $("catno").addEventListener("keydown",e=>{if(e.key==="Enter")$("catGo").click();});
 
 // ---------- Fiches ----------
@@ -1928,28 +1995,59 @@ function cmpCell(o,k,isOld){const v=cmpVal(o,k,isOld);if(v===""||v==null)return 
   if(k==="cover")return `<img src="${esc(v)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'nil',textContent:'—'}))">`;
   if(k==="tracks"){const tr=tracksOf(o),W=WORKS();return `<b>${tr.length} track${tr.length!==1?"s":""}${discsOf(o).length>1?" · "+discsOf(o).length+" CDs":""}</b>`+tr.slice(0,3).map(t=>{const w=typeof t!=="string"&&W[t.w];return `<small>${esc(tName(t)||(w&&w.t)||"")}</small>`;}).join("")+(tr.length>3?"<small>…</small>":"");}
   return esc(k==="perf"?firstPerf(v):v);}
-function openCompare(x,f,src,after){const id=x.id,p=$("detail"),sel={};
+function openCompare(x,f0,src,after){const id=x.id,p=$("detail"),sel={},ed={old:{},new:{}};
+  // Copies de travail : les modifications faites à la main ne touchent rien avant « Apply my choice »
+  const f=JSON.parse(JSON.stringify(f0)),xo=JSON.parse(JSON.stringify(x));if(COV[id])xo.coverData=COV[id];
+  const side=s=>s==="old"?xo:f;
   CMP_FIELDS.forEach(([k])=>{const o=cmpVal(x,k,true),n=cmpVal(f,k,false);
     sel[k]=n===""||n==null||String(n)===String(o)?"old":(o===""||o==null)?"new":(["cover","l","y","cat"].includes(k)?"new":"old");});
+  const prev=CUR;CUR=null;
+  const leave=ok=>{SHEETBACK=null;backUi();if(after)after(ok);else if(ok||!prev)openDetail(id);else prev();};
+  SHEETBACK=()=>leave(false);
+  // Pistes modifiables seulement pour un disque unique (les coffrets se modifient depuis la fiche)
+  const trArr=o=>discsOf(o).length>1?null:(o.discs&&o.discs[0]?o.discs[0].tr:(o.tr||(o.tr=[])));
   const draw=()=>{p.innerHTML=`<p class="cat">Compare before importing · ${esc(src)}</p><h2 class="wh">Select values to import</h2>
-    <p class="hint">Select the values to keep. Identical or empty values are left unchanged.</p>
+    <p class="hint">Tap a box to check, edit or choose it. Nothing is saved until you tap “Apply my choice”.</p>
     <div class="cmp"><div class="cmpH"><span></span><span>My entry</span><span>${esc(src)}</span></div>
-    ${CMP_FIELDS.map(([k,lab])=>{const o=cmpVal(x,k,true),n=cmpVal(f,k,false),same=n===""||n==null||String(n)===String(o);
-      return `<div class="cmpR${same?" same":""}"><span class="lab">${lab}</span><button type="button" class="cc${sel[k]==="old"?" on":""}" data-k="${k}" data-s="old" ${same?"disabled":""}>${cmpCell(x,k,true)}</button><button type="button" class="cc${sel[k]==="new"?" on":""}" data-k="${k}" data-s="new" ${same?"disabled":""}>${cmpCell(f,k,false)}</button></div>`;}).join("")}</div>
-    <div class="row"><button type="button" class="primary" id="cmpGo">Apply my choice</button></div>
-    <div class="row"><button type="button" id="cmpAll">Replace all</button><button type="button" id="cmpNo">Cancel</button></div>`;
-    p.querySelectorAll(".cc[data-k]").forEach(b=>b.onclick=()=>{sel[b.dataset.k]=b.dataset.s;draw();});
-    $("cmpNo").onclick=()=>{if(after)after(false);else openDetail(id);};
-    $("cmpAll").onclick=()=>{CMP_FIELDS.forEach(([k])=>{const n=cmpVal(f,k,false);if(n!==""&&n!=null)sel[k]="new";});apply();};
-    $("cmpGo").onclick=apply;};
-  const apply=()=>{undoable("Entry “"+x.t+"” updated ("+src+")");const old=JSON.parse(JSON.stringify(x));toTrash(old,"old",{why:src});
+    ${CMP_FIELDS.map(([k,lab])=>{const o=cmpVal(xo,k,true),n=cmpVal(f,k,false),same=(n===""||n==null||String(n)===String(o))&&!ed.old[k]&&!ed.new[k];
+      const cell=(s,inner)=>`<button type="button" class="cc${sel[k]===s?" on":""}${ed[s][k]?" edited":""}" data-k="${k}" data-s="${s}">${ed[s][k]?'<span class="edm">edited</span>':""}${inner}</button>`;
+      return `<div class="cmpR${same?" same":""}"><span class="lab">${lab}</span>${cell("old",cmpCell(xo,k,true))}${cell("new",cmpCell(f,k,false))}</div>`;}).join("")}</div>
+    <div class="row"><button type="button" class="primary" data-cmp="apply">Apply my choice</button></div>
+    <div class="row"><button type="button" data-cmp="all">Replace all</button><button type="button" data-cmp="no">Cancel</button></div>`;
+    p.querySelectorAll(".cc[data-k]").forEach(b=>b.onclick=()=>editCell(b.dataset.k,b.dataset.s));
+    p.querySelector('[data-cmp="no"]').onclick=()=>leave(false);
+    p.querySelector('[data-cmp="all"]').onclick=()=>{CMP_FIELDS.forEach(([k])=>{const n=cmpVal(f,k,false);if(n!==""&&n!=null)sel[k]="new";});apply();};
+    p.querySelector('[data-cmp="apply"]').onclick=apply;backUi();};
+  // Fenêtre d'édition d'une case : on voit tout, on modifie, on choisit
+  const editCell=(k,s)=>{const o=side(s),lab=(CMP_FIELDS.find(e=>e[0]===k)||[])[1],from=s==="old"?"My entry":src,ov=document.createElement("div");ov.className="epop";
+    let body;
+    if(k==="cover"){const u=cmpVal(o,k,s==="old");body=(u?`<img src="${esc(u)}" alt="">`:`<p class="hint">No cover.</p>`)+(s==="new"||!o.coverData?`<label for="epV">Image link</label><input id="epV" type="url" value="${esc(o.coverData?"":(o.img||""))}" placeholder="https://…">`:`<p class="hint">Your own photo. Change it from the entry page.</p>`);}
+    else if(k==="tracks"){const tr=trArr(o);body=tr?`<label for="epV">One track per line</label><textarea id="epV" class="tall">${esc(tr.map(t=>tName(t)||"").join("\n"))}</textarea>`
+      :`<p class="hint">Box set: edit the tracks from the entry page after import.</p><ol>${tracksOf(o).map(t=>`<li>${esc(tName(t)||"")}</li>`).join("")}</ol>`;}
+    else{const v=o[k]==null?"":String(o[k]);body=`<label for="epV">${esc(lab)}</label>`+(k==="y"?`<input id="epV" type="text" inputmode="numeric" maxlength="4" value="${esc(v)}">`:`<textarea id="epV">${esc(v)}</textarea>`);}
+    ov.innerHTML=`<div class="box" role="dialog" aria-modal="true" aria-label="${esc(lab)}"><h3>${esc(lab)}</h3><p class="hint">${esc(from)}</p>${body}
+      <div class="row"><button type="button" class="primary" data-ep="use">Use this value</button><button type="button" data-ep="no">Cancel</button></div></div>`;
+    document.body.appendChild(ov);const inp=ov.querySelector("#epV");if(inp&&k!=="tracks"){inp.focus();}
+    const close=()=>ov.remove();
+    ov.onclick=e=>{if(e.target===ov)close();};
+    ov.querySelector('[data-ep="no"]').onclick=close;
+    ov.querySelector('[data-ep="use"]').onclick=()=>{
+      if(inp){const v=inp.value.trim();
+        if(k==="cover"){if(s==="new"||!o.coverData){const was=o.img||"";if(v!==was){o.img=v;if(s==="new")delete o.coverData;ed[s][k]=1;}}}
+        else if(k==="tracks"){const tr=trArr(o),lines=v.split("\n").map(l=>l.trim()).filter(Boolean),before=tr.map(t=>tName(t)||"").join("\n");
+          if(lines.join("\n")!==before){const nt=lines.map((l,i)=>{const t=tr[i];if(t&&typeof t!=="string"){return tName(t)===l?t:Object.assign({},t,{n:l});}return l;});tr.length=0;nt.forEach(t=>tr.push(t));ed[s][k]=1;}}
+        else{let nv=v;if(k==="y")nv=/^\d{4}$/.test(v)?(typeof x.y==="number"||typeof f0.y==="number"?Number(v):v):"";if(String(o[k]==null?"":o[k])!==String(nv)){if(nv==="")delete o[k];else o[k]=nv;ed[s][k]=1;}}}
+      sel[k]=s;close();const sc=$("sheet").scrollTop;draw();$("sheet").scrollTop=sc;};};
+  const apply=()=>{SHEETBACK=null;undoable("Entry “"+x.t+"” updated ("+src+")");const old=JSON.parse(JSON.stringify(x));toTrash(old,"old",{why:src});
     (Array.isArray(x.auto)?x.auto:[]).forEach(k=>{if(sel[k]!=="old")delete x[k];});delete x.auto;
     if(f.mbid)x.mbid=f.mbid;if(f.dgid)x.dgid=f.dgid;if(f.rgid)x.rgid=f.rgid;x.enr="manual";if(f.ean)addPCode(f.ean,id);
-    ["t","a","perf","g","l","y","cat"].forEach(k=>{if(sel[k]==="new")x[k]=f[k];});
-    if(sel.cover==="new"){if(f.coverData){delete x.img;COV[id]=f.coverData;covPut(id,f.coverData).catch(()=>{});}else{x.img=f.img;if(COV[id])covDel(id);}}
+    ["t","a","perf","g","l","y","cat"].forEach(k=>{const v=sel[k]==="new"?f[k]:(ed.old[k]?xo[k]:undefined);if(sel[k]==="new"||ed.old[k]){if(v===undefined||v==="")delete x[k];else x[k]=v;}});
+    if(sel.cover==="new"){if(f.coverData&&!ed.new.cover){delete x.img;COV[id]=f.coverData;covPut(id,f.coverData).catch(()=>{});}else{x.img=f.img;if(COV[id]){delete COV[id];covDel(id);}}}
+    else if(ed.old.cover){x.img=xo.img;}
     if(sel.tracks==="new"){if(f.newWorks)Object.assign(S.works,f.newWorks);["tr","discs","box"].forEach(k=>delete x[k]);if(f.discs&&f.discs.length>1){x.discs=JSON.parse(JSON.stringify(f.discs));x.box=true;}else x.tr=JSON.parse(JSON.stringify(f.discs?f.discs[0].tr:(f.tr||[])));attachWorks(x,old);}
-    save();render();if(after)after(true);else openDetail(id);};
-  draw();openSheet();$("sheet").scrollTop=0;}
+    else if(ed.old.tracks){const t=trArr(xo);if(x.discs&&x.discs[0])x.discs[0].tr=JSON.parse(JSON.stringify(t));else x.tr=JSON.parse(JSON.stringify(t));}
+    save();render();leave(true);};
+  draw();openSheet();backUi();$("sheet").scrollTop=0;}
 
 // ---------- Choisir la bonne édition (MusicBrainz + Discogs) ----------
 function openPicker(id){const x=byId(id),p=$("detail");if(!x)return;const {title,who}=enrichQuery(x);
@@ -2324,7 +2422,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.62.0";$("hVer").textContent="v"+APPV;
+const APPV="0.63.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2464,7 +2562,7 @@ async function fetchCodesAll(list){if(CB.run){CB.run=false;return;}const m=$("cb
     n++;if(n%10===0)save();}
   CB.run=false;try{CB.lock&&CB.lock.release();}catch(e){}$("cbGo").querySelector("b").textContent="Fetch likely barcodes now";
   logA("Likely barcodes fetched: "+f+" of "+n+" albums","","auto");save();render();
-  m.textContent=`Complete: ${f} likely barcode${f!==1?"s":""} added from ${n} albums queried. Remaining editions have no online barcode (common for older CDs); use the barcode button in the middle and choose “Link barcodes to my albums”.`;renderToolsCounts();toast(f+" likely barcodes added");}
+  m.textContent=`Complete: ${f} likely barcode${f!==1?"s":""} added from ${n} albums queried. Remaining editions have no online barcode (common for older CDs); use the barcode button in the middle, open “More options” and choose “Link barcodes in a row”.`;renderToolsCounts();toast(f+" likely barcodes added");}
 $("cbGo").onclick=()=>{if(CB.run){CB.run=false;return;}const t=cbTodo();if(!t.length){fetchCodesAll([]);return;}if(!navigator.onLine){$("cbMsg").textContent="No Internet connection.";return;}
   pickAlbums({op:"cb",cat:"Barcodes",title:"Fetch likely barcodes",list:t,go:"Start",intro:"Choose the albums whose likely barcode should be fetched from MusicBrainz or Discogs (about 1 second each; keep the app open). Likely barcodes are only suggestions: they are confirmed the first time you scan the real one."},l=>fetchCodesAll(l));};
 // ---------- Movements and pieces from MusicBrainz (for albums added before 0.51) ----------
