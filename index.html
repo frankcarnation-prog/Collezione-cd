@@ -429,6 +429,8 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 body.scanning{overflow:hidden}
 .srcbadge{font-size:.72rem;color:var(--muted)}
 .weblinks{display:flex;flex-wrap:wrap;gap:8px}.weblinks a{font-size:.9rem}
+.condRow{display:flex;flex-wrap:wrap;gap:8px 16px;margin:8px 0 4px;font-size:.9rem;color:var(--muted)}.condRow label{display:flex;flex-direction:column;gap:4px}
+.condRow select{max-width:100%;white-space:nowrap}.valIn{display:flex;align-items:center;gap:6px}.valIn input{width:96px;text-align:right}.valIn b{color:var(--ink);font-weight:400}
 .offers{margin:10px 0 0;font-size:.9rem;color:var(--muted)}.offer{display:flex;align-items:center;gap:8px;margin:6px 0}.offer a{color:var(--accent);font-weight:600;min-width:64px}
 .offer input{width:84px;flex:none;text-align:right}.offer .cur{color:var(--ink)}.offer small{flex:1;font-size:.78rem}.addof{display:flex;gap:8px;margin:8px 0 0}.addof input{flex:1;min-width:0}
 small.best{color:var(--wish);font-weight:600}
@@ -893,7 +895,7 @@ const verRows=vs=>vs.map(e=>`<li class="item tap" data-open="${e.x.id}"><img cla
 // Display title for a group: prefer one with a catalogue number, then a reasonably long one (not a bare "Symphony No. 5")
 function repScore(o){const t=(o&&o.t)||"";return (catKey(t)?1000:0)+Math.min(t.length,80)-(t.length>80?t.length-80:0);}
 function renderStats(){const cds=S.col.reduce((n,x)=>n+discsOf(x).length,0);
-  $("stats").textContent=S.col.length+" album"+(S.col.length!==1?"s":"")+(cds>S.col.length?" ("+cds+" CDs)":"")+" · "+S.wish.length+" on wishlist";
+  $("stats").textContent=S.col.length+" album"+(S.col.length!==1?"s":"")+(cds>S.col.length?" ("+cds+" CDs)":"")+" · "+S.wish.length+" on wishlist"+colValue();
   $("demoTag").hidden=!S.demo;}
 
 // ---------- Listes ----------
@@ -981,7 +983,7 @@ function render(){$("list").classList.remove("toolsMode");$("more").hidden=true;
   const total=rows.length;if(q)$("sortCount").textContent=total+" result"+(total!==1?"s":"");window.VISIDS=rows.map(r=>r[0].id);rows=rows.slice(0,LIMIT);
   $("more").hidden=total<=LIMIT;$("more").innerHTML=total>LIMIT?`<button type="button" id="moreBtn">Show more (${total-LIMIT} more)</button>`:"";
   ul.innerHTML=rows.length?rows.map(([x,k])=>{const c=CODE[x.id],cu=coverUrl(x);
-    return `<li class="item tap${SEL?(SEL.includes(x.id)?" picked":" pickable"):""}" data-open="${x.id}">${SEL?`<span class="chk" aria-hidden="true">${SEL.includes(x.id)?SEL.indexOf(x.id)+1:""}</span>`:""}${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${fmtLabel(x)?" · "+esc(fmtLabel(x)):""}${genreOf(x)&&genreOf(x)!=="Classical"?" · "+esc(genreOf(x)):""}${x.box?" · Box set "+discsOf(x).length+" CDs":" · "+tracksOf(x).length+" tracks"}</small>${k==="wish"&&bestOffer(x)?`<small class="best">From ${fmtPrice(bestOffer(x).p)} · ${esc(shopName(bestOffer(x).u))}</small>`:""}${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
+    return `<li class="item tap${SEL?(SEL.includes(x.id)?" picked":" pickable"):""}" data-open="${x.id}">${SEL?`<span class="chk" aria-hidden="true">${SEL.includes(x.id)?SEL.indexOf(x.id)+1:""}</span>`:""}${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${fmtLabel(x)?" · "+esc(fmtLabel(x)):""}${x.cond?" · "+esc(x.cond):""}${genreOf(x)&&genreOf(x)!=="Classical"?" · "+esc(genreOf(x)):""}${x.box?" · Box set "+discsOf(x).length+" CDs":" · "+tracksOf(x).length+" tracks"}</small>${k==="wish"&&bestOffer(x)?`<small class="best">From ${fmtPrice(bestOffer(x).p)} · ${esc(shopName(bestOffer(x).u))}</small>`:""}${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
     (k==="own"?(q?`<span class="chip own">Owned</span>`:""):`<button class="small" data-buy="${x.id}" type="button">Purchased</button><button class="small" data-del="${x.id}" type="button" aria-label="Remove from wishlist">✕</button>`)+`</li>`}).join("")
     :`<li class="empty">${q?"No matching album.":(tab==="col"?"Your collection is empty. Use SCAN to add your first album.":"Your wishlist is empty.")}</li>`;}
 // ---------- Format (CD, Vinyl…) ----------
@@ -1045,7 +1047,7 @@ function renderPerformers(){const by={};
   const list=Object.values(by).sort((a,b)=>perfSort(a.name).localeCompare(perfSort(b.name),"fr"));
   $("list").innerHTML=list.map(p=>fold("p:"+norm(p.name),lastFirst(p.name),p.items.length+" album"+(p.items.length!==1?"s":""),`<ul class="works">${p.items.map(({x,own})=>`<li class="item tap" data-open="${x.id}"><img class="cover" src="${coverUrl(x)}" alt="" onerror="this.style.visibility='hidden'"><div class="meta"><b>${esc(x.t)}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}</small></div><span class="chip ${own?"own":"wish"}">${own?"Owned":"Wishlist"}</span></li>`).join("")}</ul>`)).join("")
     ||`<li class="empty">No performers found yet. They come from classical albums (the “Performers” field of each entry).</li>`;}
-function buy(id){const i=S.wish.findIndex(x=>x.id===id);if(i<0)return;const x=S.wish[i];undoable("“"+x.t+"” moved to your collection");x.at=Date.now();S.col.push(S.wish.splice(i,1)[0]);save();render();}
+function buy(id){const i=S.wish.findIndex(x=>x.id===id);if(i<0)return;const x=S.wish[i];undoable("“"+x.t+"” moved to your collection");{const b=bestOffer(x);if(b&&!x.val)x.val=b.p;}x.at=Date.now();S.col.push(S.wish.splice(i,1)[0]);save();render();}
 // Ajout d'un disque : date d'ajout + annulation possible
 function addAlbum(n,wish,code){undoable("“"+n.t+"” added to "+(wish?"your wishlist":"your collection"));n.at=Date.now();(wish?S.wish:S.col).push(n);if(code&&!S.codes[code])S.codes[code]=n.id;}
 // ---------- Genres ----------
@@ -1512,6 +1514,17 @@ function openMerge(w){const W=WORKS(),o=W[w],V=versions(),gid=workId(w,W),comp=n
   $("mgQ").oninput=draw;draw();}
 // ---------- Wishlist: check prices in stores ----------
 // Opens the store's own search (barcode when the store finds products by barcode, otherwise artist + title). Store domain follows the device language.
+// ---------- Condition and value ----------
+// Goldmine scale, the one Discogs and most shops use. On a wish, the minimum condition accepted.
+const CONDS=[["M","Mint"],["NM","Near Mint"],["VG+","Very Good Plus"],["VG","Very Good"],["G+","Good Plus"],["G","Good"],["F","Fair"],["P","Poor"]];
+const priceIn=v=>String((+v).toFixed(2)).replace(".",(1.5).toLocaleString().charAt(1));
+function colValue(){let t=0,n=0;S.col.forEach(x=>{if(x.val>0){t+=x.val*(x.copies||1);n++;}});
+  return n?" · Value "+Math.round(t).toLocaleString()+" "+CURS+(n<S.col.length?" ("+n+" priced)":""):"";}
+function condValHtml(x,own){return `<div class="condRow"><label><span>${own?"Condition":"Minimum condition"}</span><select id="cond" aria-label="${own?"Condition":"Minimum condition"}"><option value="">Not set</option>${CONDS.map(([k,l])=>`<option value="${k}"${x.cond===k?" selected":""}>${l} (${k})</option>`).join("")}</select></label>
+  ${own?`<label><span>Value${(x.copies||1)>1?" (each)":""}</span><span class="valIn"><input id="val" type="text" inputmode="decimal" autocomplete="off" value="${x.val?priceIn(x.val):""}" placeholder="0,00"><b>${CURS}</b></span></label>`:""}</div>`;}
+function bindCond(x){const c=$("cond");if(c)c.onchange=()=>{if(c.value)x.cond=c.value;else delete x.cond;save();render();toast(c.value?"Condition: "+c.options[c.selectedIndex].text:"Condition cleared");};
+  const v=$("val");if(v)v.onchange=()=>{const n=parseFloat(v.value.replace(/\s/g,"").replace(",","."));if(isNaN(n)||n<=0){delete x.val;v.value="";}else{x.val=Math.round(n*100)/100;v.value=priceIn(x.val);}
+    save();render();renderStats();toast(x.val?"Value saved: "+fmtPrice(x.val):"Value cleared");};}
 let SHARE_LINK=""; // shop page the current search came from: saved on the wish it leads to
 const CURS=(()=>{const L=(navigator.language||"").toLowerCase();return /-gb$/.test(L)?"£":/-(us|ca|au)$/.test(L)||L==="en"?"$":/^ja/.test(L)?"¥":/-ch$/.test(L)?"CHF":"€";})();
 const fmtPrice=v=>Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+" "+CURS;
@@ -1579,7 +1592,7 @@ function openDetail(id){const x=byId(id);if(!x)return;CUR=()=>openDetail(id);con
    <div class="meta"><h2>${esc(x.t)}</h2><p class="by">${esc(x.a)}</p>
    ${x.perf&&norm(firstPerf(x.perf))!==norm(x.a)?`<p class="by">${esc(firstPerf(x.perf))}</p>`:""}<p class="facts">${fmtLabel(x)?`<span>${esc(fmtLabel(x))}</span>`:""}${x.box?`<span>Coffret ${discsOf(x).length} ${x.fmt==="Vinyl"?"discs":"CD"}</span>`:""}${x.l?`<span>${esc(x.l)}</span>`:""}${x.y?`<span>${esc(x.y)}</span>`:""}${x.g?`<span>${esc(x.g)}</span>`:""}</p>
    <div class="seg" role="group" aria-label="Status"><button type="button" data-st="own" aria-pressed="${own}">Owned</button><button type="button" data-st="wish" aria-pressed="${!own}">Wishlist</button></div>
-   ${own?`<div class="copiesRow"><span>Copies</span><button type="button" class="small" data-cp="-1" aria-label="One less">−</button><b>${x.copies||1}</b><button type="button" class="small" data-cp="1" aria-label="One more">+</button></div>`:storeLinks(x,id)}
+   ${own?`<div class="copiesRow"><span>Copies</span><button type="button" class="small" data-cp="-1" aria-label="One less">−</button><b>${x.copies||1}</b><button type="button" class="small" data-cp="1" aria-label="One more">+</button></div>`:""}${condValHtml(x,own)}${own?"":storeLinks(x,id)}
    ${(()=>{const cs=codesOf(id),ps=Object.keys(S.pcodes||{}).filter(k=>S.pcodes[k]===id);return cs.length||ps.length?`<p>${cs.map(k=>`<span class="code">${fmtEan(k)}</span>`).join(" ")}${ps.map(k=>`<span class="code prob" title="Likely barcode">${fmtEan(k)} ?</span>`).join(" ")}</p>`:"";})()}${x.cat?`<p class="hint">Catalog no.: ${esc(x.cat)}</p>`:""}${x.fd?`<p class="hint">${esc(x.fd)}</p>`:""}${x.note?`<p class="note">${esc(x.note)}</p>`:""}${x.at?`<p class="hint">Added on ${new Date(x.at).toLocaleDateString("en-GB")}</p>`:""}
    <div class="row acts"><button type="button" class="primary" id="detEdit">Edit</button><button type="button" id="coverBtn">${hasCover(x)?"Cover…":"Add a cover"}</button></div>
    <div class="photos" id="phRow">${(COV["ph:"+id]||[]).map((d,i)=>`<button type="button" class="ph" data-ph="${i}" aria-label="Photo ${i+1}"><img src="${d}" alt=""></button>`).join("")}<button type="button" class="ph add" id="phAdd" aria-label="Add a photo">＋<small>Photo</small></button></div>
@@ -1597,7 +1610,7 @@ function openDetail(id){const x=byId(id);if(!x)return;CUR=()=>openDetail(id);con
     <div class="mgrp"><span class="mlab">Delete</span><button type="button" class="setItem danger" id="detDel"><b>Move to trash</b><small>Recoverable from Tools → Trash</small></button></div>
    </details></div></div>${tracks}`;
   openSheet();
-  $("detEdit").onclick=()=>editTracks(id);if(!own)bindOffers(p,x,id);
+  $("detEdit").onclick=()=>editTracks(id);bindCond(x);if(!own)bindOffers(p,x,id);
   $("phAdd").onclick=async()=>{const r=await shoot("verso");if(!r)return;await phAdd(id,r.full);openDetail(id);};
   p.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>viewPhoto(id,+b.dataset.ph));$("pickEd").onclick=()=>openPicker(id);
   if($("okThis"))$("okThis").onclick=()=>{delete x.auto;x.enr="manual";logA("Cover confirmed: "+x.t,x.id);save();render();openDetail(id);};
@@ -2487,7 +2500,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.68.0";$("hVer").textContent="v"+APPV;
+const APPV="0.69.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
