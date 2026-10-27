@@ -541,6 +541,9 @@ small.best{color:var(--wish);font-weight:600}
 <button type="button" class="setItem" id="tbInv" hidden><b>Link barcodes to albums you already have</b><small id="tbInvN"></small></button>
 <button type="button" class="setItem" id="tbGroup"><b>Group into box sets</b><small id="tbGroupN">Automatic suggestions</small></button>
 </div></section>
+<section class="win" id="tw-val"><div class="wtitle">Value</div><div class="wbody">
+<button type="button" class="setItem" id="valGo"><b>Estimate values from Discogs</b><small id="valN">Price of each album on the Discogs marketplace</small></button><p class="hint" id="valMsg"></p>
+</div></section>
 <div hidden id="legacyTools"><section class="win" id="tw-cover"><div class="wtitle">Covers</div><div class="wbody"><section class="enr" id="enr"><button type="button" class="x2" id="enrX" aria-label="Hide">✕</button><p id="enrTxt"></p><button type="button" class="primary" id="enrGo">Start search</button></section><button type="button" class="setItem" id="gGo"><b>Classify genres</b><small>Automatic, via AI or Discogs</small></button><p class="hint" id="gMsg"></p>
 <button type="button" class="wide" id="seeNoGenre">Show albums without a genre</button>
 </div></section>
@@ -552,9 +555,6 @@ small.best{color:var(--wish);font-weight:600}
 <section class="win" id="tw-imp"><div class="wtitle">Details</div><div class="wbody">
 <button type="button" class="setItem" id="impDg"><b>Complete from Discogs</b><small id="impDgN">Track lists for imported albums with a Discogs ID</small></button><p class="hint" id="impDgMsg"></p>
 <button type="button" class="setItem" id="fmtGo"><b>Set the format</b><small id="fmtN">CD, vinyl, cassette…</small></button>
-</div></section>
-<section class="win" id="tw-val"><div class="wtitle">Value</div><div class="wbody">
-<button type="button" class="setItem" id="valGo"><b>Estimate values from Discogs</b><small id="valN">Price of each album on the Discogs marketplace</small></button><p class="hint" id="valMsg"></p>
 </div></section>
 <section class="win" id="tw-org"><div class="wtitle">Classical music</div><div class="wbody">
 <button type="button" class="setItem" id="mvGo"><b>Recognise movements and pieces</b><small id="mvN">Links each track to its MusicBrainz work</small></button><p class="hint" id="mvMsg"></p>
@@ -1535,7 +1535,7 @@ function estLine(x){const e=x.est;if(!e)return "";const d=new Date(e.at).toLocal
 function condValHtml(x,own){return `<div class="condRow"><label><span>${own?"Condition":"Minimum condition"}</span><select id="cond" aria-label="${own?"Condition":"Minimum condition"}"><option value="">Not set</option>${CONDS.map(([k,l])=>`<option value="${k}"${x.cond===k?" selected":""}>${l} (${k})</option>`).join("")}</select></label>
   ${own?`<label><span>Paid${(x.copies||1)>1?" (each)":""}</span><span class="valIn"><input id="paid" type="text" inputmode="decimal" autocomplete="off" value="${x.paid?priceIn(x.paid):""}" placeholder="0,00"><b>${CURS}</b></span></label>
   <label><span>Value${(x.copies||1)>1?" (each)":""}</span><span class="valIn"><input id="val" type="text" inputmode="decimal" autocomplete="off" value="${x.val?priceIn(x.val):""}" placeholder="${x.est&&x.est.p>0?priceIn(x.est.p):"0,00"}"><b>${CURS}</b></span></label>`:""}</div>
-  ${own?`<p class="hint estl">${estLine(x)||"Paid: what it cost you. Value: what it is worth today; leave empty to use the Discogs estimate (Tools → Value)."}</p>`:""}`;}
+  ${own?`<p class="hint estl">${estLine(x)||"Paid: what it cost you. Value: what it is worth today; leave empty to use the Discogs estimate (Tools → Value)."}</p>${valueLinks(x)}`:""}`;}
 function bindCond(x){const c=$("cond");if(c)c.onchange=()=>{if(c.value)x.cond=c.value;else delete x.cond;save();render();toast(c.value?"Condition: "+c.options[c.selectedIndex].text:"Condition cleared");};
   [["val","Value"],["paid","Price paid"]].forEach(([k,lab])=>{const v=$(k);if(v)v.onchange=()=>{const n=parseFloat(v.value.replace(/\s/g,"").replace(",","."));if(isNaN(n)||n<=0){delete x[k];v.value="";}else{x[k]=Math.round(n*100)/100;v.value=priceIn(x[k]);}
     save();render();renderStats();toast(x[k]?lab+" saved: "+fmtPrice(x[k]):lab+" cleared"+(k==="val"&&x.est&&x.est.p>0?" (Discogs estimate used)":""));};});}
@@ -1560,7 +1560,13 @@ function storeLinks(x,id){const L=(navigator.language||"en").toLowerCase(),c=L.s
   const a=(h,t)=>`<a href="${h}" target="_blank" rel="noopener">${t}</a>`;
   return offersHtml(x)+`<div class="prices"><span>Search the shops:</span><div class="weblinks">`+(mx?a("https://www.google.com/search?q="+E("site:momox-shop."+mx+" "+qt),"momox"):"")+
     a("https://www.amazon."+amz+"/s?k="+E(qe),"Amazon")+a("https://www.ebay."+eb+"/sch/i.html?_nkw="+E(qt),"eBay")+
-    a(x.dgid?"https://www.discogs.com/sell/release/"+x.dgid:"https://www.discogs.com/search/?q="+E(qt)+"&type=release","Discogs")+`</div></div>`;}
+    a(x.dgid?"https://www.discogs.com/sell/release/"+x.dgid:"https://www.discogs.com/search/?q="+E(qt)+"&type=release","Discogs")+`</div></div>`+valueLinks(x,id);}
+// Prices actually paid (eBay sold listings; Popsike for vinyl auctions): a check by hand, nothing is read automatically
+function valueLinks(x,id){const L=(navigator.language||"en").toLowerCase(),c=L.slice(0,2),E=encodeURIComponent;
+  const qt=((x.a&&x.a!=="Unknown artist"?x.a.split(/[;,]/)[0]+" ":"")+x.t.replace(/\s:\s/," ")).trim()+(x.fmt==="Vinyl"?" vinyl":x.fmt==="Cassette"?" cassette":" CD");
+  const eb={fr:"fr",de:"de",it:"it",es:"es",nl:"nl"}[c]||(L==="en-gb"?"co.uk":"com"),a=(h,t)=>`<a href="${h}" target="_blank" rel="noopener">${t}</a>`;
+  return `<div class="prices"><span>Prices actually paid:</span><div class="weblinks">`+a("https://www.ebay."+eb+"/sch/i.html?_nkw="+E(qt)+"&LH_Sold=1&LH_Complete=1","eBay sold")+
+    (x.dgid?a("https://www.discogs.com/sell/history/"+x.dgid,"Discogs sales history"):"")+(x.fmt==="Vinyl"?a("https://www.google.com/search?q="+E("site:popsike.com "+qt.replace(/ vinyl$/,"")),"Popsike"):"")+`</div></div>`;}
 // ---------- Shared from another app (Android share menu) ----------
 // A store page (momox, Amazon, eBay, Fnac…) shared to the app: use the barcode if the page address holds one, otherwise search the page title.
 function shareQuery(t){let s=String(t||"").replace(/https?:\/\/\S+/g," ").replace(/\s+/g," ").trim();
@@ -2518,7 +2524,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.71.0";$("hVer").textContent="v"+APPV;
+const APPV="0.72.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
