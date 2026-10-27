@@ -1561,10 +1561,10 @@ const money=v=>Math.round(v).toLocaleString()+" "+CURS;
 // how sure a value is: a value from Discogs is as sure as the edition it was taken from; a value you set from another source counts as sure
 const valQ=x=>x.valSrc==="Discogs"?(x.valQ!=null?x.valQ:certOf(x)):2;
 const QN={sure:2,likely:1,guess:0};
-function colValue(){let t=0,n=0,pd=0,w=0;S.col.forEach(x=>{const k=x.copies||1;if(x.val>0){t+=x.val*k;w+=x.val*k*valQ(x);n++;}if(x.paid>0)pd+=x.paid*k;});
-  if(!n)return pd?" · paid "+money(pd):"";
+function colValue(){let t=0,n=0,pd=0,w=0,np=0;S.col.forEach(x=>{const k=x.copies||1;if(x.val>0){t+=x.val*k;w+=x.val*k*valQ(x);n++;}if(x.paid>0){pd+=x.paid*k;np++;}});
+  if(!n)return pd?" · paid "+money(pd)+" ("+np+" album"+(np!==1?"s":"")+")":"";
   const sc=w/(2*t),c=sc>=.8?2:sc>=.5?1:0,tip=`Value certainty: ${CERT[c][0]} — ${Math.round(sc*100)}% (weighted by value: sure editions and your own figures count fully, unverified Discogs editions half, guessed ones not at all)`;
-  return ` · Value ≈ ${money(t)} <span class="cert c${c}" title="${esc(tip)}" aria-label="${esc(tip)}"></span>${n<S.col.length?" ("+n+" priced)":""}${pd?" · paid "+money(pd):""}`;}
+  return ` · Value ≈ ${money(t)} <span class="cert c${c}" title="${esc(tip)}" aria-label="${esc(tip)}"></span>${n<S.col.length?" ("+n+" priced)":""}${pd?" · paid "+money(pd)+" ("+np+" album"+(np!==1?"s":"")+")":""}`;}
 const dgAttr=x=>{const id=(x.est&&x.est.dg)||x.dgid;return `<a class="dgattr" href="https://www.discogs.com/${id?"release/"+id:""}" target="_blank" rel="noopener">Data provided by Discogs</a>`;};
 const canEst=x=>!!(x.dgid||x.mbid||codesOf(x.id).length||(x.est&&x.est.dg));
 function estLine(x){const e=x.est;
@@ -2582,7 +2582,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.79.5";$("hVer").textContent="v"+APPV;
+const APPV="0.79.6";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
