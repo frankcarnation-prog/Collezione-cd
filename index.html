@@ -518,7 +518,7 @@ small.best{color:var(--wish);font-weight:600}
 <div class="stick" id="stick">
   <label for="q">Collection lookup</label>
   <input id="q" type="search" placeholder="Artist, album, composer or performer" autocomplete="off">
-  <div class="sortbar" id="sortBar"><span id="sortCount"></span><button type="button" class="small" id="ncChip" hidden></button><button type="button" class="small" id="selBtn">Select</button><label for="sortSel">Sort</label><select id="genreSel" aria-label="Filter by genre"></select><select id="sortSel" aria-label="Sort order"><option value="recent">Date added (newest)</option><option value="artist">Artist (A–Z)</option><option value="title">Title (A–Z)</option><option value="year">Year (newest)</option><option value="value">Value (highest)</option><option value="paid">Price paid (highest)</option><option value="cert">Edition certainty (least sure first)</option><option value="certd">Edition certainty (most sure first)</option></select></div>
+  <div class="sortbar" id="sortBar"><span id="sortCount"></span><button type="button" class="small" id="ncChip" hidden></button><button type="button" class="small" id="selBtn">Select</button><label for="sortSel">Sort</label><select id="genreSel" aria-label="Filter by genre"></select><select id="sortSel" aria-label="Sort order"><option value="recent">Date added (newest)</option><option value="artist">Artist (A–Z)</option><option value="title">Title (A–Z)</option><option value="year">Year (newest)</option><option value="value">Value (highest)</option><option value="valuel">Value (lowest)</option><option value="paid">Price paid (highest)</option><option value="paidl">Price paid (lowest)</option><option value="cert">Edition certainty (least sure first)</option><option value="certd">Edition certainty (most sure first)</option></select></div>
 </div>
 
 
@@ -991,6 +991,7 @@ function render(){$("list").classList.remove("toolsMode");$("more").hidden=true;
     rows.forEach(([x])=>{AK.set(x,norm(x.a).replace(/^(the|les|le|la|l')\s+/,""));TK.set(x,norm(x.t));});const artKey=x=>AK.get(x),tk=x=>TK.get(x);
     const cmp={recent:(a,b)=>(b.at||0)-(a.at||0)||idx.get(b)-idx.get(a),artist:(a,b)=>artKey(a).localeCompare(artKey(b),"fr")||tk(a).localeCompare(tk(b),"fr"),
       title:(a,b)=>tk(a).localeCompare(tk(b),"fr",{numeric:true}),value:(a,b)=>moneyOf(b,"value")-moneyOf(a,"value")||artKey(a).localeCompare(artKey(b),"fr"),
+      valuel:(a,b)=>lowFirst(moneyOf(a,"value"),moneyOf(b,"value"))||artKey(a).localeCompare(artKey(b),"fr"),paidl:(a,b)=>lowFirst(moneyOf(a,"paid"),moneyOf(b,"paid"))||artKey(a).localeCompare(artKey(b),"fr"),
       paid:(a,b)=>moneyOf(b,"paid")-moneyOf(a,"paid")||artKey(a).localeCompare(artKey(b),"fr"),cert:(a,b)=>certOf(a)-certOf(b)||artKey(a).localeCompare(artKey(b),"fr"),certd:(a,b)=>certOf(b)-certOf(a)||artKey(a).localeCompare(artKey(b),"fr"),year:(a,b)=>(+b.y||0)-(+a.y||0)||artKey(a).localeCompare(artKey(b),"fr")}[by];
     rows.sort((r1,r2)=>cmp(r1[0],r2[0]));$("sortCount").textContent=rows.length+" album"+(rows.length!==1?"s":"");}
   const CODE={};for(const k in S.codes)if(!CODE[S.codes[k]])CODE[S.codes[k]]=k;
@@ -1553,6 +1554,7 @@ const estFresh=x=>!!(x.est&&x.est.p!=null&&!x.est.miss&&Date.now()-x.est.at<EST_
 function purgeEst(){let n=0;[...S.col,...S.wish].forEach(x=>{const e=x.est;if(e&&e.p!=null&&Date.now()-e.at>=EST_AGE){x.est={dg:e.dg,v:2,at:e.at,old:1};n++;}});return n;}
 const valOf=x=>x.val>0?x.val:(estFresh(x)&&x.est.p>0?x.est.p:0); // used for sorting only
 // amount used to sort: value (yours, else a fresh estimate; on a wish, the cheapest noted offer) or price paid
+const lowFirst=(a,b)=>(a>0?a:1e12)-(b>0?b:1e12); // lowest first, albums without a price last
 const moneyOf=(x,k)=>k==="paid"?(x.paid||0):(isWish(x.id)?((bestOffer(x)||{}).p||0):valOf(x));
 const money=v=>Math.round(v).toLocaleString()+" "+CURS;
 // header total: your own values only (Discogs prices cannot be kept)
@@ -2580,7 +2582,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.79.2";$("hVer").textContent="v"+APPV;
+const APPV="0.79.3";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
