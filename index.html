@@ -429,6 +429,9 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 body.scanning{overflow:hidden}
 .srcbadge{font-size:.72rem;color:var(--muted)}
 .weblinks{display:flex;flex-wrap:wrap;gap:8px}.weblinks a{font-size:.9rem}
+.offers{margin:10px 0 0;font-size:.9rem;color:var(--muted)}.offer{display:flex;align-items:center;gap:8px;margin:6px 0}.offer a{color:var(--accent);font-weight:600;min-width:64px}
+.offer input{width:84px;flex:none;text-align:right}.offer .cur{color:var(--ink)}.offer small{flex:1;font-size:.78rem}.addof{display:flex;gap:8px;margin:8px 0 0}.addof input{flex:1;min-width:0}
+small.best{color:var(--wish);font-weight:600}
 .prices{margin:10px 0 4px;font-size:.9rem;color:var(--muted)}.prices .weblinks{margin-top:6px;gap:6px 16px}.prices a{color:var(--accent);font-weight:600}
 /* Track editor: one row per track */
 .tehead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
@@ -492,7 +495,7 @@ body.scanning{overflow:hidden}
   <div class="camwrap" id="camWrap" hidden><video id="cam" playsinline muted></video></div>
   <p class="hint" id="camMsg"></p>
   <label for="ean">Or type the barcode</label>
-  <input id="ean" class="ean" type="text" inputmode="numeric" enterkeyhint="search" autocomplete="off" placeholder="0 28947 79123 4">
+  <input id="ean" class="ean" type="text" inputmode="numeric" enterkeyhint="search" autocomplete="off" placeholder="Barcode or shop link">
   <p class="hint" id="eanMsg">Checked automatically once all digits are entered (12 or 13).</p>
   <details class="scanmore" id="scanMore"><summary>No barcode? More options</summary>
     <button type="button" id="photoRead">Read the cover from a photo</button>
@@ -978,7 +981,7 @@ function render(){$("list").classList.remove("toolsMode");$("more").hidden=true;
   const total=rows.length;if(q)$("sortCount").textContent=total+" result"+(total!==1?"s":"");window.VISIDS=rows.map(r=>r[0].id);rows=rows.slice(0,LIMIT);
   $("more").hidden=total<=LIMIT;$("more").innerHTML=total>LIMIT?`<button type="button" id="moreBtn">Show more (${total-LIMIT} more)</button>`:"";
   ul.innerHTML=rows.length?rows.map(([x,k])=>{const c=CODE[x.id],cu=coverUrl(x);
-    return `<li class="item tap${SEL?(SEL.includes(x.id)?" picked":" pickable"):""}" data-open="${x.id}">${SEL?`<span class="chk" aria-hidden="true">${SEL.includes(x.id)?SEL.indexOf(x.id)+1:""}</span>`:""}${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${fmtLabel(x)?" · "+esc(fmtLabel(x)):""}${genreOf(x)&&genreOf(x)!=="Classical"?" · "+esc(genreOf(x)):""}${x.box?" · Box set "+discsOf(x).length+" CDs":" · "+tracksOf(x).length+" tracks"}</small>${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
+    return `<li class="item tap${SEL?(SEL.includes(x.id)?" picked":" pickable"):""}" data-open="${x.id}">${SEL?`<span class="chk" aria-hidden="true">${SEL.includes(x.id)?SEL.indexOf(x.id)+1:""}</span>`:""}${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${fmtLabel(x)?" · "+esc(fmtLabel(x)):""}${genreOf(x)&&genreOf(x)!=="Classical"?" · "+esc(genreOf(x)):""}${x.box?" · Box set "+discsOf(x).length+" CDs":" · "+tracksOf(x).length+" tracks"}</small>${k==="wish"&&bestOffer(x)?`<small class="best">From ${fmtPrice(bestOffer(x).p)} · ${esc(shopName(bestOffer(x).u))}</small>`:""}${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
     (k==="own"?(q?`<span class="chip own">Owned</span>`:""):`<button class="small" data-buy="${x.id}" type="button">Purchased</button><button class="small" data-del="${x.id}" type="button" aria-label="Remove from wishlist">✕</button>`)+`</li>`}).join("")
     :`<li class="empty">${q?"No matching album.":(tab==="col"?"Your collection is empty. Use SCAN to add your first album.":"Your wishlist is empty.")}</li>`;}
 // ---------- Format (CD, Vinyl…) ----------
@@ -1158,12 +1161,12 @@ $("demoCodes").onclick=e=>{const b=e.target.closest("[data-code]");if(b){stopCam
 var scanOpen=false;
 function openScan(opt){opt=opt||{};const fresh=!scanOpen;
   if(fresh){scanOpen=true;$("scanOv").hidden=false;document.body.classList.add("scanning");history.pushState({scan:1},"");$("scanPanel").scrollTop=0;}
-  if(opt.reset!==false&&fresh){SBACK=[];$("eanResult").innerHTML="";$("ean").value="";$("eanMsg").className="hint";$("eanMsg").textContent=EAN_HINT;$("scanMore").open=false;demoButtons();}
+  if(opt.reset!==false&&fresh){SBACK=[];SHARE_LINK="";$("eanResult").innerHTML="";$("ean").value="";$("eanMsg").className="hint";$("eanMsg").textContent=EAN_HINT;$("scanMore").open=false;demoButtons();}
   if(opt.cam!==false&&!stream)startCam();}
 function closeScan(fromPop){if(!scanOpen)return;scanOpen=false;stopCam();stopInventory();$("scanOv").hidden=true;document.body.classList.remove("scanning");if(!fromPop){IGNPOP++;history.back();}}
 $("scanBtn").onclick=()=>openScan();
 $("scanX").onclick=()=>closeScan();
-const EAN_HINT="Checked automatically once all digits are entered (12 or 13).";
+const EAN_HINT="Type the barcode (checked once all digits are entered), or paste a link from an online shop (momox, Amazon, eBay…).";
 // Saisie manuelle : vérification automatique dès que le code est complet (pas de bouton « Check »)
 const notCode=v=>/https?:\/\/|www\.|[a-z]{3}/i.test(v);
 function eanToSearch(){const raw=$("ean").value.trim();$("ean").value="";$("eanMsg").className="hint";$("eanMsg").textContent=EAN_HINT;stopCam();handleShare("",raw,"");}
@@ -1192,7 +1195,7 @@ async function check(){if(notCode($("ean").value)){eanToSearch();return;}
       <div class="row"><button class="primary" type="button" id="pcYes">Confirm</button><button type="button" id="pcSee">View entry</button></div>${nextBtn()}`;
     $("pcSee").onclick=()=>openDetail(px.id);$("pcYes").onclick=()=>{undoable("Barcode linked to “"+px.t+"”");S.codes[c]=px.id;delete S.pcodes[c];save();render();check();};return;}
   if(x){const own=!isWish(x.id);
-    out.innerHTML=`<div class="verdict ${own?"own":"wish"}"><strong>${own?"Already in your collection":"Already on your wishlist"}</strong><span>${esc(x.t)} · ${esc(x.a)}</span></div><div class="row"><button type="button" id="seeIt">View entry</button>${own?"":`<button class="primary" id="buyNow" type="button">Mark as purchased</button>`}</div>${nextBtn()}`;
+    out.innerHTML=`<div class="verdict ${own?"own":"wish"}"><strong>${own?"Already in your collection":"Already on your wishlist"}</strong><span>${esc(x.t)} · ${esc(x.a)}</span></div><div class="row"><button type="button" id="seeIt">View entry</button>${own?"":`<button class="primary" id="buyNow" type="button">Mark as purchased</button>`}</div>${!own&&addShop(x)?`<p class="hint">Shop link saved on this entry. Open the entry to note the price.</p>`:""}${nextBtn()}`;
     $("seeIt").onclick=()=>openDetail(x.id);if(!own)$("buyNow").onclick=()=>{buy(x.id);check();};return;}
   let f=S.demo?CAT.find(x=>x.ean===c):null,src="demo catalog",err=null;
   if(!f&&LOOK[c]){f=LOOK[c].f;src=LOOK[c].src;}
@@ -1225,12 +1228,15 @@ function showFound(out,f,src,c){const box=discsOf(f).length>1,dup=sameDisc(f),ow
   if(dup){
     out.innerHTML=(badCode
       ?`<div class="verdict warn"><strong>Similar album, different barcode</strong><span>${esc(dup.t)} · ${esc(dup.a)}${isWish(dup.id)?" (wishlist)":""}</span><small>Your entry is linked to ${dCodes.map(fmtEan).join(", ")}, the scanned code is ${fmtEan(c)}. It is probably another edition. Compare before linking.</small></div>`
-      :`<div class="verdict own"><strong>Already in your collection?</strong><span>${esc(dup.t)} · ${esc(dup.a)}${isWish(dup.id)?" (wishlist)":""}</span><small>A matching album was found. Compare the details to link ${c?"this barcode":"it"} to your entry.</small></div>`)+card+works+
+      :`<div class="verdict own"><strong>${isWish(dup.id)?"Already on your wishlist?":"Already in your collection?"}</strong><span>${esc(dup.t)} · ${esc(dup.a)}${isWish(dup.id)?" (wishlist)":""}</span><small>A matching album was found. Compare the details to link ${c?"this barcode":"it"} to your entry.</small></div>`)+card+works+
       `<div class="row"><button class="primary" id="addRep" type="button">Compare and link to my entry</button></div>
-       <div class="row"><button id="addCol" type="button">Not the same: add as new</button><button id="addCopy" type="button">Another copy</button></div>
+       ${isWish(dup.id)?"":`<div class="row"><button id="addCopy" type="button">Another copy of my entry</button></div>`}
+       <p class="ask">Not the same album?</p>
+       <div class="row"><button id="addCol" type="button">Add to collection</button><button id="addWishD" type="button">Add to wishlist</button></div>
        <button type="button" class="linkbtn" id="addOther">Link to another album of my collection…</button>`;
+    $("addWishD").onclick=()=>add(true);
     $("addRep").onclick=()=>compareLink(out,dup,f,src,c);
-    $("addCopy").onclick=()=>{undoable("2nd copy of “"+dup.t+"”");dup.copies=(dup.copies||1)+1;if(c&&!S.codes[c])S.codes[c]=dup.id;save();render();
+    if($("addCopy"))$("addCopy").onclick=()=>{undoable("2nd copy of “"+dup.t+"”");dup.copies=(dup.copies||1)+1;if(c&&!S.codes[c])S.codes[c]=dup.id;save();render();
       out.innerHTML=`<div class="verdict own"><strong>Copy no. ${dup.copies} saved</strong><span>${esc(dup.t)} · ${esc(dup.a)}</span></div>${nextBtn()}`;};}
   else{
     out.innerHTML=`<div class="verdict wish"><strong>Not in your collection</strong><span>Found on ${esc(src)}${c?" · "+fmtEan(c):""}</span></div>`+card+works+
@@ -1240,12 +1246,12 @@ function showFound(out,f,src,c){const box=discsOf(f).length>1,dup=sameDisc(f),ow
     out.querySelectorAll("[data-sg]").forEach(b=>b.onclick=()=>{const x=byId(b.dataset.sg);if(x)scanStep(()=>showFound(out,f,src,c),()=>compareLink(out,x,f,src,c));});
     $("addWish").onclick=()=>add(true);}
   $("addOther").onclick=()=>scanStep(()=>showFound(out,f,src,c),()=>linkPicker(out,f,src,c));
-  const add=w=>{const n=pick(f);delete n.newWorks;addAlbum(n,w,c);if(f.newWorks)Object.assign(S.works,f.newWorks);attachWorks(n,null);save();render();SBACK=[];
+  const add=w=>{const n=pick(f);delete n.newWorks;addAlbum(n,w,c);if(w)addShop(n);else SHARE_LINK="";if(f.newWorks)Object.assign(S.works,f.newWorks);attachWorks(n,null);save();render();SBACK=[];
     out.innerHTML=`<div class="verdict ${w?"wish":"own"}"><strong>${w?"Added to your wishlist":"Added to your collection"}</strong><span>${esc(n.t)} · ${esc(n.a)}</span></div><div class="row"><button type="button" id="seeNew">View entry</button>${nextBtn()}</div>`;
     $("seeNew").onclick=()=>openDetail(n.id);};
   $("addCol").onclick=()=>add(false);}
 // Comparer la fiche trouvée avec un album de la collection, puis lier le code-barres
-function compareLink(out,x,f,src,c){openCompare(x,f,src,ok=>{closeSheet();if(!ok)return;if(c){S.codes[c]=x.id;if(S.pcodes)delete S.pcodes[c];}save();render();SBACK=[];
+function compareLink(out,x,f,src,c){openCompare(x,f,src,ok=>{closeSheet();if(!ok)return;addShop(x);if(c){S.codes[c]=x.id;if(S.pcodes)delete S.pcodes[c];}save();render();SBACK=[];
   out.innerHTML=`<div class="verdict own"><strong>Entry updated${c?" and barcode linked":""}</strong><span>${esc(x.t)} · ${esc(x.a)}</span>${c?`<small>${fmtEan(c)} will now be recognized offline.</small>`:""}</div><div class="row"><button type="button" id="seeNew">View entry</button>${nextBtn()}</div>`;$("seeNew").onclick=()=>openDetail(x.id);});}
 // Choisir l'album de la collection auquel associer le code (avec ou sans fiche trouvée en ligne)
 function linkPicker(out,f,src,c){
@@ -1470,7 +1476,7 @@ $("catGo").onclick=async()=>{stopCam();const q=$("catno").value.trim(),out=$("ea
   if(!res.length){out.innerHTML=`<div class="verdict wish"><strong>No results</strong><span>Nothing found on MusicBrainz${dgKey()?" or Discogs":""} for “${esc(q)}”.</span></div>${errH}${web}`;return;}
   const showList=()=>{out.innerHTML=`<p class="hint">${res.length} result${res.length!==1?"s":""}. Select the correct one:</p>${errH}`+res.map((r,i)=>`<button type="button" class="pick" data-i="${i}">${r.img?`<img src="${esc(r.img)}" alt="" onerror="this.style.visibility='hidden'">`:""}<span><b>${esc(r.t)}</b><br><small>${esc(r.sub)}</small><br><small class="srcbadge">${r.src}</small></span></button>`).join("")+web;
   out.querySelectorAll(".pick").forEach(btn=>btn.onclick=async()=>{const r=res[+btn.dataset.i];out.innerHTML=`<p class="hint">Loading…</p>`;
-    try{const code=r.code&&(r.code.length===13||r.code.length===12)?r.code:"";const id=code&&S.codes[code];if(id&&byId(id)){openDetail(id);out.innerHTML="";return;}
+    try{const code=r.code&&(r.code.length===13||r.code.length===12)?r.code:"";const id=code&&S.codes[code];if(id&&byId(id)){addShop(byId(id));openDetail(id);out.innerHTML="";return;}
       let f;if(r.src==="Discogs")f=await dgRelease(r.id);else{f=await mbRelease(r.id);if(f.img&&!(await imgOk(f.img)))f.img="";}
       scanStep(showList,()=>showFound(out,f,r.src,code));}catch(e){out.innerHTML=`<p class="hint err">Loading failed: ${esc(e.message)}</p>`;}});};showList();};
 $("catno").addEventListener("keydown",e=>{if(e.key==="Enter")$("catGo").click();});
@@ -1506,11 +1512,26 @@ function openMerge(w){const W=WORKS(),o=W[w],V=versions(),gid=workId(w,W),comp=n
   $("mgQ").oninput=draw;draw();}
 // ---------- Wishlist: check prices in stores ----------
 // Opens the store's own search (barcode when the store finds products by barcode, otherwise artist + title). Store domain follows the device language.
+let SHARE_LINK=""; // shop page the current search came from: saved on the wish it leads to
+const CURS=(()=>{const L=(navigator.language||"").toLowerCase();return /-gb$/.test(L)?"£":/-(us|ca|au)$/.test(L)||L==="en"?"$":/^ja/.test(L)?"¥":/-ch$/.test(L)?"CHF":"€";})();
+const fmtPrice=v=>Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+" "+CURS;
+function shopName(u){try{const h=new URL(u).hostname.replace(/^www\./,""),m=h.match(/momox|amazon|ebay|discogs|fnac|cultura|rakuten|vinted|leboncoin|jpc|presto|hmv|bol|cdon/i);
+  return m?({momox:"momox",amazon:"Amazon",ebay:"eBay",discogs:"Discogs",fnac:"Fnac",cultura:"Cultura",rakuten:"Rakuten",vinted:"Vinted",leboncoin:"leboncoin",jpc:"jpc",presto:"Presto",hmv:"HMV",bol:"bol",cdon:"CDON"})[m[0].toLowerCase()]:(h.split(".").slice(-2)[0]||h);}catch(e){return "Shop";}}
+function addShop(x,u){u=u||SHARE_LINK;SHARE_LINK="";if(!x||!u||!isWish(x.id))return false;x.shops=x.shops||[];if(!x.shops.some(o=>o.u===u)){x.shops.push({u,at:Date.now()});save();}return true;}
+const bestOffer=x=>(x.shops||[]).filter(o=>o.p>0).sort((a,b)=>a.p-b.p)[0];
+function offersHtml(x){const sv=(x.shops||[]).map((o,i)=>`<div class="offer"><a href="${esc(o.u)}" target="_blank" rel="noopener">${esc(shopName(o.u))}</a><input type="text" inputmode="decimal" data-of="${i}" placeholder="Price" value="${o.p?String(o.p.toFixed(2)).replace(".",(1.5).toLocaleString().charAt(1)):""}" aria-label="Price at ${esc(shopName(o.u))}"><span class="cur">${CURS}</span><small>${o.pd?"noted "+new Date(o.pd).toLocaleDateString():""}</small><button type="button" class="small" data-ofx="${i}" aria-label="Remove this shop link">✕</button></div>`).join("");
+  return `<div class="offers">${sv?`<span>Your shop links (open one to check the price, then note it):</span>${sv}`:""}<div class="addof"><input id="ofNew" type="url" autocomplete="off" placeholder="Paste a shop link to keep it here" aria-label="Shop link"><button type="button" class="small" id="ofAdd">Save</button></div></div>`;}
+function bindOffers(p,x,id){p.querySelectorAll("[data-of]").forEach(inp=>inp.onchange=()=>{const o=x.shops[+inp.dataset.of],v=parseFloat(inp.value.replace(/\s/g,"").replace(",","."));
+    if(isNaN(v)||v<=0){delete o.p;delete o.pd;inp.value="";}else{o.p=Math.round(v*100)/100;o.pd=Date.now();inp.value=fmtPrice(o.p).replace(" "+CURS,"");}save();render();const sm=inp.parentNode.querySelector("small");if(sm)sm.textContent=o.pd?"noted "+new Date(o.pd).toLocaleDateString():"";
+    toast(o.p?"Price saved: "+fmtPrice(o.p)+" at "+shopName(o.u):"Price removed");});
+  p.querySelectorAll("[data-ofx]").forEach(b=>b.onclick=()=>{const o=x.shops.splice(+b.dataset.ofx,1)[0];save();render();openDetail(id);toast("Shop link removed ("+shopName(o.u)+")");});
+  const a=p.querySelector("#ofAdd");if(a)a.onclick=()=>{const u=(p.querySelector("#ofNew").value.match(/https?:\/\/\S+/)||[])[0];
+    if(!u){toast("Paste a full link, starting with http");return;}addShop(x,u);render();openDetail(id);toast("Shop link saved ("+shopName(u)+")");};}
 function storeLinks(x,id){const L=(navigator.language||"en").toLowerCase(),c=L.slice(0,2),code=codesOf(id)[0]||"";
   const qt=((x.a&&x.a!=="Unknown artist"?x.a.split(/[;,]/)[0]+" ":"")+x.t.replace(/\s:\s/," ")).trim(),qe=code||qt,E=encodeURIComponent;
   const amz={fr:"fr",de:"de",it:"it",es:"es",nl:"nl",ja:"co.jp"}[c]||(L==="en-gb"?"co.uk":"com"),eb={fr:"fr",de:"de",it:"it",es:"es",nl:"nl"}[c]||(L==="en-gb"?"co.uk":"com"),mx={fr:"fr",de:"de"}[c];
   const a=(h,t)=>`<a href="${h}" target="_blank" rel="noopener">${t}</a>`;
-  return `<div class="prices"><span>Check prices:</span><div class="weblinks">`+(mx?a("https://www.google.com/search?q="+E("site:momox-shop."+mx+" "+qt),"momox"):"")+
+  return offersHtml(x)+`<div class="prices"><span>Search the shops:</span><div class="weblinks">`+(mx?a("https://www.google.com/search?q="+E("site:momox-shop."+mx+" "+qt),"momox"):"")+
     a("https://www.amazon."+amz+"/s?k="+E(qe),"Amazon")+a("https://www.ebay."+eb+"/sch/i.html?_nkw="+E(qt),"eBay")+
     a(x.dgid?"https://www.discogs.com/sell/release/"+x.dgid:"https://www.discogs.com/search/?q="+E(qt)+"&type=release","Discogs")+`</div></div>`;}
 // ---------- Shared from another app (Android share menu) ----------
@@ -1535,7 +1556,7 @@ function handleShare(title,text,url){const all=[url,text,title].filter(Boolean).
   if(isLink(all)){importLink(all);return;}
   const link=url||((text||"").match(/https?:\/\/\S+/)||[""])[0];let path="";try{path=decodeURIComponent(new URL(link).pathname);}catch(e){}
   const asin=asinOf(link);const ean=(path.match(/\d{12,}/g)||[]).map(r=>{for(const n of [13,12])for(let i=0;i+n<=r.length;i++){const c=r.substr(i,n);if(validEan(c))return c;}return "";}).find(Boolean),q=shareQuery(title&&!/^https?:/i.test(title)?title:text)||slugQuery(link)||asin;
-  openScan({cam:false});stopCam();$("scanMore").open=true;$("catno").value=q;
+  openScan({cam:false});stopCam();SHARE_LINK=/^https?:/i.test(link)&&!isLink(link)?link:"";$("scanMore").open=true;$("catno").value=q;
   if(ean){$("ean").value=ean;check();return;}
   if(q){SHARE_ASIN=asin;$("catGo").click();return;}
   $("eanResult").innerHTML=`<p class="hint err">No barcode in this link and no title to search. Paste the product title with the link, or type the artist and title above, then Search.</p>`;}
@@ -1576,7 +1597,7 @@ function openDetail(id){const x=byId(id);if(!x)return;CUR=()=>openDetail(id);con
     <div class="mgrp"><span class="mlab">Delete</span><button type="button" class="setItem danger" id="detDel"><b>Move to trash</b><small>Recoverable from Tools → Trash</small></button></div>
    </details></div></div>${tracks}`;
   openSheet();
-  $("detEdit").onclick=()=>editTracks(id);
+  $("detEdit").onclick=()=>editTracks(id);if(!own)bindOffers(p,x,id);
   $("phAdd").onclick=async()=>{const r=await shoot("verso");if(!r)return;await phAdd(id,r.full);openDetail(id);};
   p.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>viewPhoto(id,+b.dataset.ph));$("pickEd").onclick=()=>openPicker(id);
   if($("okThis"))$("okThis").onclick=()=>{delete x.auto;x.enr="manual";logA("Cover confirmed: "+x.t,x.id);save();render();openDetail(id);};
@@ -2466,7 +2487,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.67.0";$("hVer").textContent="v"+APPV;
+const APPV="0.68.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
