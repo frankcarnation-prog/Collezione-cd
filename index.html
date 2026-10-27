@@ -429,6 +429,7 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 body.scanning{overflow:hidden}
 .srcbadge{font-size:.72rem;color:var(--muted)}
 .weblinks{display:flex;flex-wrap:wrap;gap:8px}.weblinks a{font-size:.9rem}
+.prices{margin:10px 0 4px;font-size:.9rem;color:var(--muted)}.prices .weblinks{margin-top:6px;gap:6px 16px}.prices a{color:var(--accent);font-weight:600}
 /* Track editor: one row per track */
 .tehead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .tehead .seg{margin:0}
@@ -1498,6 +1499,35 @@ function openMerge(w){const W=WORKS(),o=W[w],V=versions(),gid=workId(w,W),comp=n
   const draw=()=>{const q=norm($("mgQ").value);$("mgL").innerHTML=opts.filter(e=>!q||norm(wLabel(e.t)).includes(q)).map(e=>`<li class="item tap" data-t="${esc(e.t)}"><div class="meta"><b>${esc(wLabel(e.t))}</b><small>${e.n} version${e.n!==1?"s":""}</small></div></li>`).join("")||`<li class="empty">No other work by this composer.</li>`;
     $("mgL").querySelectorAll("[data-t]").forEach(n=>n.onclick=()=>{S.wl=S.wl||{};S.wl[w]=n.dataset.t;if(S.wsp)delete S.wsp[w];save();toast("Works merged");render();goBack();});};
   $("mgQ").oninput=draw;draw();}
+// ---------- Wishlist: check prices in stores ----------
+// Opens the store's own search (barcode when the store finds products by barcode, otherwise artist + title). Store domain follows the device language.
+function storeLinks(x,id){const L=(navigator.language||"en").toLowerCase(),c=L.slice(0,2),code=codesOf(id)[0]||"";
+  const qt=((x.a&&x.a!=="Unknown artist"?x.a.split(/[;,]/)[0]+" ":"")+x.t.replace(/\s:\s/," ")).trim(),qe=code||qt,E=encodeURIComponent;
+  const amz={fr:"fr",de:"de",it:"it",es:"es",nl:"nl",ja:"co.jp"}[c]||(L==="en-gb"?"co.uk":"com"),eb={fr:"fr",de:"de",it:"it",es:"es",nl:"nl"}[c]||(L==="en-gb"?"co.uk":"com"),mx={fr:"fr",de:"de"}[c];
+  const a=(h,t)=>`<a href="${h}" target="_blank" rel="noopener">${t}</a>`;
+  return `<div class="prices"><span>Check prices:</span><div class="weblinks">`+(mx?a("https://www.google.com/search?q="+E("site:momox-shop."+mx+" "+qt),"momox"):"")+
+    a("https://www.amazon."+amz+"/s?k="+E(qe),"Amazon")+a("https://www.ebay."+eb+"/sch/i.html?_nkw="+E(qt),"eBay")+
+    a(x.dgid?"https://www.discogs.com/sell/release/"+x.dgid:"https://www.discogs.com/search/?q="+E(qt)+"&type=release","Discogs")+`</div></div>`;}
+// ---------- Shared from another app (Android share menu) ----------
+// A store page (momox, Amazon, eBay, Fnac…) shared to the app: use the barcode if the page address holds one, otherwise search the page title.
+function shareQuery(t){let s=String(t||"").replace(/https?:\/\/\S+/g," ").replace(/\s+/g," ").trim();
+  s=s.split(/\s[|•]\s/)[0]
+    .replace(/^(check out|look at|découvrez|decouvrez|regarde|schau dir|guarda)[^:]*:\s*/i,"")
+    .replace(/^[^:]{0,40}\b(amazon|ebay|momox|fnac|cultura|rakuten)\b[^:]*:\s*/i,"")
+    .replace(/\s*[:|–—-]\s*(amazon|ebay|momox|fnac|cultura|rakuten)\b.*$/i,"")
+    .replace(/\s(zustand|état|etat|condition|stato)\b.*$/i,"")
+    .replace(/\b(cds?|musique|music|musik|musica)\s*(et|and|&|und|e|y)\s*vinyl\w*/gi," ")
+    .replace(/\b(audio cd|cd|vinyl|vinyle|lp|cassette|import|neuf|occasion|gebraucht|usato)\b/gi," ")
+    .replace(/\s(von|par|by)\s/gi," ").replace(/[()\[\]{}"«»]/g," ").replace(/\s+/g," ").replace(/^[\s:,–-]+|[\s:,–-]+$/g,"");
+  return s.slice(0,120);}
+function handleShare(title,text,url){const all=[url,text,title].filter(Boolean).join(" ");
+  if(isLink(all)){importLink(all);return;}
+  const link=url||((text||"").match(/https?:\/\/\S+/)||[""])[0];let path="";try{path=decodeURIComponent(new URL(link).pathname);}catch(e){}
+  const ean=(path.match(/\d{12,}/g)||[]).map(r=>{for(const n of [13,12])for(let i=0;i+n<=r.length;i++){const c=r.substr(i,n);if(validEan(c))return c;}return "";}).find(Boolean),q=shareQuery(title&&!/^https?:/i.test(title)?title:text);
+  openScan({cam:false});stopCam();$("scanMore").open=true;$("catno").value=q;
+  if(ean){$("ean").value=ean;check();return;}
+  if(q){$("catGo").click();return;}
+  $("eanResult").innerHTML=`<p class="hint err">The shared page has no title or barcode the app can read. Type the artist and title above, then Search.</p>`;}
 function openDetail(id){const x=byId(id);if(!x)return;CUR=()=>openDetail(id);const p=$("detail"),cu=coverUrl(x),own=!isWish(id),c=codeOf(id),W=WORKS(),V=versions(),cls=isClassical(x,W);
   const multi=discsOf(x).length>1;
   let num=0;
@@ -1517,7 +1547,7 @@ function openDetail(id){const x=byId(id);if(!x)return;CUR=()=>openDetail(id);con
    <div class="meta"><h2>${esc(x.t)}</h2><p class="by">${esc(x.a)}</p>
    ${x.perf&&norm(firstPerf(x.perf))!==norm(x.a)?`<p class="by">${esc(firstPerf(x.perf))}</p>`:""}<p class="facts">${fmtLabel(x)?`<span>${esc(fmtLabel(x))}</span>`:""}${x.box?`<span>Coffret ${discsOf(x).length} ${x.fmt==="Vinyl"?"discs":"CD"}</span>`:""}${x.l?`<span>${esc(x.l)}</span>`:""}${x.y?`<span>${esc(x.y)}</span>`:""}${x.g?`<span>${esc(x.g)}</span>`:""}</p>
    <div class="seg" role="group" aria-label="Status"><button type="button" data-st="own" aria-pressed="${own}">Owned</button><button type="button" data-st="wish" aria-pressed="${!own}">Wishlist</button></div>
-   ${own?`<div class="copiesRow"><span>Copies</span><button type="button" class="small" data-cp="-1" aria-label="One less">−</button><b>${x.copies||1}</b><button type="button" class="small" data-cp="1" aria-label="One more">+</button></div>`:""}
+   ${own?`<div class="copiesRow"><span>Copies</span><button type="button" class="small" data-cp="-1" aria-label="One less">−</button><b>${x.copies||1}</b><button type="button" class="small" data-cp="1" aria-label="One more">+</button></div>`:storeLinks(x,id)}
    ${(()=>{const cs=codesOf(id),ps=Object.keys(S.pcodes||{}).filter(k=>S.pcodes[k]===id);return cs.length||ps.length?`<p>${cs.map(k=>`<span class="code">${fmtEan(k)}</span>`).join(" ")}${ps.map(k=>`<span class="code prob" title="Likely barcode">${fmtEan(k)} ?</span>`).join(" ")}</p>`:"";})()}${x.cat?`<p class="hint">Catalog no.: ${esc(x.cat)}</p>`:""}${x.fd?`<p class="hint">${esc(x.fd)}</p>`:""}${x.note?`<p class="note">${esc(x.note)}</p>`:""}${x.at?`<p class="hint">Added on ${new Date(x.at).toLocaleDateString("en-GB")}</p>`:""}
    <div class="row acts"><button type="button" class="primary" id="detEdit">Edit</button><button type="button" id="coverBtn">${hasCover(x)?"Cover…":"Add a cover"}</button></div>
    <div class="photos" id="phRow">${(COV["ph:"+id]||[]).map((d,i)=>`<button type="button" class="ph" data-ph="${i}" aria-label="Photo ${i+1}"><img src="${d}" alt=""></button>`).join("")}<button type="button" class="ph add" id="phAdd" aria-label="Add a photo">＋<small>Photo</small></button></div>
@@ -2425,7 +2455,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.64.0";$("hVer").textContent="v"+APPV;
+const APPV="0.65.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2668,8 +2698,8 @@ if(DEMO.works)Object.values(DEMO.works).forEach(o=>{if(o.c)o.c=canonC(o.c);});
 $("sheetX").onclick=()=>closeSheet();$("sheetBack").onclick=goBack;
 $("overlay").addEventListener("click",e=>{if(e.target.id==="overlay")closeSheet();});
 renderStats();render();trashUi();
-(()=>{const u=new URL(location.href);if(u.searchParams.has("share")){const s=[u.searchParams.get("url"),u.searchParams.get("text"),u.searchParams.get("title")].filter(Boolean).join(" ");
-  history.replaceState(null,"",location.pathname);if(isLink(s))setTimeout(()=>importLink(s),300);else setTimeout(()=>toast("The shared content has no Discogs or MusicBrainz link."),300);}})();
+(()=>{const u=new URL(location.href),g=k=>u.searchParams.get(k)||"";if(["share","title","text","url"].some(k=>u.searchParams.has(k))){const t=g("title"),x=g("text"),l=g("url");
+  history.replaceState(null,"",location.pathname);setTimeout(()=>handleShare(t,x,l),300);}})();
 covAll().then(o=>{Object.assign(COV,o);render();enrUi();});
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
