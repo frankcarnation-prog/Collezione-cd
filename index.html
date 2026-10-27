@@ -429,7 +429,8 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 body.scanning{overflow:hidden}
 .srcbadge{font-size:.72rem;color:var(--muted)}
 .weblinks{display:flex;flex-wrap:wrap;gap:8px}.weblinks a{font-size:.9rem}
-.estl{margin:4px 0 6px}.lowc{color:var(--wish);font-weight:600}.pkSide{display:flex;flex-direction:column;align-items:flex-end;margin:0 8px;white-space:nowrap;font-size:.9rem}.pkSide small{font-size:.75rem;color:var(--muted)}.pkSide small.lowc{color:var(--wish)}#pkSort{max-width:190px}.estp{font-weight:700;color:var(--ink)}.estl button{margin-left:6px}.dgattr{color:var(--accent);font-size:.82rem}
+.estl{margin:4px 0 6px}.lowc{color:var(--wish);font-weight:600}.disclaim{font-size:.82rem;color:var(--muted);border-left:3px solid var(--wish);padding:6px 10px;margin:8px 0;background:var(--wish-bg)}
+.pkConf{display:flex;gap:8px;align-items:flex-start;margin:10px 0;font-size:.9rem}.pkConf input{margin-top:3px}.disc1{font-size:.75rem;color:var(--muted)}.pkSide{display:flex;flex-direction:column;align-items:flex-end;margin:0 8px;white-space:nowrap;font-size:.9rem}.pkSide small{font-size:.75rem;color:var(--muted)}.pkSide small.lowc{color:var(--wish)}#pkSort{max-width:190px}.estp{font-weight:700;color:var(--ink)}.estl button{margin-left:6px}.dgattr{color:var(--accent);font-size:.82rem}
 .money{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:6px 0;font-size:.9rem;color:var(--muted)}.money .mlab{min-width:58px;text-transform:uppercase;font-size:.75rem;letter-spacing:.06em}
 .money select{flex:1 1 140px;min-width:0;max-width:220px}.money .srcO{flex:1 1 120px;min-width:0}.mdate{font-size:.75rem}.condRow{display:flex;flex-wrap:wrap;gap:8px 16px;margin:8px 0 4px;font-size:.9rem;color:var(--muted)}.condRow label{display:flex;flex-direction:column;gap:4px}
 .condRow select{max-width:100%;white-space:nowrap}.valIn{display:flex;align-items:center;gap:6px}.valIn input{width:96px;text-align:right}.valIn b{color:var(--ink);font-weight:400}
@@ -1546,7 +1547,7 @@ const canEst=x=>!!(x.dgid||x.mbid||codesOf(x.id).length||(x.est&&x.est.dg));
 function estLine(x){const e=x.est;
   if(e&&e.miss)return `Discogs: ${e.fmt?"no "+esc(wantFmt(x)||"")+" edition":"edition not found"} (checked ${new Date(e.at).toLocaleDateString()}).`;
   if(estFresh(x)){const t=new Date(e.at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
-    return e.p>0?`Discogs estimate: <span class="estp">${fmtPrice(e.p)}</span> — ${e.k==="sugg"?"suggested price for "+esc(e.c):"lowest of "+e.n+" for sale"} (at ${t}).${e.k!=="sugg"&&e.n<3?` <span class="lowc">Few copies for sale: check that the Discogs edition is yours.</span>`:""} ${dgAttr(x)}${x.val===e.p?"":` <button type="button" class="small" id="useEst">Use as my value</button>`}`
+    return e.p>0?`Discogs estimate: <span class="estp">${fmtPrice(e.p)}</span> — ${e.k==="sugg"?"suggested price for "+esc(e.c):"lowest of "+e.n+" for sale"} (at ${t}, ${Q_LAB[e.q]||Q_LAB.likely}).${e.k!=="sugg"&&e.n<3?` <span class="lowc">Few copies for sale: check that the Discogs edition is yours.</span>`:""} ${dgAttr(x)}${x.val===e.p?"":` <button type="button" class="small" id="useEst">Use as my value</button><br><small class="disc1">Indicative asking price, not guaranteed; keeping it is your choice and it will not update.</small>`}`
       :`Discogs: no copy for sale right now (at ${t}). ${dgAttr(x)}`;}
   return canEst(x)?`<button type="button" class="small" id="refEst">Get the current Discogs price</button>`:"";}
 // where a price comes from, typed by the user
@@ -2241,8 +2242,9 @@ function pickAlbums(o,cb){if(o.sorts)o.list.sort(o.sorts[o.sortI||0][1]);const s
     p.innerHTML=`<p class="cat">${esc(o.cat||"Automatic operation")}</p><h2 class="wh">${esc(o.title)}</h2><p>${o.intro||""}</p>${typeof o.extra==="function"?o.extra():(o.extra||"")}
      <div class="pickBar"><span id="pkN"></span>${o.sorts?`<select id="pkSort" aria-label="Sort">${o.sorts.map((z,i)=>`<option value="${i}"${i===(o.sortI||0)?" selected":""}>${z[0]}</option>`).join("")}</select>`:""}<span class="pkB"><button type="button" class="small" id="pkAll">Select all</button><button type="button" class="small" id="pkNone">Select none</button></span></div>
      <ul class="list pick">${o.list.map(x=>{const cu=coverUrl(x),n=discsOf(x).length;return `<li class="item"><label class="pk"><input type="checkbox" data-pk="${esc(x.id)}"${sel.has(x.id)?" checked":""}>${cu?`<img class="cover" src="${cu}" alt="" onerror="this.remove()">`:`<span class="disc"></span>`}<span class="meta"><b>${esc(x.t)}</b><small>${esc([x.a,x.y,x.l,o.sub?o.sub(x):""].filter(Boolean).join(" · "))}${n>1?" · "+n+" CDs":tracksOf(x).length?" · "+tracksOf(x).length+" tracks":""}</small></span></label>${o.side?`<span class="pkSide">${o.side(x)}</span>`:""}<button type="button" class="small pkOpen" data-open="${esc(x.id)}" aria-label="Open ${esc(x.t)}">›</button></li>`;}).join("")}</ul>
-     <div class="pair pickAct"><button type="button" class="primary" id="pkGo"></button><button type="button" id="pkNo">Cancel</button></div>`;
-    const upd=()=>{$("pkN").textContent=sel.size+" of "+o.list.length+" selected";$("pkGo").textContent=(o.go||"Start")+" ("+sel.size+")";$("pkGo").disabled=!sel.size;};
+     ${o.confirm?`<label class="pkConf"><input type="checkbox" id="pkConf"${o.confirmed?" checked":""}> ${esc(o.confirm)}</label>`:""}<div class="pair pickAct"><button type="button" class="primary" id="pkGo"></button><button type="button" id="pkNo">Cancel</button></div>`;
+    const upd=()=>{$("pkN").textContent=sel.size+" of "+o.list.length+" selected";$("pkGo").textContent=(o.go||"Start")+" ("+sel.size+")";$("pkGo").disabled=!sel.size||(o.confirm&&!$("pkConf").checked);};
+    if(o.confirm)$("pkConf").onchange=()=>{o.confirmed=$("pkConf").checked;upd();};
     p.querySelectorAll("[data-pk]").forEach(c=>c.onchange=()=>{c.checked?sel.add(c.dataset.pk):sel.delete(c.dataset.pk);upd();});
     $("pkAll").onclick=()=>{o.list.forEach(x=>sel.add(x.id));draw();};$("pkNone").onclick=()=>{sel.clear();draw();};
     $("pkNo").onclick=()=>closeSheet();
@@ -2556,7 +2558,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.75.0";$("hVer").textContent="v"+APPV;
+const APPV="0.76.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2778,46 +2780,68 @@ function wantFmt(x){if(x.fmt)return x.fmt;const c={};let n=0;S.col.forEach(y=>{i
 const fmtOk=(want,fmts)=>!want||!fmts.length||fmts.some(f=>want==="CD"?/\bCD|SACD|CDr\b/i.test(f):want==="Vinyl"?/vinyl|\bLP\b|12"|7"|10"/i.test(f):want==="Cassette"?/cass/i.test(f):true); // albums with your own value are not asked
 function valUi(){const n=valTodo().length,b=$("valN");if(!b||VAL.run)return;b.textContent=n?`${n} album${n!==1?"s":""} without a value of yours`:"Every album has a value or a current estimate";
   const k=keepTodo().length,kb=$("valKeepN");if(kb)kb.textContent=k?`${k} current estimate${k!==1?"s":""} (valid until 6 h after the estimate) can become your values`:"No current estimate to keep (they are shown for 6 hours)";$("valKeep").hidden=!k;}
+const BCS={},bcSearch=c=>BCS[c]||(BCS[c]=dgSearch({barcode:c}).catch(e=>{delete BCS[c];throw e;})); // one Discogs barcode search per code and session
 async function dgIdFor(x){if(x.dgid)return x.dgid;
   if(x.mbid){try{const r=await mbGet("release/"+x.mbid+"?inc=url-rels");const u=(r.relations||[]).map(l=>l.url&&l.url.resource||"").find(u=>/discogs\.com\/release\/\d+/.test(u));
     if(u){x.dgid=+u.match(/release\/(\d+)/)[1];return x.dgid;}}catch(e){}}
-  const code=codesOf(x.id)[0];if(code&&dgKey()){const rs=await dgSearch({barcode:code});if(rs.length===1||(rs[0]&&rs.every(r=>r.master_id&&r.master_id===rs[0].master_id))){x.dgid=rs[0].id;return x.dgid;}}
+  const code=codesOf(x.id)[0];if(code&&dgKey()){const rs=await bcSearch(code);if(rs.length===1||(rs[0]&&rs.every(r=>r.master_id&&r.master_id===rs[0].master_id))){x.dgid=rs[0].id;return x.dgid;}}
   return 0;}
-async function estimateOne(x){const want=wantFmt(x);let id=await dgIdFor(x);if(!id){x.est={miss:1,v:2,at:Date.now()};return "miss";}
-  let rel=await dgGet("releases/"+id,{curr_abbr:curCode()});const fm=r=>(r.formats||[]).map(f=>[f.name,...(f.descriptions||[])].join(" "));
-  // your barcode is not on this Discogs edition: it is another pressing (often a pricier one) — take the edition carrying your barcode
-  {const code=codesOf(x.id)[0],bc=(rel.identifiers||[]).filter(i=>/barcode/i.test(i.type)).map(i=>String(i.value||"").replace(/\D/g,"")).filter(Boolean);
-    if(code&&dgKey()&&!bc.some(v=>v===code||v.endsWith(code)||code.endsWith(v))){const rs=await dgSearch({barcode:code}),r=rs.find(r=>fmtOk(want,r.format||[]));
-      if(r&&r.id!==id){id=r.id;rel=await dgGet("releases/"+id,{curr_abbr:curCode()});}}}
-  if(!fmtOk(want,fm(rel))){id=0;const code=codesOf(x.id)[0];
-    if(dgKey()){const {title,who}=enrichQuery(x);const rs=code?await dgSearch({barcode:code}):await dgSearch({release_title:title,artist:who[0]||"",format:want==="Vinyl"?"Vinyl":want});
-      const r=rs.find(r=>fmtOk(want,r.format||[]));if(r){id=r.id;rel=await dgGet("releases/"+id,{curr_abbr:curCode()});}}
+// Edition confidence: "sure" = your barcode is printed on the Discogs edition; "likely" = edition linked to your entry
+// (Discogs or MusicBrainz) but not checkable by barcode; "guess" = found by artist + title.
+const Q_LAB={sure:"barcode match",likely:"edition not verified",guess:"edition guessed"};
+async function estimateOne(x,mode){const want=wantFmt(x),code=codesOf(x.id)[0];
+  if(mode==="safe"&&!code)return "skip"; // no barcode: no way to be sure, no request made
+  let id=await dgIdFor(x),q="likely";
+  if(!id&&mode!=="safe"){x.est={miss:1,v:2,at:Date.now()};return "miss";}
+  const bcOf=r=>(r.identifiers||[]).filter(i=>/barcode/i.test(i.type)).map(i=>String(i.value||"").replace(/\D/g,"")).filter(Boolean),
+    hasCode=r=>bcOf(r).some(v=>v===code||v.endsWith(code)||code.endsWith(v)),fm=r=>(r.formats||[]).map(f=>[f.name,...(f.descriptions||[])].join(" "));
+  let rel=id?await dgGet("releases/"+id,{curr_abbr:curCode()}):null;
+  if(code&&rel&&hasCode(rel))q="sure";
+  else if(code&&dgKey()){ // your barcode is not on this edition (or no edition yet): take the edition carrying it
+    const rs=await bcSearch(code),r=rs.find(r=>fmtOk(want,r.format||[]));
+    if(r){if(r.id!==id){id=r.id;rel=await dgGet("releases/"+id,{curr_abbr:curCode()});}q=hasCode(rel)?"sure":"likely";}}
+  if(mode==="safe"&&q!=="sure")return "unsure"; // nothing stored: a broad run can still try it later
+  if(!rel){x.est={miss:1,v:2,at:Date.now()};return "miss";}
+  if(!fmtOk(want,fm(rel))){id=0;
+    if(dgKey()){const {title,who}=enrichQuery(x);const rs=await dgSearch({release_title:title,artist:who[0]||"",format:want==="Vinyl"?"Vinyl":want});
+      const r=rs.find(r=>fmtOk(want,r.format||[]));if(r){id=r.id;rel=await dgGet("releases/"+id,{curr_abbr:curCode()});q="guess";}}
     if(!id){x.est={miss:1,fmt:1,v:2,at:Date.now()};return "fmt";}}
   let sg=null;
   if(dgKey()&&x.cond&&localStorage.getItem("dg-sugg")!=="no"){try{const o=await dgGet("marketplace/price_suggestions/"+id);const k=Object.keys(o||{}).find(k=>k.includes("("+x.cond+")")||k.includes("("+x.cond+" "));if(k&&o[k].value>0)sg={p:Math.round(o[k].value*100)/100,c:k};}
     catch(e){if(/40[34]/.test(e.message))try{localStorage.setItem("dg-sugg","no");}catch(_){}}}  // suggestions need Discogs seller settings: asked once, then skipped
-  if(sg){x.est={p:sg.p,k:"sugg",c:sg.c,dg:id,v:2,at:Date.now()};return "ok";}
-  const lp=rel.lowest_price;x.est={p:lp>0?Math.round(lp*100)/100:0,k:"low",n:rel.num_for_sale||0,dg:id,v:2,at:Date.now()};return x.est.p?"ok":"none";}
-async function estimateValues(list){const m=t=>{$("valMsg").textContent=t;};
+  if(sg){x.est={p:sg.p,k:"sugg",c:sg.c,dg:id,q,v:2,at:Date.now()};return "ok";}
+  const lp=rel.lowest_price;x.est={p:lp>0?Math.round(lp*100)/100:0,k:"low",n:rel.num_for_sale||0,dg:id,q,v:2,at:Date.now()};return x.est.p?"ok":"none";}
+// Choice of scope before the album list
+function valMode(todo){const p=$("detail"),sure=todo.filter(x=>codesOf(x.id).length);CUR=()=>valMode(todo);
+  p.innerHTML=`<p class="cat">Value</p><h2 class="wh">Estimate values</h2><p>Which albums should be priced on the Discogs marketplace?</p>
+   <button type="button" class="setItem" id="vmSafe"><b>Sure editions only (${sure.length})</b><small>Albums with a barcode, priced only when Discogs has the edition carrying that barcode. Fewer albums, reliable prices, fewer requests.</small></button>
+   <button type="button" class="setItem" id="vmAll"><b>All albums (${todo.length})</b><small>Also albums without a barcode or whose edition cannot be verified. More albums priced, some on another edition: each estimate shows how sure it is.</small></button>
+   <p class="hint">Albums to which you gave a value yourself are never priced.</p>`;
+  const go=(mode,l)=>{closeSheet();setTimeout(()=>pickAlbums({op:"val",cat:"Value",title:mode==="safe"?"Estimate values — sure editions":"Estimate values — all albums",list:l,go:"Start",
+    intro:`Choose the albums to price${dgKey()?"":" (without a Discogs token, only albums already linked to Discogs or MusicBrainz can be priced, and more slowly)"}. Count about ${Math.max(1,Math.round(l.length*(dgKey()?2.3:4)/60))} min for ${l.length} albums; the app must stay open. Unchecked albums stay unchecked next time.`},sel=>estimateValues(sel,mode)),350);};
+  $("vmSafe").onclick=()=>{if(!sure.length){toast("No album with a barcode to price");return;}go("safe",sure);};$("vmAll").onclick=()=>go("all",todo);openSheet();$("sheet").scrollTop=0;}
+async function estimateValues(list,mode){const m=t=>{$("valMsg").textContent=t;};
   if(VAL.run){VAL.stop=true;m("Stopping after the current album…");return;}
   if(!navigator.onLine){m("No Internet connection.");return;}
   const todo=valTodo();if(!todo.length){m("Nothing to estimate: every album has a value of yours or a current estimate.");return;}
-  if(!Array.isArray(list)){pickAlbums({op:"val",cat:"Value",title:"Estimate values",list:todo,go:"Start",intro:`Choose the albums to price on the Discogs marketplace${dgKey()?"":" (without a Discogs token, only albums already linked to Discogs or MusicBrainz can be priced, and more slowly)"}. Albums to which you gave a value yourself are left out. Count about ${Math.max(1,Math.round(todo.length*(dgKey()?2.3:4)/60))} min for ${todo.length} albums; the app must stay open. Unchecked albums stay unchecked next time.`},l=>estimateValues(l));return;}
-  VAL.run=true;VAL.stop=false;$("valGo").querySelector("b").textContent="Stop the estimate";let done=0;const r={ok:0,none:0,miss:0,fmt:0,err:0};
-  for(const x of list){if(VAL.stop)break;$("valN").textContent=`${done}/${list.length} · ${r.ok} priced${r.none?" · "+r.none+" not for sale":""}${r.miss+r.fmt?" · "+(r.miss+r.fmt)+" not found":""} · ${x.t}`;
-    try{r[await estimateOne(x)]++;}catch(e){r.err++;if(/rate limit/i.test(e.message)){m("Discogs asks to slow down: pausing 60 s…");await sleep(60000);}}
+  if(!Array.isArray(list)){valMode(todo);return;}
+  VAL.run=true;VAL.stop=false;$("valGo").querySelector("b").textContent="Stop the estimate";let done=0;const r={ok:0,none:0,miss:0,fmt:0,skip:0,unsure:0,err:0};
+  for(const x of list){if(VAL.stop)break;$("valN").textContent=`${done}/${list.length} · ${r.ok} priced${r.none?" · "+r.none+" not for sale":""}${r.miss+r.fmt+r.unsure?" · "+(r.miss+r.fmt+r.unsure)+" not found":""} · ${x.t}`;
+    try{r[await estimateOne(x,mode)]++;}catch(e){r.err++;if(/rate limit/i.test(e.message)){m("Discogs asks to slow down: pausing 60 s…");await sleep(60000);}}
     done++;if(done%10===0){save();renderStats();}}
   VAL.run=false;$("valGo").querySelector("b").textContent="Estimate values from Discogs";save();render();renderStats();valUi();
-  const msg=`${r.ok} album${r.ok!==1?"s":""} priced · ${r.none} with no copy for sale · ${r.miss} not found on Discogs${r.fmt?" · "+r.fmt+" whose "+"format (CD, vinyl…) has no edition on Discogs":""}${r.err?" · "+r.err+" failed (retry later)":""}${VAL.stop?" · stopped at "+done+"/"+list.length:""}.`;m(msg);
+  const qs=list.filter(x=>estFresh(x)&&x.est.p>0),qn=k=>qs.filter(x=>x.est.q===k).length;
+  const msg=`${r.ok} album${r.ok!==1?"s":""} priced${r.ok?` (${qn("sure")} barcode match, ${qn("likely")} not verified, ${qn("guess")} guessed)`:""} · ${r.none} with no copy for sale · ${r.miss} not found on Discogs${r.unsure?" · "+r.unsure+" whose barcode is on no Discogs edition (left out)":""}${r.fmt?" · "+r.fmt+" whose format (CD, vinyl…) has no edition on Discogs":""}${r.err?" · "+r.err+" failed (retry later)":""}${VAL.stop?" · stopped at "+done+"/"+list.length:""}.`;m(msg);
   report(r.err&&!r.ok?"err":"ok",VAL.stop?"Estimate stopped":"Values estimated",msg,[],"The estimate is the Discogs suggested price for the album's condition when your Discogs seller settings allow it, otherwise the lowest price currently asked (any condition, shipping not included). It is an indication, not a sale price. Discogs allows showing it for 6 hours only: to keep it, use “Keep estimates as my values” (Tools → Value), or “Use as my value” on an entry. Data provided by Discogs.");}
 $("valGo").onclick=()=>estimateValues();
 const keepTodo=()=>S.col.filter(x=>!(x.val>0)&&estFresh(x)&&x.est.p>0);
 $("valKeep").onclick=()=>{const l=keepTodo();if(!l.length){valUi();return;}
-  const ep=x=>x.est.p,few=x=>x.est.k!=="sugg"&&x.est.n<3;
-  pickAlbums({op:"valkeep",cat:"Value",title:"Keep estimates as my values",list:l,go:"Keep",skipMemo:true,pre:x=>!few(x),
-    intro:"Check each estimate before keeping it: the checked ones become your own value (source: Discogs, today’s date) and will not update by themselves. Albums with fewer than 3 copies for sale are unchecked: one isolated offer is often far from the real value — open them (›) to check the edition. Albums that already have a value of yours are not listed.",
-    side:x=>`<b>${fmtPrice(ep(x))}</b><small class="${few(x)?"lowc":""}">${x.est.k==="sugg"?"suggested":x.est.n+" for sale"}</small>`,
-    sorts:[["Price: highest first",(a,b)=>ep(b)-ep(a)],["Price: lowest first",(a,b)=>ep(a)-ep(b)],["Fewest copies for sale first",(a,b)=>(a.est.n||0)-(b.est.n||0)||ep(b)-ep(a)],["Title (A–Z)",(a,b)=>a.t.localeCompare(b.t)]]},
+  const ep=x=>x.est.p,few=x=>x.est.k!=="sugg"&&x.est.n<3,sure=x=>x.est.q==="sure";
+  pickAlbums({op:"valkeep",cat:"Value",title:"Keep estimates as my values",list:l,go:"Keep",skipMemo:true,pre:x=>!few(x)&&sure(x),
+    confirm:"I have read this notice: the values I keep are my own choice.",extra:`<p class="disclaim">Discogs estimates are indicative only. They reflect asking prices on the Discogs marketplace at the time of the estimate, for the edition the app matched, which may differ from yours. Prices change constantly. Album Ledger does not guarantee their accuracy, never updates a kept value, and cannot be held responsible for any decision (buying, selling, insuring…) based on it. Keeping an estimate is your own choice: it is recorded as your value, which you can change at any time.</p>`,
+    intro:"Check each estimate before keeping it: the checked ones become your own value (source: Discogs, today’s date) and will not update by themselves. Only estimates on an edition confirmed by your barcode, with at least 3 copies for sale, are checked: open the others (›) to check the edition before keeping them. Albums that already have a value of yours are not listed.",
+    side:x=>`<b>${fmtPrice(ep(x))}</b><small class="${few(x)?"lowc":""}">${x.est.k==="sugg"?"suggested":x.est.n+" for sale"}</small><small class="${sure(x)?"":"lowc"}">${Q_LAB[x.est.q]||Q_LAB.likely}</small>`,
+    sorts:[["Price: highest first",(a,b)=>ep(b)-ep(a)],["Price: lowest first",(a,b)=>ep(a)-ep(b)],["Least sure first",(a,b)=>"sure likely guess".indexOf(b.est.q||"likely")-"sure likely guess".indexOf(a.est.q||"likely")||ep(b)-ep(a)],["Fewest copies for sale first",(a,b)=>(a.est.n||0)-(b.est.n||0)||ep(b)-ep(a)],["Title (A–Z)",(a,b)=>a.t.localeCompare(b.t)]]},
     sel=>{undoable("Discogs estimates kept as values");sel.forEach(x=>{x.val=x.est.p;x.valSrc="Discogs";x.valAt=Date.now();});save();render();renderStats();valUi();
       report("ok","Values saved",`${sel.length} album${sel.length!==1?"s":""} now have a value of yours (source: Discogs).`,sel.map(x=>({id:x.id,t:x.t+" — "+fmtPrice(x.val)})));});};
 setInterval(()=>{if(purgeEst()){save();renderStats();}},10*60e3);
