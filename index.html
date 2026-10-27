@@ -496,7 +496,7 @@ body.scanning{overflow:hidden}
   <p class="hint" id="eanMsg">Checked automatically once all digits are entered (12 or 13).</p>
   <details class="scanmore" id="scanMore"><summary>No barcode? More options</summary>
     <button type="button" id="photoRead">Read the cover from a photo</button>
-    <div class="row catrow"><input id="catno" type="text" autocomplete="off" spellcheck="false" placeholder="Catalog no., title or link" aria-label="Search by catalog number, artist and title, or link"><button type="button" id="catGo">Search</button></div>
+    <div class="row catrow"><input id="catno" type="text" autocomplete="off" spellcheck="false" placeholder="Catalog no., title or store link" aria-label="Search by catalog number, artist and title, or link"><button type="button" id="catGo">Search</button></div>
   </details>
   <div id="demoCodes"></div>
   </div>
@@ -1448,6 +1448,7 @@ async function dgRelease(id){const d=await dgGet("releases/"+id);
   if(ks.length>1){a.discs=ks.map(k=>({tr:discs[k]}));a.box=true;}else a.tr=ks.length?discs[ks[0]]:[];
   return a;}
 $("catGo").onclick=async()=>{stopCam();const q=$("catno").value.trim(),out=$("eanResult");cur="";if(isLink(q)){importLink(q);return;}
+  if(/https?:\/\/\S/i.test(q)){handleShare("",q,"");return;} // a store link (momox, Amazon…), possibly with its title
   if(!q){out.innerHTML=`<p class="hint err">Enter a catalog number (printed on the spine or back), or an artist and a title.</p>`;return;}
   const web=`<p class="hint">Not found? Search the web, then paste the Discogs or MusicBrainz page link here.</p><div class="weblinks"><a href="https://www.google.com/search?q=${encodeURIComponent(q+" CD")}" target="_blank" rel="noopener">Google</a><a href="https://www.discogs.com/search/?q=${encodeURIComponent(q)}&type=release" target="_blank" rel="noopener">Discogs</a><a href="https://musicbrainz.org/search?query=${encodeURIComponent(q)}&type=release" target="_blank" rel="noopener">MusicBrainz</a></div>`;
   if(!navigator.onLine){out.innerHTML=`<p class="hint err">No Internet connection: the search could not be run.</p>`;return;}
@@ -1527,7 +1528,7 @@ function handleShare(title,text,url){const all=[url,text,title].filter(Boolean).
   openScan({cam:false});stopCam();$("scanMore").open=true;$("catno").value=q;
   if(ean){$("ean").value=ean;check();return;}
   if(q){$("catGo").click();return;}
-  $("eanResult").innerHTML=`<p class="hint err">The shared page has no title or barcode the app can read. Type the artist and title above, then Search.</p>`;}
+  $("eanResult").innerHTML=`<p class="hint err">No barcode in this link and no title to search. Paste the product title with the link, or type the artist and title above, then Search.</p>`;}
 function openDetail(id){const x=byId(id);if(!x)return;CUR=()=>openDetail(id);const p=$("detail"),cu=coverUrl(x),own=!isWish(id),c=codeOf(id),W=WORKS(),V=versions(),cls=isClassical(x,W);
   const multi=discsOf(x).length>1;
   let num=0;
@@ -2455,7 +2456,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.65.0";$("hVer").textContent="v"+APPV;
+const APPV="0.66.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
