@@ -496,7 +496,6 @@ body.scanning{overflow:hidden}
   <details class="scanmore" id="scanMore"><summary>No barcode? More options</summary>
     <button type="button" id="photoRead">Read the cover from a photo</button>
     <div class="row catrow"><input id="catno" type="text" autocomplete="off" spellcheck="false" placeholder="Catalog no., title or link" aria-label="Search by catalog number, artist and title, or link"><button type="button" id="catGo">Search</button></div>
-    <div class="seg" id="scanMode" role="group" aria-label="Scan mode"><button type="button" data-sm="add" aria-pressed="true">One album</button><button type="button" data-sm="inv" aria-pressed="false">Link barcodes in a row</button></div>
   </details>
   <div id="demoCodes"></div>
   </div>
@@ -533,6 +532,7 @@ body.scanning{overflow:hidden}
 </div></section>
 <section class="win" id="tw-alb"><div class="wtitle">Add and organise</div><div class="wbody">
 <button type="button" class="setItem" id="impGo"><b>Import a collection</b><small>CSV (Discogs, CLZ…), Excel or a pasted list</small></button>
+<button type="button" class="setItem" id="tbInv" hidden><b>Link barcodes to albums you already have</b><small id="tbInvN"></small></button>
 <button type="button" class="setItem" id="tbGroup"><b>Group into box sets</b><small id="tbGroupN">Automatic suggestions</small></button>
 </div></section>
 <div hidden id="legacyTools"><section class="win" id="tw-cover"><div class="wtitle">Covers</div><div class="wbody"><section class="enr" id="enr"><button type="button" class="x2" id="enrX" aria-label="Hide">✕</button><p id="enrTxt"></p><button type="button" class="primary" id="enrGo">Start search</button></section><button type="button" class="setItem" id="gGo"><b>Classify genres</b><small>Automatic, via AI or Discogs</small></button><p class="hint" id="gMsg"></p>
@@ -1218,6 +1218,7 @@ function showFound(out,f,src,c){const box=discsOf(f).length>1,dup=sameDisc(f),ow
   const dCodes=dup?Object.keys(S.codes).filter(k=>S.codes[k]===dup.id):[],badCode=!!(dup&&c&&dCodes.length&&!dCodes.includes(c));
   const card=`<div class="found"><img src="${coverUrl(f)}" alt="" onerror="this.style.visibility='hidden'"><div class="meta"><b>${esc(f.t)}</b><small>${esc(f.a)}${f.l?" · "+esc(f.l):""}${f.cat?" · "+esc(f.cat):""}${f.y?" · "+f.y:""} · ${box?discsOf(f).length+" CDs · ":""}${tracksOf(f).length} tracks</small><small class="srcbadge">${esc(src)}</small></div></div>`;
   const works=ow.length?`<div class="already"><strong>Works you already have:</strong><ul>${ow.slice(0,6).map(o=>`<li>${esc(o.t)}${o.c?" <small>("+esc(o.c)+")</small>":""} — ${o.own?o.own+" version"+(o.own!==1?"s":""):""}${o.own&&o.wish?", ":""}${o.wish?o.wish+" on wishlist":""}</li>`).join("")}${ow.length>6?`<li>… and ${ow.length-6} more</li>`:""}</ul></div>`:"";
+  const sugg=dup?[]:rankFor({t:f.t,a:f.a,n:tracksOf(f).length}).slice(0,3);
   if(dup){
     out.innerHTML=(badCode
       ?`<div class="verdict warn"><strong>Similar album, different barcode</strong><span>${esc(dup.t)} · ${esc(dup.a)}${isWish(dup.id)?" (wishlist)":""}</span><small>Your entry is linked to ${dCodes.map(fmtEan).join(", ")}, the scanned code is ${fmtEan(c)}. It is probably another edition. Compare before linking.</small></div>`
@@ -1231,7 +1232,9 @@ function showFound(out,f,src,c){const box=discsOf(f).length>1,dup=sameDisc(f),ow
   else{
     out.innerHTML=`<div class="verdict wish"><strong>Not in your collection</strong><span>Found on ${esc(src)}${c?" · "+fmtEan(c):""}</span></div>`+card+works+
       `<div class="row"><button class="primary" id="addCol" type="button">Add to my collection</button><button id="addWish" type="button">To wishlist</button></div>
-       <div class="row"><button type="button" id="addOther">Link to an album of my collection</button></div>`;
+       ${sugg.length?`<p class="ask">Or is it one of your albums without a barcode?</p><ul class="list lkl">${sugg.map(x=>`<li><button type="button" class="pick" data-sg="${x.id}"><img src="${esc(coverUrl(x))}" alt="" onerror="this.style.visibility='hidden'"><span><b>${esc(x.t)}</b><br><small>${esc(x.a)}${x.y?" · "+x.y:""}</small></span></button></li>`).join("")}</ul>`:""}
+       <div class="row"><button type="button" id="addOther">${sugg.length?"Another album of my collection…":"Link to an album of my collection"}</button></div>`;
+    out.querySelectorAll("[data-sg]").forEach(b=>b.onclick=()=>{const x=byId(b.dataset.sg);if(x)scanStep(()=>showFound(out,f,src,c),()=>compareLink(out,x,f,src,c));});
     $("addWish").onclick=()=>add(true);}
   $("addOther").onclick=()=>scanStep(()=>showFound(out,f,src,c),()=>linkPicker(out,f,src,c));
   const add=w=>{const n=pick(f);delete n.newWorks;addAlbum(n,w,c);if(f.newWorks)Object.assign(S.works,f.newWorks);attachWorks(n,null);save();render();SBACK=[];
@@ -1247,7 +1250,7 @@ function linkPicker(out,f,src,c){
   const q=$("lkQ"),L=$("lkL"),ref=f?tNorm(f.t+" "+f.a):"";
   const draw=()=>{const v=tNorm(q.value),ws=v.split(" ").filter(Boolean);
     let r=[...S.col,...S.wish].filter(x=>!ws.length||ws.every(w=>tNorm(x.t+" "+x.a+" "+(x.perf||"")).includes(w)));
-    if(!ws.length&&ref){const rw=ref.split(" ").filter(w=>w.length>2);r=r.map(x=>[x,rw.filter(w=>tNorm(x.t+" "+x.a+" "+(x.perf||"")).includes(w)).length]).filter(e=>e[1]).sort((m,n)=>n[1]-m[1]).map(e=>e[0]);}
+    if(!ws.length&&ref){const rw=ref.split(" ").filter(w=>w.length>2);r=r.map(x=>[x,rw.filter(w=>tNorm(x.t+" "+x.a+" "+(x.perf||"")).includes(w)).length+(codeOf(x.id)?0:.5)]).filter(e=>e[1]).sort((m,n)=>n[1]-m[1]).map(e=>e[0]);}
     L.innerHTML=r.slice(0,40).map(x=>`<li><button type="button" class="pick" data-lk="${x.id}"><img src="${esc(coverUrl(x))}" alt="" onerror="this.style.visibility='hidden'"><span><b>${esc(x.t)}</b><br><small>${esc(x.a)}${x.y?" · "+x.y:""}${codeOf(x.id)?" · "+fmtEan(codeOf(x.id)):""}</small></span></button></li>`).join("")||`<li class="empty">${ws.length?"No album matches.":"Type to search your collection."}</li>`;};
   q.oninput=draw;draw();
   L.onclick=e=>{const b=e.target.closest("[data-lk]");if(!b)return;const x=byId(b.dataset.lk);if(!x)return;
@@ -2422,7 +2425,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.63.0";$("hVer").textContent="v"+APPV;
+const APPV="0.64.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2435,7 +2438,7 @@ function openTodo(){closeSettings();closeSheet();goTab("tools");return;const p=$
   p.innerHTML=`<p class="cat">Incomplete</p><h2 class="wh">Missing information</h2><p class="hint">Select a line to list the albums concerned, then complete them one by one from their entry.</p>
    <ul class="list">${TODOS.map(([k,lab,f])=>{const n=all.filter(f).length;return `<li class="item tap${n?"":" done"}" data-todo="${k}"><div class="meta"><b>${lab}</b><small>${n?n+" album"+(n!==1?"s":""):"Up to date ✓"}</small></div>${n?`<span class="count">${n}</span>`:""}</li>`;}).join("")}</ul>
    ${(()=>{const n=groupSuggestions().length;return `<ul class="list"><li class="item tap${n?"":" done"}" id="tdGroup"><div class="meta"><b>To group into box sets</b><small>${n?n+" suggestion"+(n!==1?"s":""):"No suggestions ✓"}</small></div>${n?`<span class="count">${n}</span>`:""}</li></ul>`;})()}
-   <div class="row"><button type="button" id="tdInv">Link a barcode by scanning</button></div>
+   <div class="row"><button type="button" id="tdInv">Link barcodes to albums you already have</button></div>
    <div class="row"><button type="button" id="tdEnr">Find covers and info</button><button type="button" id="tdGen">Classify genres</button></div><p class="hint" id="tdMsg"></p>`;
   openSheet();p.querySelectorAll("[data-todo]").forEach(li=>li.onclick=()=>{if(li.classList.contains("done"))return;if(li.dataset.todo==="auto"){openReview();return;}TODOF=li.dataset.todo;$("q").value="";tab="col";closeSheet();render();setTimeout(()=>$("stick").scrollIntoView({behavior:"smooth"}),50);});
   if($("tdGroup"))$("tdGroup").onclick=()=>{if(!$("tdGroup").classList.contains("done"))openGroupSugg();};
@@ -2520,7 +2523,7 @@ function startInventory(){const nav=!$("settings").hidden||sheetOpen;closeSettin
   if(nav)setTimeout(go,350);else go();}
 function smUi(){document.querySelectorAll("#scanMode [data-sm]").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.sm==="inv")===INV));}
 function stopInventory(){INV=false;smUi();$("invBar").hidden=true;$("eanResult").innerHTML="";}
-function invCount(){const all=[...S.col,...S.wish],n=all.filter(x=>!codesOf(x.id).length).length;$("invTxt").innerHTML=`<b>Linking mode</b> · scan albums one at a time. ${n} album${n!==1?"s":""} without a barcode.`;}
+function invCount(){const all=[...S.col,...S.wish],n=all.filter(x=>!codesOf(x.id).length).length;$("invTxt").innerHTML=`<b>Linking barcodes</b> · scan your albums one after another. ${n} album${n!==1?"s":""} still without a barcode.`;}
 function rankFor(info){const all=[...S.col,...S.wish].filter(x=>!codesOf(x.id).length);
   if(!info)return [];return all.map(x=>{const s=2*overlap(info.t||"",x.t)+overlap(x.t,info.t||"")+overlap(info.a||"",x.a+" "+(x.perf||"")+" "+x.t)+(info.n&&tracksOf(x).length&&Math.abs(info.n-tracksOf(x).length)<=1?.5:0);return {x,s};})
     .filter(e=>e.s>.6).sort((a,b)=>b.s-a.s).slice(0,5).map(e=>e.x);}
@@ -2541,7 +2544,7 @@ async function invHandle(c){const out=$("eanResult"),id=S.codes[c];
     $("invSkip").onclick=()=>{$("ean").value="";out.innerHTML="";startCam();};
     $("invQ").oninput=()=>{const q=norm($("invQ").value.trim());if(q.length<2)return;const list=[...S.col,...S.wish].filter(x=>matches(x,q)).slice(0,8);const v=$("invQ").value;out.innerHTML=draw(list);$("invQ").value=v;$("invQ").focus();bind();};};
   bind();}
-$("invStop").onclick=stopInventory;document.querySelectorAll("#scanMode [data-sm]").forEach(b=>b.onclick=()=>{if(b.dataset.sm==="inv")startInventory();else{stopInventory();stopCam();$("eanResult").innerHTML="";$("ean").value="";startCam();}});
+$("invStop").onclick=()=>{stopInventory();closeScan();};$("tbInv").onclick=startInventory;document.querySelectorAll("#scanMode [data-sm]").forEach(b=>b.onclick=()=>{if(b.dataset.sm==="inv")startInventory();else{stopInventory();stopCam();$("eanResult").innerHTML="";$("ean").value="";startCam();}});
 $("autoCodes").checked=autoCodes();$("autoCodes").onchange=e=>{try{localStorage.setItem("auto-codes",e.target.checked?"1":"0");}catch(err){}};
 
 
@@ -2562,7 +2565,7 @@ async function fetchCodesAll(list){if(CB.run){CB.run=false;return;}const m=$("cb
     n++;if(n%10===0)save();}
   CB.run=false;try{CB.lock&&CB.lock.release();}catch(e){}$("cbGo").querySelector("b").textContent="Fetch likely barcodes now";
   logA("Likely barcodes fetched: "+f+" of "+n+" albums","","auto");save();render();
-  m.textContent=`Complete: ${f} likely barcode${f!==1?"s":""} added from ${n} albums queried. Remaining editions have no online barcode (common for older CDs); use the barcode button in the middle, open “More options” and choose “Link barcodes in a row”.`;renderToolsCounts();toast(f+" likely barcodes added");}
+  m.textContent=`Complete: ${f} likely barcode${f!==1?"s":""} added from ${n} albums queried. Remaining editions have no online barcode (common for older CDs); use the barcode button in the middle, or Tools › “Link barcodes to albums you already have”.`;renderToolsCounts();toast(f+" likely barcodes added");}
 $("cbGo").onclick=()=>{if(CB.run){CB.run=false;return;}const t=cbTodo();if(!t.length){fetchCodesAll([]);return;}if(!navigator.onLine){$("cbMsg").textContent="No Internet connection.";return;}
   pickAlbums({op:"cb",cat:"Barcodes",title:"Fetch likely barcodes",list:t,go:"Start",intro:"Choose the albums whose likely barcode should be fetched from MusicBrainz or Discogs (about 1 second each; keep the app open). Likely barcodes are only suggestions: they are confirmed the first time you scan the real one."},l=>fetchCodesAll(l));};
 // ---------- Movements and pieces from MusicBrainz (for albums added before 0.51) ----------
@@ -2635,7 +2638,8 @@ function seeFilter(k){const l=cmpList(k);if(l.length)completeStart(l,k);}
 $("seeNoCode").onclick=()=>seeFilter("code");$("seeNoGenre").onclick=()=>seeFilter("genre");
 function renderToolsCounts(){try{cmpUi();}catch(e){}try{const n=fmtTodo().length;$("fmtN").textContent=n?n+" album"+(n!==1?"s":"")+" without a format (CD, vinyl…)":"All albums have a format";}catch(e){}try{mvUi();}catch(e){}const all=ALL(),noc=all.filter(x=>!codesOf(x.id).length),pc=noc.filter(hasPCode).length,ed=noc.filter(x=>!hasPCode(x)&&(x.mbid||x.dgid)).length,q=cbTodo().length;
   $("twCodeTxt").innerHTML=noc.length?`<b>${noc.length}</b> album${noc.length!==1?"s":""} without a confirmed barcode (<b>${pc}</b> with a likely barcode, to be confirmed on first scan).`:"All your albums have a confirmed barcode ✓";
-  $("seeNoCode").hidden=!noc.length;$("seeNoCode").textContent=`Show the ${noc.length} albums without a barcode`;
+  $("seeNoCode").hidden=!noc.length;$("tbInv").hidden=!noc.length;$("tbInvN").textContent=`${noc.length} album${noc.length!==1?"s":""} without a barcode · scan them one after another from your shelf`;
+$("seeNoCode").textContent=`Show the ${noc.length} albums without a barcode`;
   const ng=all.filter(x=>!genreOf(x)).length;$("seeNoGenre").hidden=!ng;$("seeNoGenre").textContent=`Show the ${ng} album${ng!==1?"s":""} without a genre`;
   const s=$("cbGo")&&$("cbGo").querySelector("small");if(s&&!CB.run)s.textContent=q?`${q} album${q!==1?"s":""} to query (edition found, no barcode yet)`:`Nothing to query: ${ed} albums returned no barcode; the others have no matched edition`;}
 function renderTools(){$("list").classList.add("toolsMode");$("list").innerHTML=`<li class="toolsli" id="toolsLi"></li>`;$("toolsLi").appendChild(TB);
