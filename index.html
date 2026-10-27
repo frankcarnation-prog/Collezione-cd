@@ -554,6 +554,12 @@ small.best{color:var(--wish);font-weight:600}
 <button type="button" class="setItem" id="rcGo"><b>Import a purchase receipt</b><small>Paste a momox (or other shop) invoice: fills “Paid” for matching albums</small></button>
 <p class="hint">This application uses Discogs’ API but is not affiliated with, sponsored or endorsed by Discogs. “Discogs” is a trademark of Zink Media, LLC.</p>
 </div></section>
+<section class="win" id="tw-sync"><div class="wtitle">Account and sync</div><div class="wbody">
+<div id="syOut"><p class="hint">Sign in to keep the same collection on your phone and your computer. No password: you receive a code by e-mail.</p>
+<input type="email" id="syEmail" placeholder="E-mail address" autocomplete="email" style="width:100%"><button type="button" class="setItem" id="syCode"><b>Send me a code</b></button>
+<div id="syStep2" hidden><input type="text" inputmode="numeric" id="syToken" placeholder="Code from the e-mail" autocomplete="one-time-code" style="width:100%"><button type="button" class="setItem" id="syVerify"><b>Sign in</b></button></div></div>
+<div id="syIn" hidden><p><b id="syWho"></b></p><p class="hint" id="syLast"></p><button type="button" class="setItem" id="syGo"><b>Sync now</b><small>Albums, wishlist and groupings. Discogs estimates and photos stay on each device.</small></button><button type="button" class="setItem" id="syOutBtn"><b>Sign out</b><small>Your albums stay on this device</small></button></div>
+<p class="hint" id="syMsg"></p></div></section>
 <div hidden id="legacyTools"><section class="win" id="tw-cover"><div class="wtitle">Covers</div><div class="wbody"><section class="enr" id="enr"><button type="button" class="x2" id="enrX" aria-label="Hide">✕</button><p id="enrTxt"></p><button type="button" class="primary" id="enrGo">Start search</button></section><button type="button" class="setItem" id="gGo"><b>Classify genres</b><small>Automatic, via AI or Discogs</small></button><p class="hint" id="gMsg"></p>
 <button type="button" class="wide" id="seeNoGenre">Show albums without a genre</button>
 </div></section>
@@ -665,7 +671,7 @@ if(S.demo){const isD=x=>/^d\d+$/.test(x.id);S.col=S.col.filter(x=>!isD(x));S.wis
 let DATAV=0,_W=null,_Wref=null,_Wn=-1;
 const WORKS=()=>{const n=Object.keys(S.works).length;if(_W&&_Wref===S.works&&_Wn===n)return _W;_Wref=S.works;_Wn=n;return _W=Object.assign({},S.demo?DEMO.works:{},S.works);};
 let tidied=false;
-function save(){DATAV++;_W=null;tidyWorks();_W=null;setTimeout(nag,0);try{localStorage.setItem(KEY,JSON.stringify(S));$("sync").textContent="";}catch(e){$("sync").textContent="Storage full. Download a backup.";}renderStats();}
+function save(){DATAV++;if(typeof syncSoon==="function")syncSoon();_W=null;tidyWorks();_W=null;setTimeout(nag,0);try{localStorage.setItem(KEY,JSON.stringify(S));$("sync").textContent="";}catch(e){$("sync").textContent="Storage full. Download a backup.";}renderStats();}
 
 // Photos de pochettes : IndexedDB (plus de place que localStorage)
 const COV={};
@@ -2582,7 +2588,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.79.6";$("hVer").textContent="v"+APPV;
+const APPV="0.80.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2914,6 +2920,82 @@ function receiptReview(R){const p=$("detail"),all=S.col.slice().sort((a,b)=>norm
     rows.forEach(r=>{const x=byId(r.m);x.paid=Math.round((r.p+(base?sh*r.p/base:0))*100)/100;x.paidSrc="momox";x.paidAt=R.date;});save();render();renderStats();
     report("ok","Paid set from receipt",`${rows.length} album${rows.length!==1?"s":""} now have a Paid price${sh?" (shipping/voucher included)":""}.`,rows.map(r=>({id:r.m,t:byId(r.m).t+" — "+fmtPrice(byId(r.m).paid)})),"",()=>closeSheet());};}
 $("rcGo").onclick=()=>receiptUi();
+/* ---- Cloud sync (Supabase over plain fetch, no library). Local copy stays the master; Discogs estimates are never sent. ---- */
+const SB_URL="https://vijlxamhpmepnowutnkr.supabase.co",SB_KEY="sb_publishable_cobYQqpl-AvpeebLAaMYpQ_DL0-iqq3",SYNC_KEY="album-ledger-sync";
+let SY=(()=>{try{return JSON.parse(localStorage.getItem(SYNC_KEY))||{};}catch(e){return {};}})(),SYNCING=false,SYNC_T=null,SYNC_APPLY=false;
+SY.h=SY.h||{};
+const syPut=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify(SY));}catch(e){}};
+const canon=v=>Array.isArray(v)?"["+v.map(canon).join(",")+"]":v&&typeof v==="object"?"{"+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+":"+canon(v[k])).join(",")+"}":JSON.stringify(v);
+const fnv=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(36)+"."+s.length.toString(36);};
+class SyErr extends Error{constructor(m,code){super(m);this.code=code;}}
+async function sbReq(path,o={},auth){const h=Object.assign({apikey:SB_KEY,"Content-Type":"application/json"},o.headers||{});
+  if(auth){if(!SY.tok)throw new SyErr("Not signed in","auth");if(Date.now()>(SY.exp||0)-60e3)await sbRefresh();h.Authorization="Bearer "+SY.tok;}
+  let r;try{r=await fetch(SB_URL+path,{method:o.method||"GET",headers:h,body:o.body?JSON.stringify(o.body):undefined});}catch(e){throw new SyErr("Offline or unreachable","net");}
+  if(r.status===401&&auth&&!o.retried){await sbRefresh();return sbReq(path,Object.assign({retried:true},o),auth);}
+  if(!r.ok){let m="";try{const j=await r.json();m=j.msg||j.message||j.error_description||j.error||"";}catch(e){}throw new SyErr(m||("Error "+r.status),r.status);}
+  const t=await r.text();return t?JSON.parse(t):null;}
+function sbSession(j){SY.tok=j.access_token;SY.ref=j.refresh_token;SY.exp=Date.now()+(j.expires_in||3600)*1000;if(j.user){SY.uid=j.user.id;SY.email=j.user.email||SY.email;}syPut();}
+async function sbRefresh(){if(!SY.ref)throw new SyErr("Session expired","auth");let j;try{j=await sbReq("/auth/v1/token?grant_type=refresh_token",{method:"POST",body:{refresh_token:SY.ref}},false);}catch(e){if(e.code==="net")throw e;signOutLocal();throw new SyErr("Session expired: sign in again","auth");}sbSession(j);}
+const sbSendCode=email=>sbReq("/auth/v1/otp",{method:"POST",body:{email,create_user:true}},false);
+async function sbVerify(email,code){const j=await sbReq("/auth/v1/verify",{method:"POST",body:{type:"email",email,token:code}},false);SY.email=email;sbSession(j);}
+function signOutLocal(){SY={h:{}};syPut();syncUi();}
+/* what is synced: every album (collection and wishlist) as its own row, plus one small row for works/lists. `est` (Discogs prices) stays on the device. */
+function syLocal(){const rev={};Object.keys(S.codes||{}).forEach(c=>{(rev[S.codes[c]]=rev[S.codes[c]]||[]).push(c);});const m={};
+  const add=(x,k)=>{const o=JSON.parse(JSON.stringify(x));delete o.est;o._k=k;o._codes=(rev[x.id]||[]).sort();m["album:"+x.id]={kind:"album",id:x.id,data:o,h:fnv(canon(o))};};
+  S.col.forEach(x=>add(x,"col"));S.wish.forEach(x=>add(x,"wish"));
+  const meta={works:S.works||{},wl:S.wl||{},wsp:S.wsp||{}};m["meta:main"]={kind:"meta",id:"main",data:meta,h:fnv(canon(meta))};return m;}
+function syApply(rows){let n=0;const L=syLocal();
+  rows.forEach(r=>{const key=r.kind+":"+r.id;
+    if(r.kind==="meta"){if(!r.data||(L[key]&&L[key].h===fnv(canon(r.data)))){SY.h[key]=fnv(canon(r.data||{}));return;}S.works=r.data.works||{};S.wl=r.data.wl||{};S.wsp=r.data.wsp||{};SY.h[key]=fnv(canon(r.data));n++;return;}
+    const drop=()=>{S.col=S.col.filter(x=>x.id!==r.id);S.wish=S.wish.filter(x=>x.id!==r.id);for(const c in S.codes)if(S.codes[c]===r.id)delete S.codes[c];};
+    if(r.deleted){if(L[key]){drop();n++;}delete SY.h[key];return;}
+    const h=fnv(canon(r.data));if(L[key]&&L[key].h===h){SY.h[key]=h;return;}
+    const d=JSON.parse(JSON.stringify(r.data)),k=d._k,codes=d._codes||[];delete d._k;delete d._codes;
+    const old=S.col.find(x=>x.id===r.id)||S.wish.find(x=>x.id===r.id);if(old&&old.est)d.est=old.est;
+    drop();(k==="wish"?S.wish:S.col).push(d);codes.forEach(c=>{S.codes[c]=r.id;});SY.h[key]=h;n++;});
+  return n;}
+async function syPull(){let n=0,off=0,last=SY.cur||null,maxSeen=SY.cur||null;
+  for(;;){const q="/rest/v1/ledger?select=kind,id,data,deleted,srv_at&order=srv_at.asc,id.asc&limit=1000&offset="+off+(SY.cur?"&srv_at=gt."+encodeURIComponent(SY.cur):"");
+    const rows=await sbReq(q,{},true)||[];if(!rows.length)break;SYNC_APPLY=true;try{n+=syApply(rows);}finally{SYNC_APPLY=false;}
+    rows.forEach(r=>{if(!maxSeen||r.srv_at>maxSeen)maxSeen=r.srv_at;});if(rows.length<1000)break;off+=1000;}
+  if(maxSeen)SY.cur=maxSeen;return n;}
+async function syPush(){const L=syLocal(),up=[],gone=[];
+  Object.keys(L).forEach(k=>{if(SY.h[k]!==L[k].h)up.push(k);});Object.keys(SY.h).forEach(k=>{if(k.startsWith("album:")&&!L[k])gone.push(k);});
+  const rows=up.map(k=>({user_id:SY.uid,kind:L[k].kind,id:L[k].id,data:L[k].data,deleted:false})).concat(gone.map(k=>({user_id:SY.uid,kind:"album",id:k.slice(6),data:null,deleted:true})));
+  for(let i=0;i<rows.length;i+=150){await sbReq("/rest/v1/ledger?on_conflict=user_id,kind,id",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:rows.slice(i,i+150)},true);}
+  up.forEach(k=>{SY.h[k]=L[k].h;});gone.forEach(k=>{delete SY.h[k];});return rows.length;}
+async function syncNow(quiet,first){if(SYNCING||!SY.tok)return;SYNCING=true;syMsg(quiet?null:"Syncing…");
+  try{let n=0,p=0;
+    if(first==="cloud"){undoable("Cloud sync: this device replaced by the cloud copy");S.col=[];S.wish=[];S.codes={};SY.h={};SY.cur=null;n=await syPull();p=await syPush();}
+    else if(first==="merge"){undoable("Cloud sync: merged with the cloud copy");SY.h={};SY.cur=null;n=await syPull();p=await syPush();}
+    else{p=await syPush();n=await syPull();}
+    SY.last=Date.now();SY.err="";SY.ok=true;syPut();
+    if(n){SYNC_APPLY=true;try{save();}finally{SYNC_APPLY=false;}render();renderStats();if(quiet)toast("Synced: "+n+" update"+(n!==1?"s":"")+" from your other devices");}
+    syMsg(quiet?null:"Synced"+(p||n?" · sent "+p+", received "+n:"")+".");}
+  catch(e){SY.err=e.code==="net"?"Offline: will sync when the connection is back":(e.message||"Sync failed");syPut();syMsg(SY.err);}
+  finally{SYNCING=false;syncUi();}}
+function syncSoon(){if(!SY.tok||SYNC_APPLY||!SY.init)return;clearTimeout(SYNC_T);SYNC_T=setTimeout(()=>syncNow(true),6000);}
+async function syFirst(){ // right after sign-in: decide how this device meets the cloud copy
+  const rows=await sbReq("/rest/v1/ledger?select=id&kind=eq.album&deleted=eq.false&limit=1",{},true)||[],local=S.col.length+S.wish.length;
+  if(!rows.length){SY.init=true;syPut();return syncNow(false,"merge");}
+  if(!local){SY.init=true;syPut();return syncNow(false,"cloud");}
+  const p=$("detail");CUR=null;
+  p.innerHTML=`<p class="cat">Cloud sync</p><h2 class="wh">This device and the cloud both have albums</h2><p>Choose how to combine them. You can undo right after.</p>
+   <button type="button" class="setItem" id="syM"><b>Merge both</b><small>Keeps everything. If the same album was added separately on each, it may appear twice.</small></button>
+   <button type="button" class="setItem" id="syC"><b>Use the cloud copy here</b><small>Replaces the ${local} album${local!==1?"s":""} on this device with the cloud ones.</small></button>
+   <div class="row"><button type="button" id="syX">Decide later</button></div>`;openSheet();
+  $("syM").onclick=()=>{closeSheet();SY.init=true;syPut();syncNow(false,"merge");};$("syC").onclick=()=>{closeSheet();SY.init=true;syPut();syncNow(false,"cloud");};$("syX").onclick=()=>{closeSheet();syncUi();};}
+const syMsg=t=>{const e=$("syMsg");if(e&&t!==null)e.textContent=t;};
+function syncUi(){const o=$("syOut"),i=$("syIn");if(!o)return;const on=!!SY.tok;o.hidden=on;i.hidden=!on;
+  if(on){$("syWho").textContent=SY.email||"";$("syLast").textContent=SY.err?SY.err:SY.last?"Last sync: "+fmtWhen(SY.last):(SY.init?"Not synced yet":"Sign-in done: choose how to combine your data");$("syGo").textContent=SY.init?"Sync now":"Continue";}}
+$("syCode").onclick=async()=>{const em=$("syEmail").value.trim();if(!/^\S+@\S+\.\S+$/.test(em)){toast("Enter a valid e-mail address");return;}
+  $("syCode").disabled=true;try{await sbSendCode(em);SY.pend=em;$("syStep2").hidden=false;syMsg("A code was sent to "+em+". Enter it below.");}catch(e){syMsg(e.code==="net"?"Offline: try again when connected":(e.message||"Could not send the code"));}$("syCode").disabled=false;};
+$("syVerify").onclick=async()=>{const c=$("syToken").value.replace(/\s/g,""),em=$("syEmail").value.trim();if(!/^\d{6,10}$/.test(c)){toast("Enter the code from the e-mail");return;}
+  try{await sbVerify(em,c);$("syToken").value="";$("syStep2").hidden=true;syMsg("");syncUi();await syFirst();}catch(e){syMsg(e.code===400||e.code===401||e.code===403||e.code===422?"Wrong or expired code":(e.message||"Sign-in failed"));}};
+$("syGo").onclick=()=>SY.init?syncNow(false):syFirst().catch(e=>syMsg(e.message));
+$("syOutBtn").onclick=async()=>{try{await sbReq("/auth/v1/logout",{method:"POST"},true);}catch(e){}signOutLocal();syMsg("Signed out. Your albums stay on this device.");};
+addEventListener("online",()=>syncNow(true));document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&SY.tok&&SY.init&&Date.now()-(SY.last||0)>30e3)syncNow(true);});
+syncUi();if(SY.tok&&SY.init)setTimeout(()=>syncNow(true),1500);
 setInterval(()=>{if(purgeEst()){save();renderStats();}},10*60e3);
 function renderToolsCounts(){try{valUi();}catch(e){}try{cmpUi();}catch(e){}try{const n=fmtTodo().length;$("fmtN").textContent=n?n+" album"+(n!==1?"s":"")+" without a format (CD, vinyl…)":"All albums have a format";}catch(e){}try{mvUi();}catch(e){}const all=ALL(),noc=all.filter(x=>!codesOf(x.id).length),pc=noc.filter(hasPCode).length,ed=noc.filter(x=>!hasPCode(x)&&(x.mbid||x.dgid)).length,q=cbTodo().length;
   $("twCodeTxt").innerHTML=noc.length?`<b>${noc.length}</b> album${noc.length!==1?"s":""} without a confirmed barcode (<b>${pc}</b> with a likely barcode, to be confirmed on first scan).`:"All your albums have a confirmed barcode ✓";
