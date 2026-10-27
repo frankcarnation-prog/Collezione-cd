@@ -555,9 +555,9 @@ small.best{color:var(--wish);font-weight:600}
 <p class="hint">This application uses Discogs’ API but is not affiliated with, sponsored or endorsed by Discogs. “Discogs” is a trademark of Zink Media, LLC.</p>
 </div></section>
 <section class="win" id="tw-sync"><div class="wtitle">Account and sync</div><div class="wbody">
-<div id="syOut"><p class="hint">Sign in to keep the same collection on your phone and your computer. No password: you receive a code by e-mail.</p>
-<input type="email" id="syEmail" placeholder="E-mail address" autocomplete="email" style="width:100%"><button type="button" class="setItem" id="syCode"><b>Send me a code</b></button>
-<div id="syStep2" hidden><input type="text" inputmode="numeric" id="syToken" placeholder="Code from the e-mail" autocomplete="one-time-code" style="width:100%"><button type="button" class="setItem" id="syVerify"><b>Sign in</b></button></div></div>
+<div id="syOut"><p class="hint">Sign in to keep the same collection on your phone and your computer. No password: you receive a link by e-mail. Open it on the device you want to sign in on.</p>
+<input type="email" id="syEmail" placeholder="E-mail address" autocomplete="email" style="width:100%"><button type="button" class="setItem" id="syCode"><b>Send me a sign-in link</b></button>
+</div>
 <div id="syIn" hidden><p><b id="syWho"></b></p><p class="hint" id="syLast"></p><button type="button" class="setItem" id="syGo"><b>Sync now</b><small>Albums, wishlist and groupings. Discogs estimates and photos stay on each device.</small></button><button type="button" class="setItem" id="syOutBtn"><b>Sign out</b><small>Your albums stay on this device</small></button></div>
 <p class="hint" id="syMsg"></p></div></section>
 <div hidden id="legacyTools"><section class="win" id="tw-cover"><div class="wtitle">Covers</div><div class="wbody"><section class="enr" id="enr"><button type="button" class="x2" id="enrX" aria-label="Hide">✕</button><p id="enrTxt"></p><button type="button" class="primary" id="enrGo">Start search</button></section><button type="button" class="setItem" id="gGo"><b>Classify genres</b><small>Automatic, via AI or Discogs</small></button><p class="hint" id="gMsg"></p>
@@ -2588,7 +2588,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.80.0";$("hVer").textContent="v"+APPV;
+const APPV="0.80.1";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2936,7 +2936,7 @@ async function sbReq(path,o={},auth){const h=Object.assign({apikey:SB_KEY,"Conte
   const t=await r.text();return t?JSON.parse(t):null;}
 function sbSession(j){SY.tok=j.access_token;SY.ref=j.refresh_token;SY.exp=Date.now()+(j.expires_in||3600)*1000;if(j.user){SY.uid=j.user.id;SY.email=j.user.email||SY.email;}syPut();}
 async function sbRefresh(){if(!SY.ref)throw new SyErr("Session expired","auth");let j;try{j=await sbReq("/auth/v1/token?grant_type=refresh_token",{method:"POST",body:{refresh_token:SY.ref}},false);}catch(e){if(e.code==="net")throw e;signOutLocal();throw new SyErr("Session expired: sign in again","auth");}sbSession(j);}
-const sbSendCode=email=>sbReq("/auth/v1/otp",{method:"POST",body:{email,create_user:true}},false);
+const sbSendCode=email=>sbReq("/auth/v1/otp?redirect_to="+encodeURIComponent(location.origin+location.pathname),{method:"POST",body:{email,create_user:true}},false);
 async function sbVerify(email,code){const j=await sbReq("/auth/v1/verify",{method:"POST",body:{type:"email",email,token:code}},false);SY.email=email;sbSession(j);}
 function signOutLocal(){SY={h:{}};syPut();syncUi();}
 /* what is synced: every album (collection and wishlist) as its own row, plus one small row for works/lists. `est` (Discogs prices) stays on the device. */
@@ -2989,13 +2989,19 @@ const syMsg=t=>{const e=$("syMsg");if(e&&t!==null)e.textContent=t;};
 function syncUi(){const o=$("syOut"),i=$("syIn");if(!o)return;const on=!!SY.tok;o.hidden=on;i.hidden=!on;
   if(on){$("syWho").textContent=SY.email||"";$("syLast").textContent=SY.err?SY.err:SY.last?"Last sync: "+fmtWhen(SY.last):(SY.init?"Not synced yet":"Sign-in done: choose how to combine your data");$("syGo").textContent=SY.init?"Sync now":"Continue";}}
 $("syCode").onclick=async()=>{const em=$("syEmail").value.trim();if(!/^\S+@\S+\.\S+$/.test(em)){toast("Enter a valid e-mail address");return;}
-  $("syCode").disabled=true;try{await sbSendCode(em);SY.pend=em;$("syStep2").hidden=false;syMsg("A code was sent to "+em+". Enter it below.");}catch(e){syMsg(e.code==="net"?"Offline: try again when connected":(e.message||"Could not send the code"));}$("syCode").disabled=false;};
-$("syVerify").onclick=async()=>{const c=$("syToken").value.replace(/\s/g,""),em=$("syEmail").value.trim();if(!/^\d{6,10}$/.test(c)){toast("Enter the code from the e-mail");return;}
-  try{await sbVerify(em,c);$("syToken").value="";$("syStep2").hidden=true;syMsg("");syncUi();await syFirst();}catch(e){syMsg(e.code===400||e.code===401||e.code===403||e.code===422?"Wrong or expired code":(e.message||"Sign-in failed"));}};
+  $("syCode").disabled=true;try{await sbSendCode(em);SY.pend=em;syMsg("Link sent to "+em+". Open the e-mail on this device and tap the link.");}catch(e){syMsg(e.code==="net"?"Offline: try again when connected":(e.message||"Could not send the code"));}$("syCode").disabled=false;};
 $("syGo").onclick=()=>SY.init?syncNow(false):syFirst().catch(e=>syMsg(e.message));
 $("syOutBtn").onclick=async()=>{try{await sbReq("/auth/v1/logout",{method:"POST"},true);}catch(e){}signOutLocal();syMsg("Signed out. Your albums stay on this device.");};
 addEventListener("online",()=>syncNow(true));document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&SY.tok&&SY.init&&Date.now()-(SY.last||0)>30e3)syncNow(true);});
 syncUi();if(SY.tok&&SY.init)setTimeout(()=>syncNow(true),1500);
+/* Coming back from the e-mail link: the session arrives in the URL hash */
+async function authHash(){const h=location.hash;if(!/access_token=|error_code=/.test(h))return;const q=new URLSearchParams(h.slice(1));try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}
+  if(q.get("error_code")||q.get("error")){toast(q.get("error_code")==="otp_expired"?"This sign-in link has expired or was already used. Send a new one.":(q.get("error_description")||"Sign-in failed").replace(/\+/g," "));return;}
+  const old=SY;SY={h:{}};SY.tok=q.get("access_token");SY.ref=q.get("refresh_token");SY.exp=Date.now()+(+q.get("expires_in")||3600)*1000;
+  try{const u=await sbReq("/auth/v1/user",{},true);if(old.uid===u.id){SY=Object.assign(old,{tok:SY.tok,ref:SY.ref,exp:SY.exp});}else{SY.uid=u.id;}SY.email=u.email;syPut();syncUi();toast("Signed in as "+u.email);await syFirst();}
+  catch(e){SY=old;syPut();toast(e.code==="net"?"Offline: open the link again when connected":"Sign-in failed: send a new link");syncUi();}}
+authHash();addEventListener("hashchange",authHash);
+
 setInterval(()=>{if(purgeEst()){save();renderStats();}},10*60e3);
 function renderToolsCounts(){try{valUi();}catch(e){}try{cmpUi();}catch(e){}try{const n=fmtTodo().length;$("fmtN").textContent=n?n+" album"+(n!==1?"s":"")+" without a format (CD, vinyl…)":"All albums have a format";}catch(e){}try{mvUi();}catch(e){}const all=ALL(),noc=all.filter(x=>!codesOf(x.id).length),pc=noc.filter(hasPCode).length,ed=noc.filter(x=>!hasPCode(x)&&(x.mbid||x.dgid)).length,q=cbTodo().length;
   $("twCodeTxt").innerHTML=noc.length?`<b>${noc.length}</b> album${noc.length!==1?"s":""} without a confirmed barcode (<b>${pc}</b> with a likely barcode, to be confirmed on first scan).`:"All your albums have a confirmed barcode ✓";
