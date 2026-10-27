@@ -2343,13 +2343,30 @@ const HSYN={a:["artist","artists","artiste","artistes","interprete","interpretes
   g:["genre","genres","style","genere","category","categorie"],
   n:["notes","note","remarque","remarques","comments","comment","commentaire","remark","bemerkung","nota"],
   dg:["release id","releaseid","discogs id","discogs release id","id discogs","discogs"],
-  d:["date added","added date","added","date ajout","date d ajout","ajoute le","hinzugefugt","aggiunto"]};
-const HFIELDS=[["a","Artist / performers"],["t","Title"],["c","Composer"],["y","Year"],["l","Label"],["cat","Catalogue no."],["bc","Barcode"],["f","Format"],["g","Genre"],["n","Notes"],["dg","Discogs release ID"],["d","Date added"]];
+  d:["date added","added date","added","date ajout","date d ajout","ajoute le","hinzugefugt","aggiunto"],
+  p:["purchase price","price paid","paid","prix d achat","prix achat","prix paye","paye","prix","price","prezzo","prezzo pagato","prezzo d acquisto","kaufpreis","preis","cost","cout"],
+  pd:["purchase date","date of purchase","bought on","date d achat","date achat","achete le","data acquisto","data d acquisto","kaufdatum"],
+  st:["store","shop","purchased from","bought from","achete chez","achete a","magasin","boutique","vendeur","seller","acquistato da","negozio","venditore","gekauft bei","laden"],
+  v:["current value","my value","value","estimated value","valeur","valeur actuelle","valore","wert"],
+  cd:["collection media condition","media condition","condition","etat","etat du disque","stato","condizione","zustand","grading","grade"],
+  s:["collection status","status","statut","stato","owned","ownership","possede"]};
+const HFIELDS=[["a","Artist / performers"],["t","Title"],["c","Composer"],["y","Year"],["l","Label"],["cat","Catalogue no."],["bc","Barcode"],["f","Format"],["g","Genre"],["n","Notes"],["dg","Discogs release ID"],["d","Date added"],["p","Price paid"],["pd","Purchase date"],["st","Bought from (shop)"],["v","My value"],["cd","Condition"],["s","Status (collection / wishlist)"]];
 const hnorm=s=>norm(String(s==null?"":s)).replace(/[#_]/g," ").replace(/[^a-z0-9]+/g," ").trim();
-function mapHeaders(row){const cols=row.map(hnorm),out={},used=new Set(),bad=/condition|rating|folder|shelf|box|storage|price|disc number|cd number|^cd$|^id$|^no$|^n$/;
-  for(const pass of [0,1])for(const f in HSYN)if(out[f]===undefined)cols.forEach((h,i)=>{if(out[f]!==undefined||used.has(i)||!h||bad.test(h))return;
+function mapHeaders(row){const cols=row.map(hnorm),out={},used=new Set(),bad=/condition|rating|folder|shelf|box|storage|price|value|disc number|cd number|^cd$|^id$|^no$|^n$/,
+    isBad=(f,h)=>f==="p"||f==="v"?/rating|folder|shelf|box|storage|disc number|cd number|^id$|sale|sell|vente|ask|list price|retail/.test(h):f==="cd"?/sleeve|cover|pochette|jacket|copertina|hulle|box/.test(h):f==="pd"||f==="d"?false:bad.test(h);
+  for(const pass of [0,1])for(const f in HSYN)if(out[f]===undefined)cols.forEach((h,i)=>{if(out[f]!==undefined||used.has(i)||!h||isBad(f,h))return;
     const ok=pass===0?HSYN[f].includes(h):HSYN[f].some(s=>(" "+h+" ").includes(" "+s+" "));if(ok){out[f]=i;used.add(i);}});
+  const oi=cols.findIndex(h=>/^original release (year|date)$|^annee originale$|^first release/.test(h));if(oi>=0&&out.y!==oi){Object.keys(out).forEach(k=>{if(out[k]===oi)delete out[k];});out.y=oi;}
   return out;}
+// price "€12,50", "1 234,56", "12.99 $" → number; condition "Very Good Plus (VG+)" → "VG+"; status → "wish" / "skip" / ""
+const priceOf=s=>{s=String(s||"").replace(/[^\d,.\-]/g,"");if(!/\d/.test(s))return 0;const c=s.lastIndexOf(","),d=s.lastIndexOf(".");
+  if(c>=0&&d>=0)s=c>d?s.replace(/\./g,"").replace(",","."):s.replace(/,/g,"");else if(c>=0)s=/,\d{1,2}$/.test(s)?s.replace(/\./g,"").replace(",","."):s.replace(/,/g,"");else if(/\.\d{3}$/.test(s)&&s.split(".").length>2)s=s.replace(/\./g,"");
+  const n=parseFloat(s);return n>0&&n<1e6?Math.round(n*100)/100:0;};
+const condOf=s=>{s=String(s||"").trim();if(!s)return "";const m=s.match(/\(\s*(NM|M-|VG\+|VG|G\+|EX|M|G|F|P)(?![A-Z+\-])/i)||s.match(/^(M|NM|M-|VG\+|VG|G\+|G|F|P|EX)$/i);
+  const k=m?m[1].toUpperCase():"",map={"M-":"NM","EX":"VG+"};if(k)return map[k]||k;const n=norm(s);
+  return /near mint|quasi neuf|comme neuf|come nuovo/.test(n)?"NM":/very good plus|vg plus|tres bon etat|ottimo/.test(n)?"VG+":/very good|bon etat|buono/.test(n)?"VG":/good plus/.test(n)?"G+":/mint|neuf|nuovo|sealed|scelle/.test(n)?"M":/good|correct|discreto/.test(n)?"G":/fair|passable|moyen/.test(n)?"F":/poor|mauvais|scarso/.test(n)?"P":"";};
+const statusOf=s=>{const n=norm(String(s||""));if(!n)return "";if(/wish|souhait|envie|desider|wunsch|on order|ordered|commande|pre ?order|want/.test(n))return "wish";
+  if(/not in|sold|vendu|venduto|verkauft|removed|supprime|lost|perdu|gave away|donne|^no$|^non$|^false$|^0$/.test(n))return "skip";return "";};
 function detectHeader(rows){let best=-1,bs=0,bm=null;for(let i=0;i<Math.min(rows.length,10);i++){const m=mapHeaders(rows[i]),n=Object.keys(m).length;if((m.t!==undefined||m.a!==undefined)&&n>bs){bs=n;best=i;bm=m;}}
   if(bs>=2)return {hdr:best,map:bm};const w=Math.max(0,...rows.slice(0,10).map(r=>r.length)),map={};if(w>=2){map.a=0;map.t=1;}if(w>=3)map.y=2;return {hdr:-1,map};}
 // --- parsers ---
@@ -2393,7 +2410,8 @@ function parseFree(line){let s=line.trim(),l="",y="",perf="",c="",a="",t=s,m=s.m
 // --- drafts from a sheet ---
 function sheetDrafts(sh){const out=[];if(sh.free){sh.rows.forEach((r,i)=>{const d=parseFree(r[0]||"");out.push(finishDraft(Object.assign({row:i+1,raw:r[0]},d)));});return out;}
   sh.rows.forEach((row,i)=>{if(i<=sh.hdr)return;const g=k=>{const j=sh.map[k];return j===undefined||j<0?"":String(row[j]==null?"":row[j]).trim();};
-    const d={row:i+1,raw:row.join(" · "),a:dedupeCsv(cleanName(g("a"))),t:g("t"),c:cleanName(g("c")),y:yearOf(g("y")),l:dedupeCsv(cleanName(g("l"))),cat:g("cat").replace(/\s+/g," "),bc:g("bc").replace(/\D/g,""),f:g("f"),g:g("g"),n:g("n"),dg:g("dg").replace(/\D/g,""),at:dateOf(g("d"))};
+    const d={row:i+1,raw:row.join(" · "),a:dedupeCsv(cleanName(g("a"))),t:g("t"),c:cleanName(g("c")),y:yearOf(g("y")),l:dedupeCsv(cleanName(g("l"))),cat:g("cat").replace(/\s+/g," "),bc:g("bc").replace(/\D/g,""),f:g("f"),g:g("g"),n:g("n"),dg:g("dg").replace(/\D/g,""),at:dateOf(g("d")),
+      p:priceOf(g("p")),pd:dateOf(g("pd")),st:g("st"),v:priceOf(g("v")),cd:condOf(g("cd")),s:statusOf(g("s")),sRaw:g("s")};
     if(!row.some(x=>String(x||"").trim())||/^(total|totale|somme|sum)\b/i.test(d.a||d.t)){return;}
     out.push(finishDraft(d));});return out;}
 function finishDraft(d){Object.assign(d,fmtParse(d.f));d.t=pretty(d.t||"");d.a=pretty(d.a||"");
@@ -2404,6 +2422,7 @@ function finishDraft(d){Object.assign(d,fmtParse(d.f));d.t=pretty(d.t||"");d.a=p
 function markDupes(drafts,own){const have=new Map(),dgs=new Set(ALL().map(x=>String(x.dgid||"")).filter(Boolean)),seen=new Map();
   ALL().forEach(x=>have.set(tNorm(x.a)+"|"+tNorm(x.t),x));
   drafts.forEach((d,i)=>{d.i=i;if(d.bad){d.status="invalid";return;}const k=tNorm(d.a)+"|"+tNorm(d.t);
+    if(d.s==="skip"){d.status="notown";d.why="Status “"+d.sRaw+"”: not in your collection, left unchecked";return;}
     if(d.dg&&dgs.has(d.dg)||have.has(k)||(d.bc&&S.codes[d.bc])){d.status="dup";d.why="Already in your library";return;}
     if(seen.has(k)){d.status="dup";d.why="Duplicate of row "+seen.get(k)+" in the file";return;}seen.set(k,d.row);
     const p=ALL().find(x=>tNorm(x.t)===tNorm(d.t)&&overlap(d.a,x.a)>=.5);if(p){d.status="maybe";d.why="Similar to “"+p.t+"” already in your library";return;}
@@ -2428,7 +2447,7 @@ function impText(txt,name){const t=txt.trim();if(!t)throw new Error("The file is
 function impSheets(sheets,name){sheets=sheets.filter(s=>s.rows.length);if(!sheets.length)throw new Error("No rows were found in the file.");
   sheets.forEach(sh=>{if(sh.free){sh.hdr=-1;sh.map={};sh.on=true;return;}const h=detectHeader(sh.rows);sh.hdr=h.hdr;sh.map=h.map;sh.hdr0=h.hdr;sh.on=true;sh.hasHdr=h.hdr>=0;});
   IMP.sheets=sheets;IMP.name=name;IMP.cur=0;IMP.sel=new Set();IMP.show=300;return sheets;}
-function impSource(){const s=IMP.sheets[0];if(!s||s.free)return "Free text, read line by line";const h=(s.rows[s.hdr]||[]).map(hnorm).join("|");return /catalog/.test(h)&&/release id/.test(h)?"Discogs collection export":/barcode|ean/.test(h)?"Collection export with barcodes":"Spreadsheet / CSV";}
+function impSource(){const s=IMP.sheets[0];if(!s||s.free)return "Free text, read line by line";const h=(s.rows[s.hdr]||[]).map(hnorm).join("|");return /catalog/.test(h)&&/release id/.test(h)?"Discogs collection export":/collection status|clz/.test(h)||/purchase (price|date)/.test(h)&&/barcode/.test(h)?"CLZ Music export":/barcode|ean/.test(h)?"Collection export with barcodes":"Spreadsheet / CSV";}
 function openImport(){const p=$("detail");CUR=openImport;
   p.innerHTML=`<p class="cat">Import</p><h2 class="wh">Import a collection</h2>
    <p>Bring in a collection you already keep elsewhere: a Discogs export (CSV), a CLZ or other app export, an Excel spreadsheet, or a pasted list. The file is read on this device only; nothing is uploaded.</p>
@@ -2437,7 +2456,7 @@ function openImport(){const p=$("detail");CUR=openImport;
    <textarea id="impText" rows="6" aria-label="Pasted list" placeholder="Artist – Title&#10;Beethoven: Symphony No. 5 (Carlos Kleiber, 1976)"></textarea>
    <div class="pair"><button type="button" class="primary" id="impParse">Read pasted list</button><button type="button" id="impNo">Cancel</button></div>
    <p class="hint" id="impMsg"></p>
-   <p class="hint">Discogs: Collection → Export. CLZ: export to CSV. Excel: save as .xlsx or CSV.</p>`;
+   <p class="hint"><b>Discogs:</b> on discogs.com, Collection → Export → Download (CSV). Condition, notes and the Discogs ID come along.<br><b>CLZ Music:</b> export your collection to CSV with all the fields you want to keep (price paid, store, purchase date, condition, collection status…).<br><b>Your own spreadsheet:</b> any columns are fine (artist, title, year, format, price paid…); you confirm their meaning at the next step. Excel: save as .xlsx or CSV.</p>`;
   openSheet();$("impNo").onclick=()=>closeSheet();
   const go=async fn=>{try{$("impMsg").textContent="Reading…";await fn();$("impMsg").textContent="";subView(()=>impStep());}catch(e){$("impMsg").textContent="";report("err","The file could not be imported",e.message||"Unreadable file.",[],"Your collection was not changed.");}};
   $("impFile").onchange=e=>{const f=e.target.files[0];if(f)go(()=>impLoad(f));e.target.value="";};
@@ -2463,10 +2482,11 @@ function impMap(){const p=$("detail"),sh=IMP.sheets[IMP.cur],w=Math.max(...sh.ro
     IMP.drafts.forEach(d=>{if(d.status==="new"||d.status==="maybe")IMP.sel.add(d.i);});subView(()=>impReview());};}
 function impReview(){const p=$("detail");if(!IMP.drafts.length||IMP.sheets.every(s=>s.free)&&!IMP.drafts.length){IMP.drafts=impAllDrafts();IMP.drafts.forEach(d=>{if(d.status==="new"||d.status==="maybe")IMP.sel.add(d.i);});}
   CUR=impReview;const D=IMP.drafts,n=D.length,cnt=s=>D.filter(d=>d.status===s).length,lim=Math.min(n,IMP.show);
-  const row=d=>{const dis=d.status==="invalid",tag=d.status==="dup"?`<span class="chip">Already there</span>`:d.status==="maybe"?`<span class="chip warn">Check</span>`:d.status==="invalid"?`<span class="chip warn">Skipped</span>`:"";
-    return `<li class="item"><label class="pk"><input type="checkbox" data-pk="${d.i}"${IMP.sel.has(d.i)?" checked":""}${dis?" disabled":""}><span class="meta"><b>${esc(d.t||"(no title)")}</b><small>${esc([d.a,d.y,d.l,fmtLabel(d)].filter(Boolean).join(" · "))}</small>${d.why||d.bad?`<small>${esc(d.why||d.bad)}</small>`:""}</span></label>${tag}</li>`;};
+  const row=d=>{const dis=d.status==="invalid",tag=d.s==="wish"&&d.status!=="dup"?`<span class="chip">Wishlist</span>`:d.status==="notown"?`<span class="chip warn">Not owned</span>`:d.status==="dup"?`<span class="chip">Already there</span>`:d.status==="maybe"?`<span class="chip warn">Check</span>`:d.status==="invalid"?`<span class="chip warn">Skipped</span>`:"";
+    return `<li class="item"><label class="pk"><input type="checkbox" data-pk="${d.i}"${IMP.sel.has(d.i)?" checked":""}${dis?" disabled":""}><span class="meta"><b>${esc(d.t||"(no title)")}</b><small>${esc([d.a,d.y,d.l,fmtLabel(d),d.cd,d.p?"paid "+fmtPrice(d.p)+(d.st?" ("+d.st+")":""):"",d.v?"value "+fmtPrice(d.v):""].filter(Boolean).join(" · "))}</small>${d.why||d.bad?`<small>${esc(d.why||d.bad)}</small>`:""}</span></label>${tag}</li>`;};
   p.innerHTML=`<p class="cat">Import · step 2 of 2</p><h2 class="wh">Review ${n} row${n!==1?"s":""}</h2>
-   <p class="hint">${cnt("new")} new · ${cnt("maybe")} to check · ${cnt("dup")} already in your library or repeated · ${cnt("invalid")} unusable. Rows already in your library are left unchecked.</p>
+   <p class="hint">${cnt("new")} new · ${cnt("maybe")} to check · ${cnt("dup")} already in your library or repeated${cnt("notown")?" · "+cnt("notown")+" not owned (status)":""} · ${cnt("invalid")} unusable. Rows already in your library are left unchecked.</p>
+   ${D.some(d=>d.s)?`<p class="hint">The file has a status column: rows marked as wishlist go to your wishlist (${D.filter(d=>d.s==="wish").length}); the others go where you choose below.</p>`:""}
    <div class="seg" id="impTgt"><button type="button" data-tg="col" aria-pressed="${IMP.target==="col"}">Add to Collection</button><button type="button" data-tg="wish" aria-pressed="${IMP.target==="wish"}">Add to Wishlist</button></div>
    <div class="pickBar"><span id="pkN"></span><span class="pkB"><button type="button" class="small" id="pkAll">Select all</button><button type="button" class="small" id="pkNone">Select none</button></span></div>
    <ul class="list pick">${D.slice(0,lim).map(row).join("")}</ul>${n>lim?`<button type="button" class="wide" id="impMore">Show ${Math.min(300,n-lim)} more (${n-lim} not shown, selection still applies)</button>`:""}
@@ -2477,18 +2497,20 @@ function impReview(){const p=$("detail");if(!IMP.drafts.length||IMP.sheets.every
   $("pkAll").onclick=()=>{D.forEach(d=>{if(d.status!=="invalid")IMP.sel.add(d.i);});impReview();};$("pkNone").onclick=()=>{IMP.sel.clear();impReview();};
   if($("impMore"))$("impMore").onclick=()=>{IMP.show+=300;impReview();};$("pkNo").onclick=goBack;
   $("pkGo").onclick=()=>doImport();}
-function doImport(){const chosen=IMP.drafts.filter(d=>IMP.sel.has(d.i)&&d.status!=="invalid"),tgt=IMP.target==="wish"?S.wish:S.col,now=Date.now(),added=[],skipped=IMP.drafts.filter(d=>!IMP.sel.has(d.i));
+function doImport(){const chosen=IMP.drafts.filter(d=>IMP.sel.has(d.i)&&d.status!=="invalid"),now=Date.now(),added=[],skipped=IMP.drafts.filter(d=>!IMP.sel.has(d.i));let nW=0;
   undoable("Collection import: "+chosen.length+" album"+(chosen.length!==1?"s":""));let nb=0;
   chosen.forEach((d,k)=>{const x={id:"i"+now.toString(36)+k,a:d.a||"Unknown artist",t:d.t,at:d.at||0,src:"import"};
     if(d.y)x.y=d.y;if(d.l)x.l=d.l;if(d.cat)x.cat=d.cat;if(d.dg)x.dgid=+d.dg;if(d.perf&&d.perf!==d.a)x.perf=d.perf;
     if(d.fmt){x.fmt=d.fmt;if(d.vt)x.vt=d.vt;}if(d.fd)x.fd=d.fd;if(d.n)x.note=d.n;
+    if(d.p>0){x.paid=d.p;if(d.st)x.paidSrc=d.st;if(d.pd)x.paidAt=d.pd;}if(d.v>0){x.val=d.v;x.valSrc="Imported";x.valAt=now;}if(d.cd)x.cond=d.cd;
+    const toWish=d.s==="wish"||(!d.s&&IMP.target==="wish"),tgt=toWish?S.wish:S.col;if(toWish)nW++;
     const gg=d.g?(GENRES.includes(d.g)?d.g:mapGenre([d.g],[])):"";if(gg)x.g=gg;
     if(/^\d{8}$|^\d{12,13}$/.test(d.bc)&&!S.codes[d.bc]){S.codes[d.bc]=x.id;nb++;}
     tgt.push(x);added.push({t:x.t+" — "+x.a,id:x.id,why:"Added"});});
   save();render();
   const items=added.concat(skipped.map(d=>({t:(d.t||"(no title)")+(d.a?" — "+d.a:"")+": "+(d.why||d.bad||"left unchecked"),id:""})));
   const dg=chosen.filter(d=>d.dg).length;
-  report(chosen.length?"ok":"info",chosen.length?"Import complete":"Nothing imported",chosen.length+" album"+(chosen.length!==1?"s":"")+" added to your "+(IMP.target==="wish"?"wishlist":"collection")+(skipped.length?"; "+skipped.length+" row"+(skipped.length!==1?"s":"")+" not imported.":"."),items,
+  report(chosen.length?"ok":"info",chosen.length?"Import complete":"Nothing imported",(nW&&nW<chosen.length?(chosen.length-nW)+" album"+(chosen.length-nW!==1?"s":"")+" added to your collection and "+nW+" to your wishlist":chosen.length+" album"+(chosen.length!==1?"s":"")+" added to your "+(nW?"wishlist":"collection"))+(chosen.filter(d=>d.p>0).length?" ("+chosen.filter(d=>d.p>0).length+" with the price paid)":"")+(skipped.length?"; "+skipped.length+" row"+(skipped.length!==1?"s":"")+" not imported.":"."),items,
     chosen.length?"Next, in Tools: "+(dg?"“Complete from Discogs” fetches the track lists ("+dg+" albums have a Discogs ID); ":"")+"“Find covers and info” adds covers; “Recognise movements and pieces” identifies classical works."+(nb?" "+nb+" barcode"+(nb!==1?"s were":" was")+" linked.":""):"Nothing was changed.");
   IMP.drafts=[];IMP.sheets=[];closeSheet();}
 // --- fill imported albums from Discogs (tracks, genre) when a Discogs ID is known ---
@@ -2588,7 +2610,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.80.2";$("hVer").textContent="v"+APPV;
+const APPV="0.81.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
