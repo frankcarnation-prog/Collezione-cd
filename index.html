@@ -2338,15 +2338,17 @@ const fmtWhen=t=>new Date(t).toLocaleString("en-GB",{day:"numeric",month:"short"
 function openReports(){closeSettings();const p=$("detail"),R=reportsAll();CUR=()=>openReports();
   p.innerHTML=`<p class="cat">Reports</p><h2 class="wh">${R.length} report${R.length!==1?"s":""}</h2><p class="hint">Results of operations (backup, restore, import, MusicBrainz linking…), with every detail. The last 50 are kept on this device.</p>
    <ul class="list">${R.map((r,i)=>`<li class="item tap" data-ri="${i}"><span class="rptDot ${esc(r.kind)}" aria-hidden="true"></span><div class="meta"><b>${esc(r.title)}</b><small>${fmtWhen(r.at)}${r.items.length?" · "+r.items.length+" detail"+(r.items.length!==1?"s":""):""}</small>${r.msg?`<small>${esc(r.msg)}</small>`:""}</div><span class="go" aria-hidden="true">›</span></li>`).join("")||`<li class="empty">No reports yet.</li>`}</ul>
+   ${R.some(isRcReport)?`<button type="button" class="setItem" id="rpRestAll"><b>Restore prices from all receipts</b><small>${R.filter(isRcReport).length} receipt report${R.filter(isRcReport).length!==1?"s":""}: sets “Paid” again where it is missing</small></button>`:""}
    <div class="row">${R.length?`<button type="button" id="rpClear">Clear reports</button>`:""}<button type="button" id="rpClose">Close</button></div>`;
-  openSheet();$("rpClose").onclick=()=>closeSheet();if($("rpClear"))$("rpClear").onclick=()=>{try{localStorage.removeItem(RPT_KEY);}catch(e){}openReports();};
+  openSheet();$("rpClose").onclick=()=>closeSheet();if($("rpRestAll"))$("rpRestAll").onclick=()=>subView(()=>openRestorePaid(R.map((r,i)=>isRcReport(r)?i:-1).filter(i=>i>=0)));if($("rpClear"))$("rpClear").onclick=()=>{try{localStorage.removeItem(RPT_KEY);}catch(e){}openReports();};
   p.querySelectorAll("[data-ri]").forEach(n=>n.onclick=()=>subView(()=>openReport(+n.dataset.ri)));}
 function openReport(i){const r=reportsAll()[i],p=$("detail");if(!r)return;CUR=()=>openReport(i);
   const rows=r.items.map(it=>{const x=it.id&&byId(it.id);return x?albumRow(x,it.why||it.t):`<li class="item"><div class="meta"><span>${esc(it.t)}</span></div></li>`;}).join("");
   p.innerHTML=`<p class="cat">Report · ${fmtWhen(r.at)}</p><h2 class="wh">${esc(r.title)}</h2>${r.msg?`<p>${esc(r.msg)}</p>`:""}${r.hint?`<p class="hint">${esc(r.hint)}</p>`:""}
    ${rows?`<ul class="list">${rows}</ul>`:""}
+   ${isRcReport(r)?`<button type="button" class="setItem" id="rpRest"><b>Restore these prices</b><small>Sets “Paid” again on the albums of this receipt, without duplicates</small></button>`:""}
    <div class="${BACK.length?"pair":"row"}">${BACK.length?`<button type="button" id="detBack">← Back</button>`:""}<button type="button" id="detClose">Close</button></div>`;
-  openSheet();$("detClose").onclick=()=>closeSheet();if($("detBack"))$("detBack").onclick=goBack;bindOpen(p);}
+  openSheet();$("detClose").onclick=()=>closeSheet();if($("detBack"))$("detBack").onclick=goBack;bindOpen(p);if($("rpRest"))$("rpRest").onclick=()=>subView(()=>openRestorePaid([i]));}
 $("rptsOpen").onclick=()=>openReports();
 function openTrash(){const p=$("detail"),T=S.trash||[];
   const lab=e=>e.k==="del"?"Deleted":e.k==="box"?"Grouped into “"+esc(e.into||"a box set")+"”":"Old version"+(e.why?" (before "+esc(e.why)+")":"");
@@ -2660,7 +2662,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.82.0";$("hVer").textContent="v"+APPV;
+const APPV="0.82.1";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -3018,8 +3020,40 @@ function receiptReview(R){const p=$("detail"),all=S.col.slice().sort((a,b)=>norm
     const ids=rows.map(r=>r.m),d=ids.filter((m,k)=>ids.indexOf(m)!==k);if(d.length){toast("Two lines point to the same album: “"+byId(d[0]).t+"”");return;}
     const sh=($("rcShip")&&$("rcShip").checked?R.ship:0)-($("rcDisc")&&$("rcDisc").checked?R.disc:0),base=rows.reduce((a,r)=>a+r.p,0);undoable("Paid set from a receipt");
     rows.forEach(r=>{const x=byId(r.m);x.paid=Math.round((r.p+(base?sh*r.p/base:0))*100)/100;x.paidSrc=($("rcSrc").value||"").trim()||"receipt";x.paidAt=R.date;});save();render();renderStats();
-    report("ok","Paid set from receipt",`${rows.length} album${rows.length!==1?"s":""} now have a Paid price${sh?" (shipping/voucher included)":""}.`,rows.map(r=>({id:r.m,t:byId(r.m).t+" — "+fmtPrice(byId(r.m).paid)})),"",()=>closeSheet());};}
+    report("ok","Paid set from receipt",`${rows.length} album${rows.length!==1?"s":""} now have a Paid price${sh?" (shipping/voucher included)":""}.`,rows.map(r=>({id:r.m,t:byId(r.m).t+" — "+fmtPrice(byId(r.m).paid),pr:{p:byId(r.m).paid,s:byId(r.m).paidSrc,a:R.date}})),"",()=>closeSheet());};}
 $("rcGo").onclick=()=>receiptUi();
+/* ---- Restore Paid prices from "Paid set from receipt" reports (e.g. after a sync overwrote them). Never replaces a different price unless ticked. ---- */
+const isRcReport=r=>!!r&&r.title==="Paid set from receipt"&&(r.items||[]).length>0;
+function rcRestoreRows(idx){const Rp=reportsAll(),rows=[],seen=new Set();
+  idx.forEach(i=>{const r=Rp[i];if(!isRcReport(r))return;r.items.forEach(it=>{let t=String(it.t||""),p=it.pr?+it.pr.p:0;
+    const k=t.lastIndexOf(" — "),pp=k>0?priceOf(t.slice(k+3)):0;if(pp){if(!(p>0))p=pp;t=t.slice(0,k);}if(!(p>0))return;
+    const ex=it.id?S.col.find(x=>x.id===it.id):null,c=ex?[ex]:S.col.filter(x=>tNorm(x.t)===tNorm(t));
+    rows.push({t,p,src:(it.pr&&it.pr.s)||"",at:(it.pr&&it.pr.a)||r.at,c,m:c.length===1?c[0].id:""});});});
+  return rows;}
+function openRestorePaid(idx){const p=$("detail"),rows=rcRestoreRows(idx);CUR=()=>openRestorePaid(idx);
+  const lab=x=>(x.a||"?")+" — "+x.t+(x.y?" ("+x.y+")":"");
+  p.innerHTML=`<p class="cat">Value</p><h2 class="wh">Restore prices from receipts</h2>
+   <p class="hint">${rows.length} price${rows.length!==1?"s":""} found in ${idx.length>1?"your receipt reports":"this report"}. Albums that already have this price are left alone; albums with a different price are unticked, so nothing you entered is replaced unless you tick it.</p>
+   ${rows.some(r=>!r.src)?`<label class="pkConf">Bought from (reports made before this version do not record the shop) <input type="text" id="rpSrc" value="momox" style="width:10em"></label>`:""}
+   <ul class="list pick">${rows.map((r,n)=>`<li class="item"><label class="pk"><input type="checkbox" data-rp="${n}"><span class="meta"><b>${esc(r.t)}</b>${r.c.length>1?`<select data-rpm="${n}" style="max-width:100%"><option value="">— several albums share this title: choose —</option>${r.c.map(x=>`<option value="${esc(x.id)}">${esc(lab(x))}</option>`).join("")}</select>`:""}<small data-rpw="${n}"></small></span></label><span class="pkSide"><b>${fmtPrice(r.p)}</b></span></li>`).join("")||`<li class="empty">No price found in this report.</li>`}</ul>
+   <div class="pair pickAct"><button type="button" class="primary" id="rpGo"></button><button type="button" id="rpNo">Back</button></div>`;
+  openSheet();$("rpNo").onclick=goBack;
+  const claimed=()=>{const m=new Map();rows.forEach((r,n)=>{if(r.m&&!m.has(r.m))m.set(r.m,n);});return m;};
+  const upd=()=>{rows.forEach((r,n)=>{const sl=p.querySelector(`[data-rpm="${n}"]`);if(sl)r.m=sl.value;});const cl=claimed();let c=0;rows.forEach((r,n)=>{const ck=p.querySelector(`[data-rp="${n}"]`),w=p.querySelector(`[data-rpw="${n}"]`),sl=p.querySelector(`[data-rpm="${n}"]`);if(sl)r.m=sl.value;
+      const x=r.m&&byId(r.m);let st=!r.c.length?"none":!x?"amb":cl.get(r.m)!==n?"dupe":!(x.paid>0)?"ok":Math.abs(x.paid-r.p)<.01?"same":"diff";
+      w.textContent={none:"Album not found in your collection",amb:"",dupe:"Same album already covered by a more recent line",same:"Already has this price: nothing to do",ok:"",diff:"Currently "+fmtPrice(x&&x.paid)+(x&&x.paidSrc?" ("+x.paidSrc+")":"")+": tick to replace"}[st]||"";
+      ck.disabled=st==="none"||st==="amb"||st==="dupe"||st==="same";
+      ck.checked=ck.disabled?false:r.on===undefined?st==="ok":r.on;
+      if(ck.checked)c++;});
+    $("rpGo").textContent="Set Paid ("+c+")";$("rpGo").classList.toggle("off",!c);};
+  p.querySelectorAll("[data-rpm]").forEach(sl=>sl.onchange=()=>{rows[+sl.dataset.rpm].on=undefined;upd();});
+  p.querySelectorAll("[data-rp]").forEach(ck=>ck.onchange=()=>{rows[+ck.dataset.rp].on=ck.checked;upd();});
+  upd();
+  $("rpGo").onclick=()=>{const sel=rows.filter((r,n)=>p.querySelector(`[data-rp="${n}"]`).checked&&r.m&&byId(r.m));if(!sel.length){toast("Nothing to restore");return;}
+    const shop=($("rpSrc")&&$("rpSrc").value||"").trim()||"receipt";undoable("Paid restored from receipt reports");
+    sel.forEach(r=>{const x=byId(r.m);x.paid=r.p;x.paidSrc=r.src||shop;x.paidAt=r.at;});save();render();renderStats();
+    report("ok","Paid restored",`${sel.length} album${sel.length!==1?"s":""} now have the Paid price from your receipts.`,sel.map(r=>({id:r.m,t:byId(r.m).t+" — "+fmtPrice(r.p)})),"Run it again any time: albums that already have the price are skipped.",()=>closeSheet());};}
+
 /* ---- Cloud sync (Supabase over plain fetch, no library). Local copy stays the master; Discogs estimates are never sent. ---- */
 const SB_URL="https://vijlxamhpmepnowutnkr.supabase.co",SB_KEY="sb_publishable_cobYQqpl-AvpeebLAaMYpQ_DL0-iqq3",SYNC_KEY="album-ledger-sync";
 let SY=(()=>{try{return JSON.parse(localStorage.getItem(SYNC_KEY))||{};}catch(e){return {};}})(),SYNCING=false,SYNC_T=null,SYNC_APPLY=false;
