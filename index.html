@@ -211,6 +211,12 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 .cc img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px}.cc small{color:var(--muted);font-size:.74rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .cc .nil{color:var(--muted)}.cmpR.same .lab{opacity:.6}
 .photos{display:flex;gap:8px;overflow-x:auto;padding:4px 0;scrollbar-width:none}
+.covBox{display:flex;flex-direction:column;gap:6px;min-width:0}.covBox .acts{margin:2px 0 0}
+.orig{background:none;border:0;box-shadow:none;padding:2px 0;min-height:0;font-size:.78rem;color:var(--muted);text-align:left;font-style:italic;text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer}
+.phf{flex:none;width:72px;margin:0;display:flex;flex-direction:column;align-items:center;gap:2px}.phf .ph{width:64px}
+.orig.sm{font-size:.62rem;line-height:1.15;text-align:center;width:100%;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.edBox{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px 0 4px;margin:10px 0}.edBox .certL{margin-top:0}.edActs>button{flex:1 1 150px;font-size:.88rem}
+.lbO{color:#ddd;font-size:.85rem;font-style:italic;text-align:center;margin:6px 8px}
 .ph{flex:none;width:64px;height:64px;padding:0;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--bg);min-height:0}
 .ph img{width:100%;height:100%;object-fit:cover}.ph.add{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);font-size:1.3rem;border-style:dashed}.ph.add small{font-size:.65rem}
 .lightbox{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px}
@@ -606,7 +612,7 @@ small.best{color:var(--wish);font-weight:600}
 <section class="card"><h3>Export</h3>
 <p>Printable list with cover, title, artist, year, performers, label and total duration (no track lists). In the print dialog, choose “Save as PDF”.</p>
 <div class="seg" id="exSeg" role="group" aria-label="Albums to export"><button type="button" data-ex="col" aria-pressed="true">Collection</button><button type="button" data-ex="wish" aria-pressed="false">Wishlist</button><button type="button" data-ex="all" aria-pressed="false">Both</button></div>
-<div class="row"><button class="primary" id="exGo" type="button">Export PDF</button></div><p class="hint" id="exMsg"></p>
+<div class="row"><button class="primary" id="exGo" type="button">Export PDF</button><button id="exImg" type="button">Export images (ZIP)</button></div><p class="hint">Images: covers and your photos as JPEG files, each with its source written underneath, plus a sources.csv list.</p><p class="hint" id="exMsg"></p>
 </section>
 <section class="card"><h3>Discogs</h3>
 <label for="dgKey">Personal token (free)</label>
@@ -1289,7 +1295,7 @@ function showFound(out,f,src,c){const box=discsOf(f).length>1,dup=sameDisc(f),ow
   $("addCol").onclick=()=>add(false);}
 // Comparer la fiche trouvée avec un album de la collection, puis lier le code-barres
 function compareLink(out,x,f,src,c){openCompare(x,f,src,ok=>{closeSheet();if(!ok)return;addShop(x);if(c){S.codes[c]=x.id;if(S.pcodes)delete S.pcodes[c];}save();render();SBACK=[];
-  out.innerHTML=`<div class="verdict own"><strong>Entry updated${c?" and barcode linked":""}</strong><span>${esc(x.t)} · ${esc(x.a)}</span>${c?`<small>${fmtEan(c)} will now be recognized offline.</small>`:""}</div><div class="row"><button type="button" id="seeNew">View entry</button>${nextBtn()}</div>`;$("seeNew").onclick=()=>viewEntry(x.id);});}
+  out.innerHTML=`<div class="verdict own"><strong>Entry updated${c?" and barcode linked":""}</strong><span>${esc(x.t)} · ${esc(x.a)}</span>${c?`<small>${fmtEan(c)} is now linked to this album: scanning it again finds it instantly, even without internet.</small>`:""}</div><div class="row"><button type="button" id="seeNew">View entry</button>${nextBtn()}</div>`;$("seeNew").onclick=()=>viewEntry(x.id);});}
 // Choisir l'album de la collection auquel associer le code (avec ou sans fiche trouvée en ligne)
 function linkPicker(out,f,src,c){
   out.innerHTML=`<p class="ask">Link ${c?fmtEan(c):"this album"} to which album?</p><input id="lkQ" type="search" autocomplete="off" placeholder="Search my collection" aria-label="Search my collection"><ul class="list lkl" id="lkL"></ul>`;
@@ -1302,7 +1308,7 @@ function linkPicker(out,f,src,c){
   L.onclick=e=>{const b=e.target.closest("[data-lk]");if(!b)return;const x=byId(b.dataset.lk);if(!x)return;
     if(f){compareLink(out,x,f,src,c);return;}
     undoable("Barcode linked to “"+x.t+"”");S.codes[c]=x.id;if(S.pcodes)delete S.pcodes[c];save();render();SBACK=[];
-    out.innerHTML=`<div class="verdict own"><strong>Barcode linked</strong><span>${esc(x.t)} · ${esc(x.a)}</span><small>${fmtEan(c)} will now be recognized offline.</small></div><div class="row"><button type="button" id="seeNew">View entry</button>${nextBtn()}</div>`;$("seeNew").onclick=()=>viewEntry(x.id);};}
+    out.innerHTML=`<div class="verdict own"><strong>Barcode linked</strong><span>${esc(x.t)} · ${esc(x.a)}</span><small>${fmtEan(c)} is now linked to this album: scanning it again finds it instantly, even without internet.</small></div><div class="row"><button type="button" id="seeNew">View entry</button>${nextBtn()}</div>`;$("seeNew").onclick=()=>viewEntry(x.id);};}
 function manual(out,append){out.insertAdjacentHTML("beforeend",`<label for="fa">Artist / composer</label><input id="fa" type="text" autocomplete="off">
   <label for="ft">Album / work and performer</label><input id="ft" type="text" autocomplete="off">
   <div class="row"><button class="primary" id="addCol" type="button">Add to collection</button><button id="addWish" type="button">Add to wishlist</button></div>`);
@@ -1588,15 +1594,34 @@ function openMerge(w){const W=WORKS(),o=W[w],V=versions(),gid=workId(w,W),comp=n
     $("mgL").querySelectorAll("[data-t]").forEach(n=>n.onclick=()=>{S.wl=S.wl||{};S.wl[w]=n.dataset.t;if(S.wsp)delete S.wsp[w];save();toast("Works merged");render();goBack();});};
   $("mgQ").oninput=draw;draw();}
 // ---------- Edition certainty ----------
-// sure: barcode confirmed AND matched to an online edition (MusicBrainz or Discogs), match not awaiting confirmation — or Discogs edition carrying your barcode
+// sure: verified by hand (x.ver), or barcode confirmed AND matched to an online edition (MusicBrainz or Discogs), match not awaiting confirmation — or Discogs edition carrying your barcode
 // fairly sure: only one of the two, a likely barcode, or an automatic match still to confirm
 // not sure: no barcode and no online edition (typed or imported without a match)
-const CERT=[["Not sure","No barcode and no online edition: scan it or choose its edition"],["Fairly sure","Barcode or online edition, not both (or a match to confirm)"],["Sure","Barcode confirmed and matched to an online edition"]];
+const CERT=[["Not sure","No barcode and no online edition: scan it or choose its edition"],["Fairly sure","Barcode or online edition, not both (or a match to confirm)"],["Sure","Barcode confirmed and matched to an online edition, or verified by you"]];
 function certOf(x){const bc=codesOf(x.id).length>0,ed=!!(x.mbid||x.dgid),pend=!!(x.auto&&x.enr!=="manual");
-  if((bc&&ed&&!pend)||(x.est&&x.est.q==="sure"))return 2;if(bc||ed||hasPCode(x))return 1;return 0;}
+  if(x.ver||(bc&&ed&&!pend)||(x.est&&x.est.q==="sure"))return 2;if(bc||ed||hasPCode(x))return 1;return 0;}
 function certWhy(x){const bc=codesOf(x.id).length>0,ed=x.mbid?"MusicBrainz":x.dgid?"Discogs":"",pend=!!(x.auto&&x.enr!=="manual"),c=certOf(x);
-  const what=[bc?"barcode confirmed":hasPCode(x)?"likely barcode, to confirm on first scan":"no barcode",ed?"edition matched on "+ed+(pend?" automatically (to confirm)":""):"no online edition"].join(" · ");
+  const what=[x.ver?"verified by me":"",bc?"barcode confirmed":hasPCode(x)?"likely barcode, to confirm on first scan":"no barcode",ed?"edition matched on "+ed+(pend?" automatically (to confirm)":""):"no online edition"].filter(Boolean).join(" · ");
   return `<p class="certL"><span class="cert c${c}"></span><b>Edition: ${CERT[c][0]}</b> — ${what}</p>`;}
+// ---------- Where an image comes from (shown under every image, burnt into exported images) ----------
+const IMG_HOSTS=[[/coverartarchive\.org|archive\.org/,"Cover Art Archive (MusicBrainz)"],[/discogs\.com/,"Discogs"],[/dzcdn\.net|deezer\.com/,"Deezer"],[/mzstatic\.com|apple\.com/,"Apple Music"],[/amazon/,"Amazon"],[/wikimedia\.org|wikipedia\.org/,"Wikimedia Commons"]];
+function urlOrigin(u){if(!u)return "";if(/^data:/.test(u))return "Imported image";let h="";try{h=new URL(u).hostname;}catch(e){return "Online image";}const m=IMG_HOSTS.find(e=>e[0].test(h));return m?m[1]:h.replace(/^www\./,"");}
+// own images: "photo" (taken in the app), "gallery" (picked on the phone), or a text typed by the user; nothing recorded for images added before v0.84
+const origTxt=o=>o==="photo"?"My photo":o==="gallery"?"Image from my phone":o||"Origin not recorded";
+function coverOrigin(x){if(COV[x.id])return origTxt(x.covO);if(x.img)return x.imgOt&&x.imgOt.u===x.img?x.imgOt.t:urlOrigin(x.img);return "";}
+const photoOrigin=(x,i)=>origTxt((x.phO||[])[i]);
+const fromOf=r=>r&&r.from==="gallery"?"gallery":"photo";
+function editOrigin(x,kind,i,done){const cur=kind==="cover"?coverOrigin(x):photoOrigin(x,i),v=prompt("Origin of this image (shown under it and in exports)",/^Origin not recorded$/.test(cur)?"":cur);if(v===null)return;const t=v.trim();
+  undoable("Image origin changed");
+  if(kind==="cover"){if(COV[x.id]){if(t)x.covO=t;else delete x.covO;}else if(x.img){if(t)x.imgOt={u:x.img,t};else delete x.imgOt;}}
+  else{const a=(x.phO||[]).slice();while(a.length<=i)a.push(null);a[i]=t||null;x.phO=a;}
+  save();if(done)done();}
+// keeps the photo origins in step with the photo list
+function phOSet(x,a){if(a.some(Boolean))x.phO=a;else delete x.phO;}
+// links to check an edition online: its own pages first, then searches
+function srchLinks(x,lab){const q=encodeURIComponent((x.a&&x.a!=="Unknown artist"?String(x.a).split(/[;,]/)[0]+" ":"")+String(x.t||"").replace(/\s:\s/," "));
+  return `<div class="srch"><span>${lab||"View online:"}</span>`+(x.mbid?`<a href="https://musicbrainz.org/release/${esc(x.mbid)}" target="_blank" rel="noopener">MusicBrainz page</a>`:"")+(x.dgid?`<a href="https://www.discogs.com/release/${esc(x.dgid)}" target="_blank" rel="noopener">Discogs page</a>`:"")+(x.dzid?`<a href="https://www.deezer.com/album/${esc(x.dzid)}" target="_blank" rel="noopener">Deezer page</a>`:"")+
+    `<a href="https://www.discogs.com/search/?q=${q}&type=release" target="_blank" rel="noopener">Search Discogs</a><a href="https://musicbrainz.org/search?query=${q}&type=release" target="_blank" rel="noopener">MusicBrainz</a><a href="https://www.google.com/search?q=${q}+CD" target="_blank" rel="noopener">Google</a></div>`;}
 // ---------- Wishlist: check prices in stores ----------
 // Opens the store's own search (barcode when the store finds products by barcode, otherwise artist + title). Store domain follows the device language.
 // ---------- Condition and value ----------
@@ -1719,38 +1744,42 @@ function openDetail(id){const x=byId(id);if(!x)return;CUR=()=>openDetail(id);con
         h+=`<div class="tr${o?" sub":""}"><span class="n">${num}</span><span class="t">${esc(nm)}${bonus?` <span class="bonus">bonus</span>`:""}</span><span class="d">${fmtD(t.d)}</span></div>`;});
       return h+`</div>`;}).join("")
     :`<p class="hint">No track list. Paste it here, one track per line:</p><textarea id="trIn" aria-label="Tracks"></textarea><button type="button" id="trSave">Save tracks</button>`;
-  p.innerHTML=`<div class="detail"><div class="sleeve${cu?"":" nocov"}">${cu?`<img src="${cu}" alt="Cover of ${esc(x.t)}" onerror="this.remove()">`:"No cover"}</div>
+  const co=cu?coverOrigin(x):"",phs=COV["ph:"+id]||[],dg=x.mbid||x.dgid;
+  p.innerHTML=`<div class="detail"><div class="covBox"><div class="sleeve${cu?"":" nocov"}">${cu?`<img src="${cu}" alt="Cover of ${esc(x.t)}" onerror="this.remove()">`:"No cover"}</div>
+    ${co?`<button type="button" class="orig" id="covOrig" title="Change the origin">Source: ${esc(co)}</button>`:""}
+    <div class="row acts"><button type="button" id="coverBtn">${hasCover(x)?"Change the cover":"Add a cover"}</button><button type="button" id="detRead">Read the cover (AI)</button></div>
+    <div class="photos" id="phRow">${phs.map((d,i)=>`<figure class="phf"><button type="button" class="ph" data-ph="${i}" aria-label="Photo ${i+1}"><img src="${d}" alt=""></button><figcaption><button type="button" class="orig sm" data-po="${i}">${esc(photoOrigin(x,i))}</button></figcaption></figure>`).join("")}<button type="button" class="ph add" id="phAdd" aria-label="Add a photo">＋<small>Photo</small></button></div></div>
    <div class="meta"><h2>${esc(x.t)}</h2><p class="by">${esc(x.a)}</p>
    ${x.perf&&norm(firstPerf(x.perf))!==norm(x.a)?`<p class="by">${esc(firstPerf(x.perf))}</p>`:""}<p class="facts">${fmtLabel(x)?`<span>${esc(fmtLabel(x))}</span>`:""}${x.box?`<span>Coffret ${discsOf(x).length} ${x.fmt==="Vinyl"?"discs":"CD"}</span>`:""}${x.l?`<span>${esc(x.l)}</span>`:""}${x.y?`<span>${esc(x.y)}</span>`:""}${x.g?`<span>${esc(x.g)}</span>`:""}</p>
-   ${certWhy(x)}<div class="seg" role="group" aria-label="Status"><button type="button" data-st="own" aria-pressed="${own}">Owned</button><button type="button" data-st="wish" aria-pressed="${!own}">Wishlist</button></div>
-   ${own?`<div class="copiesRow"><span>Copies</span><button type="button" class="small" data-cp="-1" aria-label="One less">−</button><b>${x.copies||1}</b><button type="button" class="small" data-cp="1" aria-label="One more">+</button></div>`:""}${condValHtml(x,own)}${own?"":storeLinks(x,id)}
-   ${(()=>{const cs=codesOf(id),ps=Object.keys(S.pcodes||{}).filter(k=>S.pcodes[k]===id);return cs.length||ps.length?`<p>${cs.map(k=>`<span class="code">${fmtEan(k)}</span>`).join(" ")}${ps.map(k=>`<span class="code prob" title="Likely barcode">${fmtEan(k)} ?</span>`).join(" ")}</p>`:"";})()}${x.cat?`<p class="hint">Catalog no.: ${esc(x.cat)}</p>`:""}${x.fd?`<p class="hint">${esc(x.fd)}</p>`:""}${x.note?`<p class="note">${esc(x.note)}</p>`:""}${x.at?`<p class="hint">Added on ${new Date(x.at).toLocaleDateString("en-GB")}</p>`:""}
-   <div class="row acts"><button type="button" class="primary" id="detEdit">Edit</button><button type="button" id="coverBtn">${hasCover(x)?"Cover…":"Add a cover"}</button></div>
-   <div class="photos" id="phRow">${(COV["ph:"+id]||[]).map((d,i)=>`<button type="button" class="ph" data-ph="${i}" aria-label="Photo ${i+1}"><img src="${d}" alt=""></button>`).join("")}<button type="button" class="ph add" id="phAdd" aria-label="Add a photo">＋<small>Photo</small></button></div>
+   <div class="row acts"><button type="button" class="primary" id="detEdit">Edit details and tracks</button></div>
+   <div class="edBox">${certWhy(x)}
+    <div class="row edActs"><button type="button" id="pickEd">${dg?"Choose another edition":"Choose the edition"}</button>${x.mbid?`<button type="button" id="cmpMb">Compare with MusicBrainz</button>`:""}${x.dgid?`<button type="button" id="cmpDg">Compare with Discogs</button>`:""}${x.ver||certOf(x)<2?`<button type="button" id="verBtn" aria-pressed="${!!x.ver}">${x.ver?"✓ Verified by me (undo)":"I checked it: mark as sure"}</button>`:""}</div>
+    ${srchLinks(x)}</div>
    ${x.auto&&x.enr!=="manual"?`<div class="autobox"><span>Cover and details matched automatically. Confirm this match?</span><div class="pair"><button type="button" class="primary" id="okThis">Confirm</button><button type="button" id="notThis">Reject</button></div></div>`:""}
    <p class="hint" id="covMsg"></p>
+   <div class="seg" role="group" aria-label="Status"><button type="button" data-st="own" aria-pressed="${own}">Owned</button><button type="button" data-st="wish" aria-pressed="${!own}">Wishlist</button></div>
+   ${own?`<div class="copiesRow"><span>Copies</span><button type="button" class="small" data-cp="-1" aria-label="One less">−</button><b>${x.copies||1}</b><button type="button" class="small" data-cp="1" aria-label="One more">+</button></div>`:""}${condValHtml(x,own)}${own?"":storeLinks(x,id)}
+   ${(()=>{const cs=codesOf(id),ps=Object.keys(S.pcodes||{}).filter(k=>S.pcodes[k]===id);return cs.length||ps.length?`<p>${cs.map(k=>`<span class="code">${fmtEan(k)}</span>`).join(" ")}${ps.map(k=>`<span class="code prob" title="Likely barcode">${fmtEan(k)} ?</span>`).join(" ")}</p>`:"";})()}${x.cat?`<p class="hint">Catalog no.: ${esc(x.cat)}</p>`:""}${x.fd?`<p class="hint">${esc(x.fd)}</p>`:""}${x.note?`<p class="note">${esc(x.note)}</p>`:""}${x.at?`<p class="hint">Added on ${new Date(x.at).toLocaleDateString("en-GB")}</p>`:""}
    <details class="more"><summary>⋯ More actions</summary>
-    <div class="mgrp"><span class="mlab">Complete</span>
-     <button type="button" class="setItem" id="pickEd"><b>Choose the right edition</b><small>MusicBrainz, Discogs or a pasted link</small></button>
-     ${x.mbid?`<button type="button" class="setItem" id="mbRefresh"><b>Refresh from MusicBrainz</b><small>Compare with the online entry</small></button>`:""}
-     <button type="button" class="setItem" id="detRead"><b>Re-read the cover from a photo (AI)</b><small>Front and back</small></button>
-     <div class="srch"><span>View online:</span>${(()=>{const q=encodeURIComponent((x.a!=="Unknown artist"?x.a.split(/[;,]/)[0]+" ":"")+x.t.replace(/\s:\s/," "));
-       return (x.mbid?`<a href="https://musicbrainz.org/release/${x.mbid}" target="_blank" rel="noopener">MusicBrainz page</a>`:"")+(x.dgid?`<a href="https://www.discogs.com/release/${x.dgid}" target="_blank" rel="noopener">Discogs page</a>`:"")+
-       `<a href="https://www.discogs.com/search/?q=${q}&type=release" target="_blank" rel="noopener">Search Discogs</a><a href="https://musicbrainz.org/search?query=${q}&type=release" target="_blank" rel="noopener">MusicBrainz</a><a href="https://www.google.com/search?q=${q}+CD" target="_blank" rel="noopener">Google</a>`;})()}</div></div>
     ${discsOf(x).length>1?`<div class="mgrp"><span class="mlab">Organize</span><button type="button" class="setItem" id="detSplit"><b>Split the box set</b><small>Separate one or more CDs</small></button></div>`:""}
     <div class="mgrp"><span class="mlab">Delete</span><button type="button" class="setItem danger" id="detDel"><b>Move to trash</b><small>Recoverable from Tools → Trash</small></button></div>
    </details></div></div>${tracks}`;
   openSheet();
   $("detEdit").onclick=()=>editTracks(id);bindCond(x);if(!own)bindOffers(p,x,id);
-  $("phAdd").onclick=async()=>{const r=await shoot("verso");if(!r)return;await phAdd(id,r.full);openDetail(id);};
+  $("phAdd").onclick=async()=>{const r=await shoot("verso");if(!r)return;const n=(COV["ph:"+id]||[]).length,a=(x.phO||[]).slice(0,n);while(a.length<n)a.push(null);a.push(fromOf(r));await phAdd(id,r.full);x.phO=a;save();openDetail(id);};
+  p.querySelectorAll("[data-po]").forEach(b=>b.onclick=()=>editOrigin(x,"photo",+b.dataset.po,()=>openDetail(id)));
+  if($("covOrig"))$("covOrig").onclick=()=>editOrigin(x,"cover",0,()=>openDetail(id));
+  if($("verBtn"))$("verBtn").onclick=()=>{undoable(x.ver?"Verification removed":"Edition marked as sure");if(x.ver)delete x.ver;else x.ver=1;logA((x.ver?"Verified by hand: ":"Verification removed: ")+x.t,x.id);save();render();openDetail(id);};
+  const cmpOnline=async(src,get)=>{$("covMsg").textContent="Loading from "+src+"…";$("covMsg").scrollIntoView({block:"center"});
+    try{const f=await get();if(f.img&&!(await imgOk(f.img)))f.img="";openCompare(x,f,src);}catch(err){$("covMsg").textContent=err.message;}};
+  if($("cmpMb"))$("cmpMb").onclick=()=>cmpOnline("MusicBrainz",()=>mbRelease(x.mbid));
+  if($("cmpDg"))$("cmpDg").onclick=()=>cmpOnline("Discogs",()=>dgRelease(x.dgid));
   p.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>viewPhoto(id,+b.dataset.ph));$("pickEd").onclick=()=>openPicker(id);
   if($("okThis"))$("okThis").onclick=()=>{delete x.auto;x.enr="manual";logA("Cover confirmed: "+x.t,x.id);save();render();openDetail(id);};
   if($("notThis"))$("notThis").onclick=()=>{undoable("Match removed");(Array.isArray(x.auto)?x.auto:[]).forEach(k=>delete x[k]);["mbid","dgid","rgid","img","auto"].forEach(k=>delete x[k]);x.enr="none";x.enrP=2;save();render();openDetail(id);};$("detRead").onclick=()=>openReader(id);
   $("detDel").onclick=()=>{setStatus(id,"del");closeSheet();};if($("detSplit"))$("detSplit").onclick=()=>openSplit(id);
   p.querySelectorAll("[data-cp]").forEach(b=>b.onclick=()=>{const n=Math.max(1,(x.copies||1)+ +b.dataset.cp);if(n===(x.copies||1))return;undoable("Copies of “"+x.t+"”: "+n);if(n>1)x.copies=n;else delete x.copies;save();render();openDetail(id);});
   p.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{setStatus(id,b.dataset.st);openDetail(id);});
-  if($("mbRefresh"))$("mbRefresh").onclick=async()=>{$("covMsg").textContent="Loading from MusicBrainz…";$("covMsg").scrollIntoView({block:"center"});
-    try{const f=await mbRelease(x.mbid);if(f.img&&!(await imgOk(f.img)))f.img="";openCompare(x,f,"MusicBrainz");}catch(err){$("covMsg").textContent=err.message;}};
   p.querySelectorAll("[data-work]").forEach(n=>n.onclick=()=>subView(()=>openWork(n.dataset.work)));
   $("coverBtn").onclick=()=>openCoverMenu(id);
   if($("trSave"))$("trSave").onclick=()=>{const l=$("trIn").value.split(/\n/).map(s=>s.replace(/^\s*\d+[.)\-\s]+/,"").trim()).filter(Boolean);if(!l.length)return;x.tr=l;save();openDetail(id);};}
@@ -1792,7 +1821,7 @@ function shoot(kind){return new Promise(async res=>{
     const v=$("shootCam");v.srcObject=shootStream;await v.play();
   }catch(e){$("shootTip").textContent="Camera unavailable. Select a photo from the gallery.";}});}
 function pickFile(){return new Promise(res=>{const i=$("shootFile");i.value="";i.onchange=async()=>{const f=i.files[0];if(!f){res(null);return;}
-  try{res({full:await shrink(f,1400),small:await shrink(f,500)});}catch(e){res(null);}};i.click();});}
+  try{res({full:await shrink(f,1400),small:await shrink(f,500),from:"gallery"});}catch(e){res(null);}};i.click();});}
 function grab(){const v=$("shootCam"),vw=v.videoWidth,vh=v.videoHeight;if(!vw)return null;
   const cr=v.getBoundingClientRect(),fr=$("shootFrame").getBoundingClientRect();
   const k=Math.max(cr.width/vw,cr.height/vh),ox=(cr.width-vw*k)/2,oy=(cr.height-vh*k)/2;
@@ -2063,6 +2092,43 @@ $("upB").onchange=async e=>{const inp=e.target,f=inp.files[0];if(!f)return;const
 let EXS="col";
 document.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>{EXS=b.dataset.ex;document.querySelectorAll("[data-ex]").forEach(o=>o.setAttribute("aria-pressed",o===b));});
 const fmtTotal=sec=>{if(!sec)return "";let m=Math.round(sec/60);const h=Math.floor(m/60);m%=60;return h?h+" h "+String(m).padStart(2,"0")+" min":m+" min";};
+// ---------- Export the images: one ZIP, every image with its origin written underneath ----------
+const CRCT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(b){let c=~0;for(let i=0;i<b.length;i++)c=CRCT[(c^b[i])&255]^(c>>>8);return ~c>>>0;}
+// stored ZIP (no compression: JPEGs do not shrink anyway); files = [{name, data: Uint8Array}]
+function zipStore(files){const enc=new TextEncoder(),parts=[],cen=[];let off=0;const d=new Date(),tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),dy=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+  for(const f of files){const nm=enc.encode(f.name),c=crc32(f.data),sz=f.data.length,h=new DataView(new ArrayBuffer(30)),e=new DataView(new ArrayBuffer(46));
+    h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(10,tm,true);h.setUint16(12,dy,true);h.setUint32(14,c,true);h.setUint32(18,sz,true);h.setUint32(22,sz,true);h.setUint16(26,nm.length,true);
+    e.setUint32(0,0x02014b50,true);e.setUint16(4,20,true);e.setUint16(6,20,true);e.setUint16(8,0x0800,true);e.setUint16(12,tm,true);e.setUint16(14,dy,true);e.setUint32(16,c,true);e.setUint32(20,sz,true);e.setUint32(24,sz,true);e.setUint16(28,nm.length,true);e.setUint32(42,off,true);
+    parts.push(h,nm,f.data);cen.push(e,nm);off+=30+nm.length+sz;}
+  const csz=cen.reduce((s,p)=>s+p.byteLength,0),end=new DataView(new ArrayBuffer(22));end.setUint32(0,0x06054b50,true);end.setUint16(8,files.length,true);end.setUint16(10,files.length,true);end.setUint32(12,csz,true);end.setUint32(16,off,true);
+  return new Blob([...parts,...cen,end],{type:"application/zip"});}
+// the image with a white band underneath: origin in bold, then album and artist
+async function captioned(blob,lines){const bmp=await createImageBitmap(blob),w=Math.max(bmp.width,480),h=Math.round(bmp.height*w/bmp.width),fs=Math.max(14,Math.round(w/36)),pad=Math.round(fs*.8),lh=Math.round(fs*1.3),c=document.createElement("canvas"),g=c.getContext("2d"),wr=[];
+  lines.forEach((t,j)=>{g.font=(j?"":"bold ")+fs+"px sans-serif";let cur="";String(t).split(/\s+/).forEach(wd=>{const tr=cur?cur+" "+wd:wd;if(cur&&g.measureText(tr).width>w-2*pad){wr.push([cur,j]);cur=wd;}else cur=tr;});if(cur)wr.push([cur,j]);});
+  c.width=w;c.height=h+pad*2+wr.length*lh;g.fillStyle="#fff";g.fillRect(0,0,c.width,c.height);g.drawImage(bmp,0,0,w,h);g.textBaseline="top";
+  wr.forEach(([t,j],n)=>{g.font=(j?"":"bold ")+fs+"px sans-serif";g.fillStyle=j?"#555":"#111";g.fillText(t,pad,h+pad+n*lh);});
+  return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error("Image could not be encoded")),"image/jpeg",.9));}
+async function imgBlob(u){if(/^data:/.test(u))return (await fetch(u)).blob();
+  // a cover already shown may sit in the offline cache as an unreadable copy: retry with a distinct address
+  for(const v of [u,u+(u.includes("?")?"&":"?")+"export=1"]){try{const r=await fetch(v,{mode:"cors"});if(r.ok)return await r.blob();}catch(e){}}
+  throw new Error("The site does not allow downloading this image");}
+async function exportImages(rows,msg){const jobs=[],seen={},fname=(s,suf)=>{let b=(String(s).replace(/[\\/:*?"<>|\u0000-\u001f]+/g," ").replace(/\s+/g," ").trim().slice(0,80).replace(/[\s\-–—,;.]+$/,"")||"album")+suf,n=b,k=2;while(seen[n.toLowerCase()])n=b+" ("+k+++")";seen[n.toLowerCase()]=1;return n;};
+  rows.forEach(([x])=>{const base=(x.a&&x.a!=="Unknown artist"?x.a+" - ":"")+x.t,who=[x.t,x.a&&x.a!=="Unknown artist"?x.a:"",x.y].filter(Boolean).join(" — ");
+    const cv=COV[x.id]||x.img;if(cv)jobs.push({x,src:cv,kind:"cover",origin:coverOrigin(x),who,name:base,suf:" - cover"});
+    (COV["ph:"+x.id]||[]).forEach((d,i)=>jobs.push({x,src:d,kind:"photo "+(i+1),origin:photoOrigin(x,i),who,name:base,suf:" - photo "+(i+1)}));});
+  if(!jobs.length){msg.textContent="No images to export.";return;}
+  const files=[],csv=[["file","album","artist","image","source","address","status"]],enc=new TextEncoder();let done=0,fail=0;
+  const one=async j=>{const nm="images/"+fname(j.name,j.suf)+".jpg";let st="ok";
+    try{const b=await captioned(await imgBlob(j.src),["Source: "+j.origin,j.who]);files.push({name:nm,data:new Uint8Array(await b.arrayBuffer())});}catch(e){st="not exported: "+e.message;fail++;}
+    csv.push([st==="ok"?nm:"",j.x.t,j.x.a,j.kind,j.origin,/^data:/.test(j.src)?"":j.src,st]);done++;msg.textContent=`Preparing images… ${done}/${jobs.length}`;};
+  const q=jobs.slice();await Promise.all([0,1,2,3].map(async()=>{while(q.length)await one(q.shift());}));
+  const cell=v=>{const t=String(v==null?"":v);return /[",\n;]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;};
+  files.push({name:"sources.csv",data:enc.encode("﻿"+csv.map(r=>r.map(cell).join(",")).join("\r\n"))});
+  const a=document.createElement("a");a.href=URL.createObjectURL(zipStore(files));a.download="album-ledger-images-"+new Date().toISOString().slice(0,10)+".zip";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),60000);
+  msg.textContent=`${files.length-1} image${files.length-1!==1?"s":""} exported, each with its source written underneath; the list is in sources.csv.`+(fail?` ${fail} could not be downloaded (the site refuses it): their address is in sources.csv.`:"");}
+$("exImg").onclick=async()=>{const m=$("exMsg"),rows=(EXS!=="wish"?S.col.map(x=>[x,"own"]):[]).concat(EXS!=="col"?S.wish.map(x=>[x,"wish"]):[]);
+  if(!rows.length){m.textContent="Nothing to export.";return;}$("exImg").disabled=true;try{await exportImages(rows,m);}catch(e){m.textContent="Export failed: "+e.message;}$("exImg").disabled=false;};
 $("exGo").onclick=async()=>{const m=$("exMsg");
   const rows=(EXS!=="wish"?S.col.map(x=>[x,"own"]):[]).concat(EXS!=="col"?S.wish.map(x=>[x,"wish"]):[]);
   if(!rows.length){m.textContent="Nothing to export.";report("info","Nothing to export","The "+(EXS==="wish"?"wishlist":EXS==="col"?"collection":"collection and wishlist")+" is empty.",[],"Add albums first, then export again.");return;}
@@ -2224,7 +2290,7 @@ function openCompare(x,f0,src,after){const id=x.id,p=$("detail"),sel={},ed={old:
   // Pistes modifiables seulement pour un disque unique (les coffrets se modifient depuis la fiche)
   const trArr=o=>discsOf(o).length>1?null:(o.discs&&o.discs[0]?o.discs[0].tr:(o.tr||(o.tr=[])));
   const draw=()=>{p.innerHTML=`<p class="cat">Compare before importing · ${esc(src)}</p><h2 class="wh">Select values to import</h2>
-    <p class="hint">Tap a box to check, edit or choose it. Nothing is saved until you tap “Apply my choice”.</p>
+    <p class="hint">Tap a box to check, edit or choose it. Nothing is saved until you tap “Apply my choice”.</p>${srchLinks(f,"Check online:")}
     <div class="cmp"><div class="cmpH"><span></span><span>My entry</span><span>${esc(src)}</span></div>
     ${CMP_FIELDS.map(([k,lab])=>{const o=cmpVal(xo,k,true),n=cmpVal(f,k,false),same=(n===""||n==null||String(n)===String(o))&&!ed.old[k]&&!ed.new[k];
       const cell=(s,inner)=>`<button type="button" class="cc${sel[k]===s?" on":""}${ed[s][k]?" edited":""}" data-k="${k}" data-s="${s}">${ed[s][k]?'<span class="edm">edited</span>':""}${inner}</button>`;
@@ -2307,10 +2373,11 @@ function attachWorks(x,old,forcedC){const W=WORKS(),byCat={},byTitle={},cnt={};
 async function phAdd(id,data){const a=(COV["ph:"+id]||[]).concat([data]);COV["ph:"+id]=a;try{await covPut("ph:"+id,a);}catch(e){}}
 async function phSet(id,a){if(a.length){COV["ph:"+id]=a;try{await covPut("ph:"+id,a);}catch(e){}}else covDel("ph:"+id);}
 function viewPhoto(id,i){const a=COV["ph:"+id]||[],lb=$("lightbox");if(!a[i])return;
-  lb.innerHTML=`<img src="${a[i]}" alt="Photo ${i+1}"><div class="lbBar"><button type="button" id="lbCov">Use as cover</button><button type="button" id="lbDel">Delete</button><button type="button" id="lbX">Close</button></div>`;lb.hidden=false;
+  const x0=byId(id);lb.innerHTML=`<img src="${a[i]}" alt="Photo ${i+1}"><p class="lbO">Source: ${esc(photoOrigin(x0,i))}</p><div class="lbBar"><button type="button" id="lbOr">Origin…</button><button type="button" id="lbCov">Use as cover</button><button type="button" id="lbDel">Delete</button><button type="button" id="lbX">Close</button></div>`;lb.hidden=false;
   $("lbX").onclick=()=>{lb.hidden=true;};
-  $("lbDel").onclick=async()=>{const b=a.slice();b.splice(i,1);await phSet(id,b);lb.hidden=true;openDetail(id);toast("Photo deleted");};
-  $("lbCov").onclick=async()=>{const x=byId(id);const cur=COV[id];const b=a.slice();const chosen=b.splice(i,1)[0];if(cur)b.unshift(cur);
+  $("lbOr").onclick=()=>editOrigin(x0,"photo",i,()=>{viewPhoto(id,i);openDetail(id);});
+  $("lbDel").onclick=async()=>{const b=a.slice();b.splice(i,1);const o=(x0.phO||[]).slice();o.splice(i,1);phOSet(x0,o);save();await phSet(id,b);lb.hidden=true;openDetail(id);toast("Photo deleted");};
+  $("lbCov").onclick=async()=>{const x=byId(id);const cur=COV[id];const b=a.slice();const chosen=b.splice(i,1)[0];if(cur)b.unshift(cur);const o=(x.phO||[]).slice();while(o.length<a.length)o.push(null);const co=o.splice(i,1)[0];if(cur)o.unshift(x.covO||null);x.covO=co||undefined;if(!co)delete x.covO;phOSet(x,o);save();
     // la photo choisie devient la pochette ; l'ancienne pochette (si c'était une photo) rejoint les photos
     const small=await new Promise(res=>{const im=new Image();im.onload=()=>{const k=Math.min(1,500/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.85));};im.onerror=()=>res(chosen);im.src=chosen;});
     COV[id]=small;await covPut(id,small);await phSet(id,b);lb.hidden=true;render();openDetail(id);toast("Cover changed");};}
@@ -2666,7 +2733,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.83.0";$("hVer").textContent="v"+APPV;
+const APPV="0.84.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2696,13 +2763,13 @@ function openCoverMenu(id){const x=byId(id),p=$("detail"),phs=COV["ph:"+id]||[];
    ${phs.length?`<button type="button" class="setItem" id="cvMine"><b>From my photos of this album</b><small>${phs.length} photo${phs.length!==1?"s":""}</small></button>`:""}
    ${COV[id]&&x.img?`<button type="button" class="setItem" id="cvBack"><b>Back to the imported cover</b><small>Removes your photo</small></button>`:""}
    </div><div class="row"><button type="button" id="cvNo">Back</button></div>`;
-  openSheet();const setMine=async d=>{undoable("Cover changed");COV[id]=d;await covPut(id,d).catch(()=>{});save();render();openDetail(id);};
+  openSheet();const setMine=async(d,o)=>{undoable("Cover changed");COV[id]=d;x.covO=o;await covPut(id,d).catch(()=>{});save();render();openDetail(id);};
   $("cvNo").onclick=()=>openDetail(id);
-  $("cvShoot").onclick=async()=>{const r=await shoot("recto");if(r)setMine(r.small);};
-  $("cvGal").onclick=async()=>{const r=await pickFile();if(r)setMine(r.small);};
+  $("cvShoot").onclick=async()=>{const r=await shoot("recto");if(r)setMine(r.small,fromOf(r));};
+  $("cvGal").onclick=async()=>{const r=await pickFile();if(r)setMine(r.small,"gallery");};
   $("cvWeb").onclick=()=>openCoverSearch(id);
   if($("cvMine"))$("cvMine").onclick=()=>viewPhoto(id,0);
-  if($("cvBack"))$("cvBack").onclick=async()=>{undoable("Imported cover restored");await covDel(id);save();render();openDetail(id);};}
+  if($("cvBack"))$("cvBack").onclick=async()=>{undoable("Imported cover restored");delete x.covO;await covDel(id);save();render();openDetail(id);};}
 function openCoverSearch(id){const x=byId(id),p=$("detail");const {title,who}=enrichQuery(x);
   p.innerHTML=`<p class="cat">Find a cover</p><h2 class="wh">${esc(x.t)}</h2>
    <div class="row catrow"><input id="csQ" type="search" value="${esc(((x.a&&x.a!=="Unknown artist"?x.a.split(/[;,]/)[0]+" ":"")+title).trim())}" aria-label="Search"><button type="button" id="csGo">Search</button></div>
@@ -2713,7 +2780,7 @@ function openCoverSearch(id){const x=byId(id),p=$("detail");const {title,who}=en
     if(dgKey()){try{(await dgSearch({q},true)).forEach(r=>{if(r.cover_image||r.thumb)res.push({img:r.cover_image||r.thumb,thumb:r.thumb||r.cover_image,cap:[r.title,r.year,r.country].filter(Boolean).join(" · "),src:"Discogs"});});}catch(e){}}
     m.innerHTML=(res.length?"Select a cover (unavailable images are removed).":"No results.")+`<br><small>${srcLine()}</small>`;
     out.innerHTML=res.map((r,i)=>`<button type="button" class="cv" data-i="${i}"><img src="${esc(r.thumb||r.img)}" alt="" loading="lazy" onerror="this.closest('.cv').remove()"><small>${esc(r.cap)}</small></button>`).join("");
-    out.querySelectorAll(".cv").forEach(b=>b.onclick=async()=>{const r=res[+b.dataset.i];undoable("Cover changed");x.img=r.img;if(Array.isArray(x.auto))x.auto=x.auto.filter(k=>k!=="img");await covDel(id);save();render();openDetail(id);toast("Cover changed");});};
+    out.querySelectorAll(".cv").forEach(b=>b.onclick=async()=>{const r=res[+b.dataset.i];undoable("Cover changed");x.img=r.img;delete x.imgOt;if(Array.isArray(x.auto))x.auto=x.auto.filter(k=>k!=="img");await covDel(id);save();render();openDetail(id);toast("Cover changed");});};
   $("csGo").onclick=run;$("csQ").addEventListener("keydown",e=>{if(e.key==="Enter")run();});run();}
 
 
@@ -3086,8 +3153,8 @@ function syLocal(){const rev={};Object.keys(S.codes||{}).forEach(c=>{(rev[S.code
   S.col.forEach(x=>add(x,"col"));S.wish.forEach(x=>add(x,"wish"));
   const meta={works:S.works||{},wl:S.wl||{},wsp:S.wsp||{},ng:S.noGroup||[],nd:S.noDup||[]};m["meta:main"]={kind:"meta",id:"main",data:meta,h:fnv(canon(meta))};return m;}
 const SY_GROUPS=[["paid","paidSrc","paidAt"],["val","valSrc","valAt","valQ"],["fmt","vt","fd"]];
-const SY_SILENT=new Set(["img","auto","enr","enrP","dgT","mbid","rgid","dgid","dzid","at","src","ean","eans"]);
-const SY_LABEL={paid:"Price paid",val:"My value",cond:"Condition",note:"Notes",fmt:"Format",g:"Genre",y:"Year",l:"Label",cat:"Catalogue no.",a:"Artist",t:"Title",perf:"Performers",copies:"Copies",tr:"Track list",discs:"Discs",box:"Box set",loc:"Location"};
+const SY_SILENT=new Set(["covO","phO","imgOt","img","auto","enr","enrP","dgT","mbid","rgid","dgid","dzid","at","src","ean","eans"]);
+const SY_LABEL={paid:"Price paid",val:"My value",cond:"Condition",note:"Notes",fmt:"Format",g:"Genre",y:"Year",l:"Label",cat:"Catalogue no.",a:"Artist",t:"Title",perf:"Performers",copies:"Copies",tr:"Track list",discs:"Discs",box:"Box set",loc:"Location",ver:"Verified by me"};
 const syEmpty=v=>v===undefined||v===null||v===""||(Array.isArray(v)&&!v.length)||(typeof v==="object"&&v!==null&&!Array.isArray(v)&&!Object.keys(v).length);
 const syShow=(f,v)=>syEmpty(v)?"(empty)":(f==="paid"||f==="val")?fmtPrice(v):Array.isArray(v)?"("+v.length+" item"+(v.length!==1?"s":"")+")":typeof v==="object"?"(different)":String(v).slice(0,80);
 /* merge two versions of one album: L = this device, R = other device. Nothing is dropped: empty fields are filled from the other side, notes are combined. */
