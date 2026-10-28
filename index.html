@@ -262,6 +262,9 @@ b.warn{color:#e0a030;font-weight:600}
 .pickAct button:disabled{opacity:.5;cursor:default}
 .rptDot{flex:none;width:10px;height:10px;border-radius:50%;background:#1565c0;margin:0 4px}.rptDot.ok{background:#1a7f37}.rptDot.err{background:#b3261e}.rptDot.warn{background:#b26a00}
 .gsug .list{margin:6px 0}.gsug .list .item{padding:6px 0}.mvHint button{margin-left:6px}
+.dupli{flex-wrap:wrap}.dupli .meta{flex:1 1 100%}.dupli .tact{flex:1 1 100%;display:flex;gap:6px;margin-top:6px}.dupx{display:block;margin-top:3px;padding-left:8px;border-left:2px solid var(--line,#ccc)}
+.syPill{align-self:center;font-family:var(--mono);font-size:.7rem;letter-spacing:.03em;border:1px solid currentColor;border-radius:999px;padding:3px 9px;min-height:0;background:transparent;color:#b26a00;white-space:nowrap}.syPill.busy{color:#1565c0}.syPill.err{color:#b3261e}.syPill[hidden]{display:none}
+.gate{z-index:300;background:rgba(0,0,0,.62);-webkit-backdrop-filter:grayscale(1) blur(2px);backdrop-filter:grayscale(1) blur(2px)}.gate.quiet{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}.gate.quiet .rpt{display:none}
 .rptOv{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}.rptOv[hidden]{display:none}
 .rpt{background:var(--surface,#fff);color:var(--ink,#111);border:1px solid var(--line,#ccc);border-radius:10px;max-width:460px;width:100%;max-height:85vh;overflow:auto;padding:16px 18px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
 .rptHd{display:flex;align-items:center;gap:10px;margin-bottom:8px}.rptHd h3{margin:0;font-size:1.05rem}
@@ -489,7 +492,7 @@ small.best{color:var(--wish);font-weight:600}
 </head>
 <body>
 <div class="wrap">
-<header><div class="htop"><h1>Album Ledger <span class="beta">beta</span> <span class="ver" id="hVer"></span></h1><div class="hbtns"><button type="button" class="hb" id="setBtn" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div></div><p class="demo" id="demoTag" hidden></p><p id="stats"></p><p class="sync" id="sync"></p><div class="nag" id="nag" hidden><span id="nagTxt"></span><button type="button" id="nagGo" class="small">Back up</button></div></header>
+<header><div class="htop"><h1>Album Ledger <span class="beta">beta</span> <span class="ver" id="hVer"></span></h1><div class="hbtns"><button type="button" class="syPill" id="syPill" hidden></button><button type="button" class="hb" id="setBtn" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div></div><p class="demo" id="demoTag" hidden></p><p id="stats"></p><p class="sync" id="sync"></p><div class="nag" id="nag" hidden><span id="nagTxt"></span><button type="button" id="nagGo" class="small">Back up</button></div></header>
 
 <button class="scan" id="scanBtn" type="button" hidden><span class="bars" aria-hidden="true"><i style="width:3px"></i><i style="width:1px"></i><i style="width:2px"></i><i style="width:1px"></i><i style="width:3px"></i><i style="width:1px"></i></span>SCAN</button>
 
@@ -558,7 +561,7 @@ small.best{color:var(--wish);font-weight:600}
 <div id="syOut"><p class="hint">Sign in to keep the same collection on your phone and your computer. No password: you receive a link by e-mail. Open it on the device you want to sign in on.</p>
 <input type="email" id="syEmail" placeholder="E-mail address" autocomplete="email" style="width:100%"><button type="button" class="setItem" id="syCode"><b>Send me a sign-in link</b></button>
 </div>
-<div id="syIn" hidden><p><b id="syWho"></b></p><p class="hint" id="syLast"></p><button type="button" class="setItem" id="syGo"><b>Sync now</b><small>Albums, wishlist and groupings. Discogs estimates and photos stay on each device.</small></button><button type="button" class="setItem" id="syOutBtn"><b>Sign out</b><small>Your albums stay on this device</small></button></div>
+<div id="syIn" hidden><p><b id="syWho"></b></p><p class="hint" id="syLast"></p><button type="button" class="setItem" id="syGo"><b>Sync now</b><small>Every album field, wishlist, groupings and links. Nothing is overwritten: differences are merged or listed for review. Discogs estimates and your own photos stay on each device.</small></button><button type="button" class="setItem" id="syRev" hidden><b>Differences to review</b><small id="syRevN"></small></button><button type="button" class="setItem" id="syDup" hidden><b>Possible duplicates</b><small id="syDupN"></small></button><button type="button" class="setItem" id="syOutBtn"><b>Sign out</b><small>Your albums stay on this device</small></button></div>
 <p class="hint" id="syMsg"></p></div></section>
 <div hidden id="legacyTools"><section class="win" id="tw-cover"><div class="wtitle">Covers</div><div class="wbody"><section class="enr" id="enr"><button type="button" class="x2" id="enrX" aria-label="Hide">✕</button><p id="enrTxt"></p><button type="button" class="primary" id="enrGo">Start search</button></section><button type="button" class="setItem" id="gGo"><b>Classify genres</b><small>Automatic, via AI or Discogs</small></button><p class="hint" id="gMsg"></p>
 <button type="button" class="wide" id="seeNoGenre">Show albums without a genre</button>
@@ -584,6 +587,7 @@ small.best{color:var(--wish);font-weight:600}
 </div></div>
 <div class="lightbox" id="lightbox" hidden></div>
 <div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
+<div class="rptOv gate quiet" id="syGate" hidden><div class="rpt" role="alertdialog" aria-modal="true" aria-labelledby="gT" aria-describedby="gB"><div class="rptHd"><span class="rptI" id="gI" aria-hidden="true">⟳</span><h3 id="gT">Synchronising</h3></div><p id="gB"></p><div class="row" id="gBtns" hidden><button type="button" id="gOff">Work offline</button><button type="button" class="primary" id="gRetry">Try again</button></div></div></div>
 <div class="rptOv" id="rpt" hidden><div class="rpt" role="alertdialog" aria-modal="true" aria-labelledby="rptT" aria-describedby="rptB"><div class="rptHd"><span class="rptI" id="rptI" aria-hidden="true"></span><h3 id="rptT"></h3></div><p id="rptB"></p><ul id="rptL"></ul><p class="hint" id="rptH"></p><div class="row"><button type="button" id="rptFull" hidden>View full report</button><button type="button" class="primary" id="rptOk">OK</button></div></div></div>
 <div class="selbar" id="selBar" hidden><span id="selTxt"></span><button type="button" class="small" id="selAll">All</button><button type="button" class="primary" id="selAct" disabled>Actions</button><button type="button" id="selBox" disabled>Group</button><button type="button" id="selCancel" aria-label="Cancel selection">✕</button></div>
 <p class="empty" id="more" hidden></p>
@@ -675,7 +679,7 @@ function save(){DATAV++;if(typeof syncSoon==="function")syncSoon();_W=null;tidyW
 
 // Photos de pochettes : IndexedDB (plus de place que localStorage)
 const COV={};
-function idb(){return new Promise((res,rej)=>{const r=indexedDB.open("collezione-cd",2);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains("covers"))d.createObjectStore("covers");if(!d.objectStoreNames.contains("snaps"))d.createObjectStore("snaps");};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open("collezione-cd",3);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains("syncbase"))d.createObjectStore("syncbase");if(!d.objectStoreNames.contains("covers"))d.createObjectStore("covers");if(!d.objectStoreNames.contains("snaps"))d.createObjectStore("snaps");};r.onsuccess=()=>{const d=r.result;d.onversionchange=()=>d.close();res(d);};r.onerror=()=>rej(r.error);});}
 async function covPut(id,data){const d=await idb();return new Promise((res,rej)=>{const t=d.transaction("covers","readwrite");t.objectStore("covers").put(data,id);t.oncomplete=res;t.onerror=()=>rej(t.error);});}
 async function covPutMany(o){const d=await idb();return new Promise((res,rej)=>{const t=d.transaction("covers","readwrite"),st=t.objectStore("covers");for(const k in o)st.put(o[k],k);t.oncomplete=res;t.onerror=()=>rej(t.error);});}
 async function covAll(){try{const d=await idb();return await new Promise(res=>{const out={},t=d.transaction("covers"),st=t.objectStore("covers"),rq=st.openCursor();rq.onsuccess=()=>{const c=rq.result;if(c){out[c.key]=c.value;c.continue();}else res(out);};rq.onerror=()=>res(out);});}catch(e){return {};}}
@@ -2662,7 +2666,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.82.1";$("hVer").textContent="v"+APPV;
+const APPV="0.83.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -3057,7 +3061,7 @@ function openRestorePaid(idx){const p=$("detail"),rows=rcRestoreRows(idx);CUR=()
 /* ---- Cloud sync (Supabase over plain fetch, no library). Local copy stays the master; Discogs estimates are never sent. ---- */
 const SB_URL="https://vijlxamhpmepnowutnkr.supabase.co",SB_KEY="sb_publishable_cobYQqpl-AvpeebLAaMYpQ_DL0-iqq3",SYNC_KEY="album-ledger-sync";
 let SY=(()=>{try{return JSON.parse(localStorage.getItem(SYNC_KEY))||{};}catch(e){return {};}})(),SYNCING=false,SYNC_T=null,SYNC_APPLY=false;
-SY.h=SY.h||{};
+SY.h=SY.h||{};SY.sv=SY.sv||{};
 const syPut=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify(SY));}catch(e){}};
 const canon=v=>Array.isArray(v)?"["+v.map(canon).join(",")+"]":v&&typeof v==="object"?"{"+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+":"+canon(v[k])).join(",")+"}":JSON.stringify(v);
 const fnv=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(36)+"."+s.length.toString(36);};
@@ -3072,66 +3076,214 @@ function sbSession(j){SY.tok=j.access_token;SY.ref=j.refresh_token;SY.exp=Date.n
 async function sbRefresh(){if(!SY.ref)throw new SyErr("Session expired","auth");let j;try{j=await sbReq("/auth/v1/token?grant_type=refresh_token",{method:"POST",body:{refresh_token:SY.ref}},false);}catch(e){if(e.code==="net")throw e;signOutLocal();throw new SyErr("Session expired: sign in again","auth");}sbSession(j);}
 const sbSendCode=email=>sbReq("/auth/v1/otp?redirect_to="+encodeURIComponent(location.origin+location.pathname),{method:"POST",body:{email,create_user:true}},false);
 async function sbVerify(email,code){const j=await sbReq("/auth/v1/verify",{method:"POST",body:{type:"email",email,token:code}},false);SY.email=email;sbSession(j);}
-function signOutLocal(){SY={h:{}};syPut();syncUi();}
-/* what is synced: every album (collection and wishlist) as its own row, plus one small row for works/lists. `est` (Discogs prices) stays on the device. */
+function signOutLocal(){SY={h:{},sv:{},v:2};syPut();syncUi();syPill();if(typeof sybClear==="function")sybClear();}
+/* what is synced: every album (collection and wishlist) as its own row, plus one small row for works/lists. `est` (Discogs prices) stays on the device.
+   v2 rules: pull first, then push. Nothing is overwritten blindly: when both devices changed the same album, the two versions are merged field by field
+   (the value of this device is kept on a true conflict, the other value is listed in "Differences to review"). A push only replaces the server row
+   that this device has seen (srv_at check); if another device pushed in between, the cycle starts again. */
 function syLocal(){const rev={};Object.keys(S.codes||{}).forEach(c=>{(rev[S.codes[c]]=rev[S.codes[c]]||[]).push(c);});const m={};
   const add=(x,k)=>{const o=JSON.parse(JSON.stringify(x));delete o.est;o._k=k;o._codes=(rev[x.id]||[]).sort();m["album:"+x.id]={kind:"album",id:x.id,data:o,h:fnv(canon(o))};};
   S.col.forEach(x=>add(x,"col"));S.wish.forEach(x=>add(x,"wish"));
-  const meta={works:S.works||{},wl:S.wl||{},wsp:S.wsp||{}};m["meta:main"]={kind:"meta",id:"main",data:meta,h:fnv(canon(meta))};return m;}
-function syApply(rows){let n=0;const L=syLocal();
-  rows.forEach(r=>{const key=r.kind+":"+r.id;
-    if(r.kind==="meta"){if(!r.data||(L[key]&&L[key].h===fnv(canon(r.data)))){SY.h[key]=fnv(canon(r.data||{}));return;}S.works=r.data.works||{};S.wl=r.data.wl||{};S.wsp=r.data.wsp||{};SY.h[key]=fnv(canon(r.data));n++;return;}
-    const drop=()=>{S.col=S.col.filter(x=>x.id!==r.id);S.wish=S.wish.filter(x=>x.id!==r.id);for(const c in S.codes)if(S.codes[c]===r.id)delete S.codes[c];};
-    if(r.deleted){if(L[key]){drop();n++;}delete SY.h[key];return;}
-    const h=fnv(canon(r.data));if(L[key]&&L[key].h===h){SY.h[key]=h;return;}
-    const d=JSON.parse(JSON.stringify(r.data)),k=d._k,codes=d._codes||[];delete d._k;delete d._codes;
-    const old=S.col.find(x=>x.id===r.id)||S.wish.find(x=>x.id===r.id);if(old&&old.est)d.est=old.est;
-    drop();(k==="wish"?S.wish:S.col).push(d);codes.forEach(c=>{S.codes[c]=r.id;});SY.h[key]=h;n++;});
+  const meta={works:S.works||{},wl:S.wl||{},wsp:S.wsp||{},ng:S.noGroup||[],nd:S.noDup||[]};m["meta:main"]={kind:"meta",id:"main",data:meta,h:fnv(canon(meta))};return m;}
+const SY_GROUPS=[["paid","paidSrc","paidAt"],["val","valSrc","valAt","valQ"],["fmt","vt","fd"]];
+const SY_SILENT=new Set(["img","auto","enr","enrP","dgT","mbid","rgid","dgid","dzid","at","src","ean","eans"]);
+const SY_LABEL={paid:"Price paid",val:"My value",cond:"Condition",note:"Notes",fmt:"Format",g:"Genre",y:"Year",l:"Label",cat:"Catalogue no.",a:"Artist",t:"Title",perf:"Performers",copies:"Copies",tr:"Track list",discs:"Discs",box:"Box set",loc:"Location"};
+const syEmpty=v=>v===undefined||v===null||v===""||(Array.isArray(v)&&!v.length)||(typeof v==="object"&&v!==null&&!Array.isArray(v)&&!Object.keys(v).length);
+const syShow=(f,v)=>syEmpty(v)?"(empty)":(f==="paid"||f==="val")?fmtPrice(v):Array.isArray(v)?"("+v.length+" item"+(v.length!==1?"s":"")+")":typeof v==="object"?"(different)":String(v).slice(0,80);
+/* merge two versions of one album: L = this device, R = other device. Nothing is dropped: empty fields are filled from the other side, notes are combined. */
+function syMergeAlbum(L,R,B){const m={},conf=[],keys=new Set(Object.keys(L).concat(Object.keys(R),B?Object.keys(B):[])),done=new Set(),same=(a,b)=>canon(a)===canon(b),put=(f,v)=>{if(v!==undefined)m[f]=v;};
+  keys.delete("_codes");keys.delete("_k");
+  // with B (what this device last synced) we know who changed what; without it, empty fields are filled and true differences are listed
+  SY_GROUPS.forEach(g=>{g.forEach(f=>done.add(f));const lead=g[0],lv=L[lead],rv=R[lead];
+    const lch=B?g.some(f=>!same(L[f],B[f])):true,rch=B?g.some(f=>!same(R[f],B[f])):true;
+    if(B&&!lch&&!rch){g.forEach(f=>put(f,L[f]));return;}
+    if(B&&lch&&!rch){g.forEach(f=>put(f,L[f]));return;}
+    if(B&&!lch&&rch){g.forEach(f=>put(f,R[f]));return;}
+    if(same(lv,rv)||syEmpty(lv)||syEmpty(rv)){const side=syEmpty(lv)&&!syEmpty(rv)?R:syEmpty(rv)&&!syEmpty(lv)?L:null;g.forEach(f=>put(f,side?side[f]:(syEmpty(L[f])?R[f]:L[f])));}
+    else{g.forEach(f=>put(f,L[f]));const raw={};g.forEach(f=>{raw[f]=R[f];});conf.push({f:lead,ks:syShow(lead,lv),os:syShow(lead,rv),raw});}});
+  keys.forEach(f=>{if(done.has(f))return;const lv=L[f],rv=R[f];
+    if(same(lv,rv)){put(f,lv);return;}
+    if(B){const lch=!same(lv,B[f]),rch=!same(rv,B[f]);if(lch&&!rch){put(f,lv);return;}if(rch&&!lch){put(f,rv);return;}}
+    if(syEmpty(rv)){put(f,lv);return;}if(syEmpty(lv)){put(f,rv);return;}
+    if(SY_SILENT.has(f)){put(f,lv);return;}
+    if(f==="note"&&typeof lv==="string"&&typeof rv==="string"){put(f,lv.includes(rv)?lv:rv.includes(lv)?rv:lv+"\n— "+rv);return;}
+    put(f,lv);conf.push({f,ks:syShow(f,lv),os:syShow(f,rv),raw:{[f]:rv}});});
+  const lc=L._codes||[],rc=R._codes||[],bc=B?B._codes||[]:null;
+  m._codes=(bc?[...new Set(lc.filter(c=>rc.includes(c)||!bc.includes(c)).concat(rc.filter(c=>lc.includes(c)||!bc.includes(c))))]:[...new Set(lc.concat(rc))]).sort();
+  if(L._k===R._k)m._k=L._k;else if(B&&L._k===B._k)m._k=R._k;else if(B&&R._k===B._k)m._k=L._k;
+  else{m._k="col";conf.push({info:true,f:"_k",ks:"",os:"",msg:"Kept in your collection (it was in the collection on one device and on the wishlist on the other)."});}
+  return {m,conf};}
+function syMergeMeta(L,R){return {works:Object.assign({},R.works,L.works),wl:Object.assign({},R.wl,L.wl),wsp:Object.assign({},R.wsp,L.wsp),ng:[...new Set((L.ng||[]).concat(R.ng||[]))],nd:[...new Set((L.nd||[]).concat(R.nd||[]))]};}
+function syConfAll(){try{return JSON.parse(localStorage.getItem(SYC_KEY)||"[]");}catch(e){return [];}}
+function syConfSet(a){try{localStorage.setItem(SYC_KEY,JSON.stringify(a.slice(0,300)));}catch(e){}}
+const SYC_KEY="album-ledger-syncconf";
+/* base copies (IndexedDB): the version of each row this device last synced, so a merge knows who changed what */
+let SYB=null;const SYBW=new Map();
+async function sybLoad(){if(SYB)return;SYB=new Map();try{const d=await idb();await new Promise((res,rej)=>{const rq=d.transaction("syncbase","readonly").objectStore("syncbase").openCursor();rq.onsuccess=()=>{const c=rq.result;if(c){SYB.set(c.key,c.value);c.continue();}else res();};rq.onerror=()=>rej(rq.error);});}catch(e){}}
+const sybSet=(k,d)=>{if(SYB)SYB.set(k,d);SYBW.set(k,d);},sybDel=k=>{if(SYB)SYB.delete(k);SYBW.set(k,null);};
+async function sybFlush(){if(!SYBW.size)return;const w=[...SYBW];SYBW.clear();try{const d=await idb();await new Promise((res,rej)=>{const t=d.transaction("syncbase","readwrite"),st=t.objectStore("syncbase");w.forEach(([k,v])=>v===null?st.delete(k):st.put(v,k));t.oncomplete=res;t.onerror=()=>rej(t.error);});}catch(e){}}
+async function sybClear(){SYB=new Map();SYBW.clear();try{const d=await idb();await new Promise(res=>{const t=d.transaction("syncbase","readwrite");t.objectStore("syncbase").clear();t.oncomplete=res;t.onerror=res;});}catch(e){}}
+const sybGet=(k,h)=>{const b=SYB&&SYB.get(k);return b&&fnv(canon(b))===h?b:null;}; // only if it is exactly the version SY.h points to
+/* apply what the server sent. base = SY.h[key] = what this device last synced for that row. */
+function syApply(rows,conf){let n=0;const L=syLocal();
+  const drop=id=>{S.col=S.col.filter(x=>x.id!==id);S.wish=S.wish.filter(x=>x.id!==id);for(const c in S.codes)if(S.codes[c]===id)delete S.codes[c];};
+  const setCodes=(id,codes,t)=>{(codes||[]).forEach(c=>{const o=S.codes[c];if(o&&o!==id&&byId(o)){conf.push({info:true,id,t,f:"code",ks:"",os:"",msg:"Barcode "+c+" is linked to another album on this device: kept as it was."});return;}S.codes[c]=id;});};
+  rows.forEach(r=>{const key=r.kind+":"+r.id,base=SY.h[key];SY.sv[key]=r.srv_at;
+    if(r.kind==="meta"){if(!r.data)return;const rh=fnv(canon(r.data)),lh=L[key].h;if(lh===rh){SY.h[key]=rh;return;}
+      const lc=base===undefined||lh!==base,rc=base===undefined||rh!==base;if(lc&&!rc)return;
+      const mm=lc&&rc?syMergeMeta(L[key].data,r.data):r.data;S.works=mm.works||{};S.wl=mm.wl||{};S.wsp=mm.wsp||{};S.noGroup=mm.ng||[];S.noDup=mm.nd||[];SY.h[key]=rh;n++;return;}
+    const lcl=L[key];
+    if(r.deleted){if(!lcl){delete SY.h[key];return;}
+      if(lcl.h===base){drop(r.id);delete SY.h[key];sybDel(key);n++;return;}
+      conf.push({info:true,id:r.id,t:lcl.data.t,a:lcl.data.a,f:"deleted",ks:"",os:"",msg:"Deleted on another device, but you changed it here: it was kept."});delete SY.h[key];sybDel(key);return;}
+    const rh=fnv(canon(r.data));
+    const take=(d0)=>{const d=JSON.parse(JSON.stringify(d0)),k=d._k,codes=d._codes||[];delete d._k;delete d._codes;
+      const old=byId(r.id);if(old&&old.est)d.est=old.est;
+      if(old&&((k==="wish")===S.wish.includes(old))){Object.keys(old).forEach(f=>{if(f!=="est")delete old[f];});Object.assign(old,d); // in place: an open editor keeps working on the same object
+        for(const c in S.codes)if(S.codes[c]===r.id)delete S.codes[c];}
+      else{drop(r.id);(k==="wish"?S.wish:S.col).push(d);}
+      setCodes(r.id,codes,d.t);};
+    if(!lcl){if(base!==undefined&&rh===base)return; // deleted here, not yet sent: the delete goes out in the push
+      take(r.data);SY.h[key]=rh;sybSet(key,r.data);n++;if(base!==undefined)conf.push({info:true,id:r.id,t:r.data.t,a:r.data.a,f:"restored",ks:"",os:"",msg:"Brought back: you deleted it here, but it was changed on another device."});return;}
+    if(lcl.h===rh){SY.h[key]=rh;sybSet(key,r.data);return;}
+    const lc=base===undefined||lcl.h!==base,rc=base===undefined||rh!==base;
+    if(!lc){take(r.data);SY.h[key]=rh;sybSet(key,r.data);n++;return;}
+    if(!rc)return; // only this device changed it: the push sends it
+    const mg=syMergeAlbum(lcl.data,r.data,base!==undefined?sybGet(key,base):null);take(mg.m);SY.h[key]=rh;sybSet(key,r.data);n++;
+    mg.conf.forEach(c=>conf.push(Object.assign({id:r.id,t:mg.m.t,a:mg.m.a},c)));});
   return n;}
-async function syPull(){let n=0,off=0,last=SY.cur||null,maxSeen=SY.cur||null;
+async function syPull(conf){let n=0,off=0,maxSeen=SY.cur||null;
   for(;;){const q="/rest/v1/ledger?select=kind,id,data,deleted,srv_at&order=srv_at.asc,id.asc&limit=1000&offset="+off+(SY.cur?"&srv_at=gt."+encodeURIComponent(SY.cur):"");
-    const rows=await sbReq(q,{},true)||[];if(!rows.length)break;SYNC_APPLY=true;try{n+=syApply(rows);}finally{SYNC_APPLY=false;}
+    const rows=await sbReq(q,{},true)||[];if(!rows.length)break;SYNC_APPLY=true;try{n+=syApply(rows,conf);}finally{SYNC_APPLY=false;}
     rows.forEach(r=>{if(!maxSeen||r.srv_at>maxSeen)maxSeen=r.srv_at;});if(rows.length<1000)break;off+=1000;}
   if(maxSeen)SY.cur=maxSeen;return n;}
-async function syPush(){const L=syLocal(),up=[],gone=[];
+async function syPool(fns,n){let i=0,err=null;const w=async()=>{while(i<fns.length){const f=fns[i++];try{await f();}catch(e){err=err||e;}}};await Promise.all(Array.from({length:Math.min(n,fns.length)},w));if(err)throw err;}
+/* push: new rows in bulk (ignored if they already exist), known rows only if the server still holds the version this device saw */
+async function syPush(){const L=syLocal(),up=[],gone=[];let sent=0,stale=false;
   Object.keys(L).forEach(k=>{if(SY.h[k]!==L[k].h)up.push(k);});Object.keys(SY.h).forEach(k=>{if(k.startsWith("album:")&&!L[k])gone.push(k);});
-  const rows=up.map(k=>({user_id:SY.uid,kind:L[k].kind,id:L[k].id,data:L[k].data,deleted:false})).concat(gone.map(k=>({user_id:SY.uid,kind:"album",id:k.slice(6),data:null,deleted:true})));
-  for(let i=0;i<rows.length;i+=150){await sbReq("/rest/v1/ledger?on_conflict=user_id,kind,id",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:rows.slice(i,i+150)},true);}
-  up.forEach(k=>{SY.h[k]=L[k].h;});gone.forEach(k=>{delete SY.h[k];});return rows.length;}
-async function syncNow(quiet,first){if(SYNCING||!SY.tok)return;SYNCING=true;syMsg(quiet?null:"Syncing…");
-  try{let n=0,p=0;
-    if(first==="cloud"){undoable("Cloud sync: this device replaced by the cloud copy");S.col=[];S.wish=[];S.codes={};SY.h={};SY.cur=null;n=await syPull();p=await syPush();}
-    else if(first==="merge"){undoable("Cloud sync: merged with the cloud copy");SY.h={};SY.cur=null;n=await syPull();p=await syPush();}
-    else{p=await syPush();n=await syPull();}
-    SY.last=Date.now();SY.err="";SY.ok=true;syPut();
-    if(n){SYNC_APPLY=true;try{save();}finally{SYNC_APPLY=false;}render();renderStats();if(quiet)toast("Synced: "+n+" update"+(n!==1?"s":"")+" from your other devices");}
-    syMsg(quiet?null:"Synced"+(p||n?" · sent "+p+", received "+n:"")+".");}
+  const fresh=up.filter(k=>!SY.sv[k]),known=up.filter(k=>SY.sv[k]);
+  for(let i=0;i<fresh.length;i+=150){const ch=fresh.slice(i,i+150),rows=ch.map(k=>({user_id:SY.uid,kind:L[k].kind,id:L[k].id,data:L[k].data,deleted:false}));
+    const res=await sbReq("/rest/v1/ledger?on_conflict=user_id,kind,id",{method:"POST",headers:{Prefer:"resolution=ignore-duplicates,return=representation"},body:rows},true)||[],got=new Set();
+    res.forEach(r=>{const k=r.kind+":"+r.id;got.add(k);SY.sv[k]=r.srv_at;SY.h[k]=L[k].h;sybSet(k,L[k].data);sent++;});ch.forEach(k=>{if(!got.has(k))stale=true;});}
+  const patch=async(k,body)=>{const c=k.indexOf(":"),q="/rest/v1/ledger?kind=eq."+k.slice(0,c)+"&id=eq."+encodeURIComponent(k.slice(c+1))+"&srv_at=eq."+encodeURIComponent(SY.sv[k]);
+    const res=await sbReq(q,{method:"PATCH",headers:{Prefer:"return=representation"},body},true)||[];if(!res.length){stale=true;return false;}SY.sv[k]=res[0].srv_at;return true;};
+  await syPool(known.map(k=>async()=>{if(await patch(k,{data:L[k].data,deleted:false})){SY.h[k]=L[k].h;sybSet(k,L[k].data);sent++;}}),6);
+  await syPool(gone.map(k=>async()=>{if(!SY.sv[k]){delete SY.h[k];sybDel(k);return;}if(await patch(k,{data:null,deleted:true})){delete SY.h[k];sybDel(k);sent++;}}),6);
+  return {sent,stale};}
+async function syCycle(first,conf){let n=0,p=0;
+  if(first==="cloud"){undoable("Cloud sync: this device replaced by the cloud copy");S.col=[];S.wish=[];S.codes={};SY.h={};SY.sv={};SY.cur=null;await sybClear();}
+  else if(first==="merge"){undoable("Cloud sync: merged with the cloud copy");SY.h={};SY.sv={};SY.cur=null;await sybClear();}
+  await sybLoad();
+  for(let round=0;;round++){n+=await syPull(conf);const r=await syPush();p+=r.sent;if(!r.stale)break;
+    if(round>=3)throw new SyErr("Another device is changing the data at the same time. Try again in a moment.","busy");}
+  if(p)n+=await syPull(conf); // picks up our own rows (moves the cursor) and anything another device sent meanwhile
+  return {n,p};}
+let SYDIRTY=false;
+const syDirty=()=>{const L=syLocal();return Object.keys(L).some(k=>SY.h[k]!==L[k].h)||Object.keys(SY.h).some(k=>k.startsWith("album:")&&!L[k]);};
+const syIdle=async()=>{for(let i=0;i<600&&SYNCING;i++)await new Promise(r=>setTimeout(r,100));};
+async function syncNow(quiet,first,gate){if(!SY.tok)return false;if(SYNCING){if(!gate)return false;await syIdle();}
+  SYNCING=true;syPill();syMsg(quiet?null:"Syncing…");const conf=[];let ok=false;
+  try{if(SY.v!==2){SY.v=2;SY.cur=null;SY.sv={};} // first run of this version: re-read the server once to learn each row's version
+    const {n,p}=await syCycle(first,conf);
+    SY.last=Date.now();SY.err="";SY.ok=true;syPut();ok=true;
+    if(n){SYNC_APPLY=true;try{save();}finally{SYNC_APPLY=false;}render();renderStats();}
+    const real=conf.filter(c=>!c.info||c.msg);
+    if(conf.length){const a=syConfAll();conf.forEach(c=>a.unshift(Object.assign({at:Date.now()},c)));syConfSet(a);}
+    if(!syDirtyAfter())SYDIRTY=false;
+    syMsg(quiet?null:"Synced"+(p||n?" · sent "+p+", received "+n:"")+(real.length?" · "+real.length+" difference"+(real.length!==1?"s":"")+" to review":"")+".");
+    if(real.length)toast(real.length+" difference"+(real.length!==1?"s":"")+" between your devices to review","Review",()=>{openSettings();setTimeout(()=>openSyncReview(),200);});
+    else if(n&&quiet)toast("Synced: "+n+" update"+(n!==1?"s":"")+" from your other devices");}
   catch(e){SY.err=e.code==="net"?"Offline: will sync when the connection is back":(e.message||"Sync failed");syPut();syMsg(SY.err);}
-  finally{SYNCING=false;syncUi();}}
-function syncSoon(){if(!SY.tok||SYNC_APPLY||!SY.init)return;clearTimeout(SYNC_T);SYNC_T=setTimeout(()=>syncNow(true),6000);}
+  finally{await sybFlush();SYNCING=false;syncUi();syPill();}
+  return ok;}
+const syDirtyAfter=()=>{try{return syDirty();}catch(e){return true;}};
+function syncSoon(){if(!SY.tok||SYNC_APPLY||!SY.init)return;SYDIRTY=true;syPill();clearTimeout(SYNC_T);SYNC_T=setTimeout(()=>syncNow(true),6000);}
 async function syFirst(){ // right after sign-in: decide how this device meets the cloud copy
   const rows=await sbReq("/rest/v1/ledger?select=id&kind=eq.album&deleted=eq.false&limit=1",{},true)||[],local=S.col.length+S.wish.length;
   if(!rows.length){SY.init=true;syPut();return syncNow(false,"merge");}
   if(!local){SY.init=true;syPut();return syncNow(false,"cloud");}
   const p=$("detail");CUR=null;
   p.innerHTML=`<p class="cat">Cloud sync</p><h2 class="wh">This device and the cloud both have albums</h2><p>Choose how to combine them. You can undo right after.</p>
-   <button type="button" class="setItem" id="syM"><b>Merge both</b><small>Keeps everything. If the same album was added separately on each, it may appear twice.</small></button>
+   <button type="button" class="setItem" id="syM"><b>Merge both</b><small>Keeps everything from both. If the same album exists on both with different details, this device’s values are kept and the other values are listed for you to review. An album added separately on each may appear twice: Tools → Possible duplicates.</small></button>
    <button type="button" class="setItem" id="syC"><b>Use the cloud copy here</b><small>Replaces the ${local} album${local!==1?"s":""} on this device with the cloud ones.</small></button>
    <div class="row"><button type="button" id="syX">Decide later</button></div>`;openSheet();
   $("syM").onclick=()=>{closeSheet();SY.init=true;syPut();syncNow(false,"merge");};$("syC").onclick=()=>{closeSheet();SY.init=true;syPut();syncNow(false,"cloud");};$("syX").onclick=()=>{closeSheet();syncUi();};}
 const syMsg=t=>{const e=$("syMsg");if(e&&t!==null)e.textContent=t;};
 function syncUi(){const o=$("syOut"),i=$("syIn");if(!o)return;const on=!!SY.tok;o.hidden=on;i.hidden=!on;
-  if(on){$("syWho").textContent=SY.email||"";$("syLast").textContent=SY.err?SY.err:SY.last?"Last sync: "+fmtWhen(SY.last):(SY.init?"Not synced yet":"Sign-in done: choose how to combine your data");$("syGo").textContent=SY.init?"Sync now":"Continue";}}
+  if(on){$("syWho").textContent=SY.email||"";$("syLast").textContent=SY.err?SY.err:SY.last?"Last sync: "+fmtWhen(SY.last):(SY.init?"Not synced yet":"Sign-in done: choose how to combine your data");$("syGo").textContent=SY.init?"Sync now":"Continue";}
+  const nc=syConfAll().length,nd=(()=>{try{return dupGroups().length;}catch(e){return 0;}})();$("syRev").hidden=!nc;$("syRevN").textContent=nc+" value"+(nc!==1?"s":"")+" set differently on two devices";$("syDup").hidden=!nd;$("syDupN").textContent=nd+" album"+(nd!==1?"s":"")+" that appear more than once";}
 $("syCode").onclick=async()=>{const em=$("syEmail").value.trim();if(!/^\S+@\S+\.\S+$/.test(em)){toast("Enter a valid e-mail address");return;}
   $("syCode").disabled=true;try{await sbSendCode(em);SY.pend=em;syMsg("Link sent to "+em+". Open the e-mail on this device and tap the link.");}catch(e){syMsg(e.code==="net"?"Offline: try again when connected":(e.message||"Could not send the code"));}$("syCode").disabled=false;};
 $("syGo").onclick=()=>SY.init?syncNow(false):syFirst().catch(e=>syMsg(e.message));
 $("syOutBtn").onclick=async()=>{try{await sbReq("/auth/v1/logout",{method:"POST"},true);}catch(e){}signOutLocal();syMsg("Signed out. Your albums stay on this device.");};
-addEventListener("online",()=>syncNow(true));document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&SY.tok&&SY.init&&Date.now()-(SY.last||0)>30e3)syncNow(true);});
-syncUi();if(SY.tok&&SY.init)setTimeout(()=>syncNow(true),1500);
+/* header pill: tells at a glance whether this device has changes the others have not seen */
+function syPill(){const e=$("syPill");if(!e)return;const on=!!(SY.tok&&SY.init);
+  const st=!on?"":SYNCING?["busy","Syncing…"]:SY.err&&!/^Offline/.test(SY.err)?["err","Sync failed"]:SYDIRTY?["","Not synced"]:null;
+  e.hidden=!st;if(st){e.className="syPill "+st[0];e.textContent=st[1];}}
+$("syPill").onclick=()=>{if(!SYNCING)syncNow(false).then(ok=>toast(ok?"Synced":(SY.err||"Sync failed")));};
+/* mandatory sync when you come back to this device: nothing can be edited until this device and the cloud agree */
+const GATE={on:false,busy:false,t:null};
+function gateShow(){const g=$("syGate");GATE.on=true;g.hidden=false;[...document.body.children].forEach(el=>{if(el!==g&&el.tagName!=="SCRIPT"){el.inert=true;el.dataset.gi="1";}});
+  g.classList.add("quiet");$("gBtns").hidden=true;clearTimeout(GATE.t);GATE.t=setTimeout(()=>{if(GATE.on&&!GATE.busyOff)g.classList.remove("quiet");},450);}
+function gateHide(){const g=$("syGate");GATE.on=false;clearTimeout(GATE.t);g.hidden=true;g.classList.add("quiet");document.querySelectorAll("[data-gi]").forEach(el=>{el.inert=false;delete el.dataset.gi;});}
+const gateMsg=(t,b,k)=>{$("gT").textContent=t;$("gB").textContent=b||"";$("gI").textContent=k==="err"?"!":"⟳";$("gI").style.background=k==="err"?"#b3261e":"#1565c0";};
+async function syHasRemote(){const r=await sbReq("/rest/v1/ledger?select=id&limit=1"+(SY.cur&&SY.v===2?"&srv_at=gt."+encodeURIComponent(SY.cur):""),{},true)||[];return r.length>0;}
+async function syGuard(){if(!SY.tok||!SY.init||GATE.busy)return;GATE.busy=true;gateShow();gateMsg("Synchronising","Checking your other devices. Editing resumes as soon as this device is up to date.");
+  try{await syIdle();const rem=await syHasRemote(),dirty=syDirty();
+    if(rem||dirty||SY.v!==2||SYDIRTY){gateMsg("Synchronising",rem?"Receiving changes made on your other devices…":"Sending your changes to the cloud…");
+      if(!(await syncNow(false,null,true)))throw new Error(SY.err||"Sync failed");}
+    gateHide();}
+  catch(e){const off=e.code==="net"||!navigator.onLine,au=e.code==="auth";
+    gateMsg(au?"Sign in again":"Synchronisation required",au?"Your session expired. Open Settings → Account and sync to sign in again.":(off?"You are offline. To avoid conflicts, this device must sync before you edit.":(e.message||"The sync did not complete."))+" Your data is safe on this device.","err");
+    $("syGate").classList.remove("quiet");$("gBtns").hidden=false;$("gRetry").hidden=au;}
+  finally{GATE.busy=false;}}
+$("gRetry").onclick=()=>syGuard();
+$("gOff").onclick=()=>{gateHide();GATE.skip=Date.now()+20e3;toast("Working without sync: your changes will be merged next time");};
+const syFresh=()=>Date.now()-(SY.last||0)<15e3||Date.now()<(GATE.skip||0);
+function syLeave(){if(SY.tok&&SY.init&&SYDIRTY&&!SYNCING){clearTimeout(SYNC_T);syncNow(true);}}
+addEventListener("online",()=>{if(SY.tok&&SY.init&&!GATE.on)syncNow(true);});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")syLeave();else if(SY.tok&&SY.init&&!syFresh())syGuard();});
+addEventListener("pagehide",syLeave);addEventListener("focus",()=>{if(SY.tok&&SY.init&&!syFresh()&&!GATE.on)syGuard();});
+syncUi();syPill();if(SY.tok&&SY.init)setTimeout(syGuard,0);
+/* ---- Differences to review: values that two devices set differently (this device's value was kept) ---- */
+function openSyncReview(){const p=$("detail"),A=syConfAll();CUR=openSyncReview;
+  p.innerHTML=`<p class="cat">Sync</p><h2 class="wh">${A.length} difference${A.length!==1?"s":""} to review</h2><p class="hint">When two devices changed the same thing, the value from the device that synced second was kept and the other value is listed here. Switch to it, or dismiss.</p>
+   <ul class="list">${A.map((c,i)=>`<li class="item"><div class="meta"><b>${esc(c.t||"Album")}</b>${c.a?`<small>${esc(c.a)}</small>`:""}${c.info?`<small>${esc(c.msg||"")}</small>`:`<small>${esc(SY_LABEL[c.f]||c.f)}</small><small>Kept here: <b>${esc(c.ks)}</b></small><small>Other device: <b>${esc(c.os)}</b></small>`}<small>${fmtWhen(c.at)}</small></div><span class="tact">${!c.info&&c.raw&&byId(c.id)?`<button type="button" class="small" data-su="${i}">Use other</button>`:""}<button type="button" class="small" data-sd="${i}" aria-label="Dismiss">✕</button></span></li>`).join("")||`<li class="empty">Nothing to review.</li>`}</ul>
+   <div class="row">${A.length?`<button type="button" id="scAll">Dismiss all</button>`:""}<button type="button" id="scClose">Close</button></div>`;
+  openSheet();$("scClose").onclick=()=>closeSheet();if($("scAll"))$("scAll").onclick=()=>{syConfSet([]);syncUi();openSyncReview();};
+  p.querySelectorAll("[data-sd]").forEach(b=>b.onclick=()=>{const a=syConfAll();a.splice(+b.dataset.sd,1);syConfSet(a);syncUi();openSyncReview();});
+  p.querySelectorAll("[data-su]").forEach(b=>b.onclick=()=>{const a=syConfAll(),c=a[+b.dataset.su],x=c&&byId(c.id);if(!x)return;undoable("Other device’s value used for “"+x.t+"”");
+    Object.keys(c.raw).forEach(f=>{if(c.raw[f]===undefined||c.raw[f]===null)delete x[f];else x[f]=JSON.parse(JSON.stringify(c.raw[f]));});
+    a.splice(+b.dataset.su,1);syConfSet(a);save();render();syncUi();toast("Done: you can undo from History");openSyncReview();});}
+/* ---- Possible duplicates (same artist and title twice): merge, count as copies, or keep both ---- */
+function dupGroups(){const by={},nd=new Set(S.noDup||[]);[S.col,S.wish].forEach((L,li)=>L.forEach(x=>{const k=li+"|"+tNorm(x.a)+"|"+tNorm(x.t);if(tNorm(x.t).length>1)(by[k]=by[k]||[]).push(x);}));
+  return Object.entries(by).filter(([k,v])=>v.length>1&&!nd.has(k)).map(([k,v])=>({k,xs:v}));}
+const dupScore=x=>tracksOf(x).length*2+(coverUrl(x)?3:0)+(x.paid>0?2:0)+(x.val>0?1:0)+Object.keys(x).length*.1;
+function dupMerge(g,asCopies){const xs=g.xs.slice().sort((a,b)=>dupScore(b)-dupScore(a)),P=xs[0];undoable("Duplicates merged: “"+P.t+"”");
+  const rev=id=>Object.keys(S.codes).filter(c=>S.codes[c]===id);let cp=P.copies||1;
+  xs.slice(1).forEach(O=>{const o=JSON.parse(JSON.stringify(O)),pd=JSON.parse(JSON.stringify(P));delete o.est;delete pd.est;o._k=pd._k="col";o._codes=rev(O.id);pd._codes=rev(P.id);
+    const {m,conf}=syMergeAlbum(pd,o),est=P.est;delete m._k;const codes=m._codes;delete m._codes;
+    Object.keys(P).forEach(f=>delete P[f]);Object.assign(P,m);if(est)P.est=est;codes.forEach(c=>{S.codes[c]=P.id;});
+    conf.filter(c=>!c.info).forEach(c=>{const a=syConfAll();a.unshift(Object.assign({at:Date.now(),id:P.id,t:P.t,a:P.a},c));syConfSet(a);});
+    cp=asCopies?cp+(O.copies||1):Math.max(cp,O.copies||1);
+    toTrash(O,"del",{own:!isWish(O.id),codes:rev(O.id)});for(const c in S.codes)if(S.codes[c]===O.id)delete S.codes[c];
+    S.col=S.col.filter(y=>y.id!==O.id);S.wish=S.wish.filter(y=>y.id!==O.id);});
+  if(cp>1)P.copies=cp;else delete P.copies;P.id=P.id;save();render();}
+function openDupes(){const p=$("detail"),G=dupGroups();CUR=openDupes;
+  const row=x=>`<small>${esc([x.y,fmtLabel(x),x.l,x.cat,x.copies>1?"×"+x.copies+" copies":"",x.paid>0?"paid "+fmtPrice(x.paid):"",tracksOf(x).length+" tracks",codesOf(x.id).length?"barcode "+codesOf(x.id).map(fmtEan).join(", "):"no barcode"].filter(Boolean).join(" · "))}</small>`;
+  p.innerHTML=`<p class="cat">Sync</p><h2 class="wh">${G.length} possible duplicate${G.length!==1?"s":""}</h2><p class="hint">Same artist and title more than once, for example an album added separately on two devices. “Merge” keeps one entry with the information of both. “Two copies” keeps one entry and counts 2 copies. A merged entry can be restored from History → Trash.</p>
+   <ul class="list">${G.map((g,i)=>`<li class="item dupli"><div class="meta"><b>${esc(g.xs[0].t)}</b><small>${esc(g.xs[0].a)} · ${g.xs.length} entries${isWish(g.xs[0].id)?" (wishlist)":""}</small>${g.xs.map(x=>`<span class="dupx">${row(x)}</span>`).join("")}${new Set(g.xs.map(x=>codesOf(x.id).join())).size>1&&g.xs.every(x=>codesOf(x.id).length)?`<small class="lowc">Different barcodes: probably different editions.</small>`:""}</div>
+     <span class="tact"><button type="button" class="small" data-dm="${i}">Merge</button><button type="button" class="small" data-dc="${i}">Two copies</button><button type="button" class="small" data-dk="${i}">Keep both</button></span></li>`).join("")||`<li class="empty">No duplicates found.</li>`}</ul>
+   <div class="row"><button type="button" id="dpClose">Close</button></div>`;
+  openSheet();$("dpClose").onclick=()=>closeSheet();
+  p.querySelectorAll("[data-dm]").forEach(b=>b.onclick=()=>{dupMerge(G[+b.dataset.dm],false);syncUi();openDupes();});
+  p.querySelectorAll("[data-dc]").forEach(b=>b.onclick=()=>{dupMerge(G[+b.dataset.dc],true);syncUi();openDupes();});
+  p.querySelectorAll("[data-dk]").forEach(b=>b.onclick=()=>{S.noDup=(S.noDup||[]).concat([G[+b.dataset.dk].k]);save();syncUi();openDupes();});}
+$("syRev").onclick=()=>subView(()=>openSyncReview());$("syDup").onclick=()=>subView(()=>openDupes());
 /* Coming back from the e-mail link: the session arrives in the URL hash */
 async function authHash(){const h=location.hash;if(!/access_token=|error_code=/.test(h))return;const q=new URLSearchParams(h.slice(1));try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}
   if(q.get("error_code")||q.get("error")){toast(q.get("error_code")==="otp_expired"?"This sign-in link has expired or was already used. Send a new one.":(q.get("error_description")||"Sign-in failed").replace(/\+/g," "));return;}
-  const old=SY;SY={h:{}};SY.tok=q.get("access_token");SY.ref=q.get("refresh_token");SY.exp=Date.now()+(+q.get("expires_in")||3600)*1000;
+  const old=SY;SY={h:{},sv:{},v:2};SY.tok=q.get("access_token");SY.ref=q.get("refresh_token");SY.exp=Date.now()+(+q.get("expires_in")||3600)*1000;
   try{const u=await sbReq("/auth/v1/user",{},true);if(old.uid===u.id){SY=Object.assign(old,{tok:SY.tok,ref:SY.ref,exp:SY.exp});}else{SY.uid=u.id;}SY.email=u.email;syPut();syncUi();toast("Signed in as "+u.email);await syFirst();}
   catch(e){SY=old;syPut();toast(e.code==="net"?"Offline: open the link again when connected":"Sign-in failed: send a new link");syncUi();}}
 authHash();addEventListener("hashchange",authHash);
