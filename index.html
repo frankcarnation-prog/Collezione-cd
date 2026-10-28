@@ -1226,13 +1226,19 @@ async function check(){if(notCode($("ean").value)){eanToSearch();return;}
   else if(!f){out.innerHTML=`<p class="hint">Searching MusicBrainz…</p>`;
     try{f=await mbLookup(c);src="MusicBrainz";}catch(e){err=e;}
     if(cur!==c)return;
+    if(f){const tm=ms=>new Promise(r=>setTimeout(()=>r(null),ms));const [ok,dz]=await Promise.all([Promise.race([imgOk(f.img),tm(5000)]),Promise.race([dzLookup(c).catch(()=>null),tm(6000)])]);
+      if(cur!==c)return;if(!ok)f.img=dz&&dz.img||"";if(dz&&!tracksOf(f).length&&tracksOf(dz).length){if(dz.discs){f.discs=dz.discs;f.box=dz.box;delete f.tr;}else f.tr=dz.tr;src="MusicBrainz + Deezer";}
+      if(dz)f.dzid=dz.dzid;}
+    if(!f&&navigator.onLine){out.innerHTML=`<p class="hint">Searching Deezer…</p>`;
+      try{f=await dzLookup(c);if(f){src="Deezer";err=null;}}catch(e){err=err||e;}
+      if(cur!==c)return;}
     if(!f&&dgKey()&&navigator.onLine){out.innerHTML=`<p class="hint">Searching Discogs…</p>`;
       try{const rs=await dgSearch({barcode:c});if(rs.length){f=await dgRelease(rs[0].id);src="Discogs";err=null;}}catch(e){err=err||e;}
       if(cur!==c)return;}}
   if(!err)LOOK[c]={f,src};
   if(f){showFound(out,f,src,c);return;}
   if(err){out.innerHTML=`<div class="verdict wish"><strong>Search failed</strong><span>${esc(err.message)}</span></div>`;manual(out,true);return;}
-  out.innerHTML=`<div class="verdict wish"><strong>Unknown code</strong><span>Not found on MusicBrainz${dgKey()?" or Discogs":""}. Search the catalog number, read the cover from a photo, or enter it by hand.</span></div><div class="row"><button class="primary" type="button" id="readFromUnknown">Read the cover from a photo</button></div><div class="row"><button type="button" id="lkUnknown">Link to an album of my collection</button></div><p class="ask">Or enter it by hand</p>`;$("readFromUnknown").onclick=openReader;
+  out.innerHTML=`<div class="verdict wish"><strong>Unknown code</strong><span>Not found on MusicBrainz, Deezer${dgKey()?" or Discogs":""}. Search the catalog number, read the cover from a photo, or enter it by hand.</span></div><div class="row"><button class="primary" type="button" id="readFromUnknown">Read the cover from a photo</button></div><div class="row"><button type="button" id="lkUnknown">Link to an album of my collection</button></div><p class="ask">Or enter it by hand</p>`;$("readFromUnknown").onclick=openReader;
   $("lkUnknown").onclick=()=>scanStep(()=>check(),()=>linkPicker(out,null,"",c));manual(out,true);}
 // Disque déjà présent sous une autre édition ? Œuvres déjà possédées ?
 const tNorm=s=>norm(s).replace(/\[.*?\]|\(.*?\)/g," ").replace(/[^a-z0-9]+/g," ").trim();
@@ -1426,6 +1432,44 @@ async function mbRelease(rid){
   if(discs.length>1){a.discs=discs;a.box=true;}else{a.tr=discs[0]?discs[0].tr:[];if(discs[0]&&discs[0].t)a.discs=discs;}
   return a;}
 
+// ---------- Deezer (public catalogue, no key needed) ----------
+// Deezer sends no CORS headers, so its API is called in JSONP. Used for barcodes MusicBrainz does not know, missing covers and track lists.
+const DZ="https://api.deezer.com/";let lastDz=0,dzN=0;
+function dzGet(path){return new Promise(res=>setTimeout(res,Math.max(0,120-(Date.now()-lastDz)))).then(()=>new Promise((res,rej)=>{lastDz=Date.now();
+  if(!navigator.onLine){rej(new Error("No Internet connection."));return;}
+  const cb="__dz"+(++dzN)+"_"+Date.now().toString(36),sc=document.createElement("script");let t;
+  const done=(e,v)=>{clearTimeout(t);try{delete window[cb];}catch(_){window[cb]=undefined;}sc.remove();e?rej(e):res(v);};
+  t=setTimeout(()=>{window[cb]=()=>{};done(new Error("Deezer did not reply."));},10000);
+  window[cb]=j=>{if(j&&j.error){if(j.error.code===800){done(null,null);return;}done(new Error("Deezer: "+(j.error.message||"error")));return;}done(null,j);};
+  sc.onerror=()=>done(new Error("Deezer could not be reached."));
+  sc.src=DZ+path+(path.includes("?")?"&":"?")+"output=jsonp&callback="+cb;document.head.appendChild(sc);}));}
+const DZG=[[/classi|opera/i,"Classical"],[/jazz/i,"Jazz"],[/metal/i,"Metal"],[/rock|alternative|indie/i,"Rock"],[/rap|hip ?hop/i,"Hip-hop"],[/soul|funk|r&b/i,"Soul / Funk"],[/blues/i,"Blues"],[/reggae/i,"Reggae"],[/latin|brazil/i,"Latin"],[/film|game|soundtrack/i,"Soundtrack"],[/folk|world|africa|asia|india/i,"Folk / World"],[/electro|dance|techno/i,"Electronic"],[/chanson|vari/i,"Chanson"],[/pop/i,"Pop"]];
+const dzGenre=gs=>{for(const g of gs||[]){const m=DZG.find(([re])=>re.test(g));if(m)return m[1];}return "";};
+const dzCover=d=>d&&(d.cover_big||d.cover_medium||d.cover_xl)||"";
+async function dzAlbum(id){const d=await dzGet("album/"+id);if(!d||!d.id)return null;
+  let tl=[];try{const r=await dzGet("album/"+id+"/tracks?limit=500");tl=(r&&r.data)||[];}catch(e){tl=(d.tracks&&d.tracks.data)||[];}
+  const by={};tl.forEach(t=>{const k=t.disk_number||1;(by[k]=by[k]||[]).push(t);});
+  const ks=Object.keys(by).sort((a,b)=>a-b),mk=l=>l.sort((a,b)=>(a.track_position||0)-(b.track_position||0)).map(t=>({n:t.title,d:t.duration||0}));
+  const a={id:"dz"+d.id,a:(d.artist&&d.artist.name)||"Unknown artist",t:d.title||"",l:d.label||"",y:(d.release_date||"").slice(0,4),img:dzCover(d),dzid:d.id,
+    ean:String(d.upc||"").replace(/\D/g,""),g:dzGenre(((d.genres&&d.genres.data)||[]).map(g=>g.name)),newWorks:{}};
+  if(a.y==="0000")a.y="";
+  if(ks.length>1){a.discs=ks.map(k=>({tr:mk(by[k])}));a.box=true;}else a.tr=ks.length?mk(by[ks[0]]):[];
+  return a;}
+// A barcode can be printed with or without its leading zero (UPC-A 12 digits / EAN-13)
+async function dzLookup(code){const tries=[code];if(code.length===13&&code[0]==="0")tries.push(code.slice(1));if(code.length===12)tries.push("0"+code);
+  for(const c of tries){const d=await dzGet("album/upc:"+c);if(d&&d.id)return dzAlbum(d.id);}return null;}
+async function dzSearch(q,lim){const r=await dzGet("search/album?q="+encodeURIComponent(q)+"&limit="+(lim||10));return (r&&r.data)||[];}
+// ---------- Wikidata: composer facts (dates, nationality), cached on this device ----------
+const WDQ="https://query.wikidata.org/sparql?format=json&query=";
+function wdCache(){try{return JSON.parse(localStorage.getItem("wd-composers")||"{}");}catch(e){return {};}}
+async function wdComposer(name){if(!name)return null;const C=wdCache(),k=norm(name);if(C[k]&&(C[k].q||Date.now()-C[k].at<30*864e5))return C[k].q?C[k]:null;
+  if(!navigator.onLine)return null;const lit=JSON.stringify(name);
+  const q=`SELECT ?p ?pl ?b ?d ?cl WHERE { {?p rdfs:label ${lit}@en} UNION {?p skos:altLabel ${lit}@en} UNION {?p rdfs:label ${lit}@fr} ?p wdt:P106 wd:Q36834. ?p rdfs:label ?pl FILTER(lang(?pl)="en") OPTIONAL{?p wdt:P569 ?b} OPTIONAL{?p wdt:P570 ?d} OPTIONAL{?p wdt:P27 ?c. ?c rdfs:label ?cl FILTER(lang(?cl)="en")} ?p wikibase:sitelinks ?sl } ORDER BY DESC(?sl) LIMIT 3`;
+  const r=await fetch(WDQ+encodeURIComponent(q),{headers:{Accept:"application/sparql-results+json"}});if(!r.ok)throw new Error("Wikidata replied "+r.status+".");
+  const b=((await r.json()).results||{}).bindings||[],x=b[0],o={at:Date.now()};
+  if(x){o.q=x.p.value.split("/").pop();o.n=x.pl&&x.pl.value;o.b=x.b?x.b.value.slice(0,x.b.value[0]==="-"?5:4).replace(/^\+/,""):"";o.d=x.d?x.d.value.slice(0,4):"";o.c=[...new Set(b.filter(y=>y.p.value===x.p.value&&y.cl).map(y=>y.cl.value))].slice(0,2).join(", ");}
+  C[k]=o;try{localStorage.setItem("wd-composers",JSON.stringify(C));}catch(e){}return o.q?o:null;}
+
 
 // ---------- Discogs ----------
 const DG="https://api.discogs.com/";
@@ -1444,7 +1488,7 @@ async function dgCheck(){const k=dgKey();if(!k){dgInfoUi();return;}if(!navigator
   catch(e){dgSetState({k,net:1});}}
 $("dgKey").addEventListener("input",e=>{try{localStorage.setItem("discogs-token",e.target.value.trim());}catch(err){}dgInfoUi();if(typeof enrUi==="function"&&!$("enr").hidden)enrUi();clearTimeout(dgT);dgT=setTimeout(dgCheck,900);});
 // statut des sources, affiché là où il compte
-function srcLine(){const k=dgKey(),s=dgState();return `Sources: MusicBrainz ✓ · Discogs ${!k?`<button type="button" class="linklike" data-gokey="1">not configured (add token)</button>`:s.k===k&&s.ok===false?`<button type="button" class="linklike err" data-gokey="1">token rejected</button>`:"✓"+(s.ok&&s.k===k?" ("+esc(s.user)+")":"")}`;}
+function srcLine(){const k=dgKey(),s=dgState();return `Sources: MusicBrainz ✓ · Deezer ✓ · Wikidata ✓ · Discogs ${!k?`<button type="button" class="linklike" data-gokey="1">not configured (add token)</button>`:s.k===k&&s.ok===false?`<button type="button" class="linklike err" data-gokey="1">token rejected</button>`:"✓"+(s.ok&&s.k===k?" ("+esc(s.user)+")":"")}`;}
 document.addEventListener("click",e=>{if(!e.target.closest("[data-gokey]"))return;const was=sheetOpen;closeSheet();setTimeout(()=>{openSettings();setTimeout(()=>{$("dgKey").scrollIntoView({behavior:"smooth",block:"center"});$("dgKey").focus();},300);},was?150:0);return;$("dgKey").scrollIntoView({behavior:"smooth",block:"center"});setTimeout(()=>$("dgKey").focus(),400);});
 dgInfoUi();if(dgKey()&&dgState().k!==dgKey())dgCheck();
 let lastDg=0;
@@ -1487,7 +1531,7 @@ $("catGo").onclick=async()=>{stopCam();const q=$("catno").value.trim(),out=$("ea
   if(!q){out.innerHTML=`<p class="hint err">Enter a catalog number (printed on the spine or back), or an artist and a title.</p>`;return;}
   const web=`<p class="hint">Not found? Search the web, then paste the Discogs or MusicBrainz page link here.</p><div class="weblinks"><a href="https://www.google.com/search?q=${encodeURIComponent(q+" CD")}" target="_blank" rel="noopener">Google</a><a href="https://www.discogs.com/search/?q=${encodeURIComponent(q)}&type=release" target="_blank" rel="noopener">Discogs</a><a href="https://musicbrainz.org/search?query=${encodeURIComponent(q)}&type=release" target="_blank" rel="noopener">MusicBrainz</a></div>`;
   if(!navigator.onLine){out.innerHTML=`<p class="hint err">No Internet connection: the search could not be run.</p>`;return;}
-  out.innerHTML=`<p class="hint">Searching MusicBrainz${dgKey()?" and Discogs":""}…</p>`;
+  out.innerHTML=`<p class="hint">Searching MusicBrainz, Deezer${dgKey()?" and Discogs":""}…</p>`;
   const res=[],errs=[],seen=new Set(),catq=q.replace(/"/g,"");
   const addMb=rs=>(rs||[]).forEach(r=>{if(seen.has(r.id))return;seen.add(r.id);res.push({src:"MusicBrainz",id:r.id,t:r.title,code:(r.barcode||"").replace(/\D/g,""),
     sub:[credit(r["artist-credit"]),((r["label-info"]||[]).find(l=>l.label)||{label:{}}).label.name,((r["label-info"]||[]).find(l=>l["catalog-number"])||{})["catalog-number"],(r.date||"").slice(0,4),r.country,(r.media||[]).map(m=>m.format).filter(Boolean)[0]].filter(Boolean).join(" · "),
@@ -1499,12 +1543,13 @@ $("catGo").onclick=async()=>{stopCam();const q=$("catno").value.trim(),out=$("ea
     if(!res.length&&/[a-z]{3}/i.test(q))addMb((await mbGet("release/?query="+encodeURIComponent(luc(q)||q)+"&limit=10")).releases);}catch(e){errs.push("MusicBrainz: "+e.message);}
   if(dgKey()&&!exact){try{let rs=await dgSearch({catno:q});if(!rs.length)rs=await dgSearch({q});rs.forEach(r=>res.push({src:"Discogs",id:r.id,t:r.title,code:(r.barcode||[]).map(x=>x.replace(/\D/g,"")).find(x=>x.length===13||x.length===12)||"",
     sub:[(r.label||[])[0],r.catno,r.year,(r.format||[]).join(", ")].filter(Boolean).join(" · "),img:r.thumb||""}));}catch(e){errs.push("Discogs: "+e.message);}}
+  if(!exact&&/[a-z]{3}/i.test(q)){try{(await dzSearch(q,8)).forEach(r=>res.push({src:"Deezer",id:r.id,t:r.title,code:"",sub:[(r.artist||{}).name,r.nb_tracks?r.nb_tracks+" tracks":"",r.record_type&&r.record_type!=="album"?r.record_type:""].filter(Boolean).join(" · "),img:r.cover_medium||""}));}catch(e){errs.push(e.message);}}
   const errH=errs.length?`<p class="hint err">${esc(errs.join(" · "))}</p>`:"";
-  if(!res.length){out.innerHTML=`<div class="verdict wish"><strong>No results</strong><span>Nothing found on MusicBrainz${dgKey()?" or Discogs":""} for “${esc(q)}”.</span></div>${errH}${web}`;return;}
+  if(!res.length){out.innerHTML=`<div class="verdict wish"><strong>No results</strong><span>Nothing found on MusicBrainz, Deezer${dgKey()?" or Discogs":""} for “${esc(q)}”.</span></div>${errH}${web}`;return;}
   const showList=()=>{out.innerHTML=`<p class="hint">${res.length} result${res.length!==1?"s":""}. Select the correct one:</p>${errH}`+res.map((r,i)=>`<button type="button" class="pick" data-i="${i}">${r.img?`<img src="${esc(r.img)}" alt="" onerror="this.style.visibility='hidden'">`:""}<span><b>${esc(r.t)}</b><br><small>${esc(r.sub)}</small><br><small class="srcbadge">${r.src}</small></span></button>`).join("")+web;
   out.querySelectorAll(".pick").forEach(btn=>btn.onclick=async()=>{const r=res[+btn.dataset.i];out.innerHTML=`<p class="hint">Loading…</p>`;
     try{const code=r.code&&(r.code.length===13||r.code.length===12)?r.code:"";const id=code&&S.codes[code];if(id&&byId(id)){addShop(byId(id));openDetail(id);out.innerHTML="";return;}
-      let f;if(r.src==="Discogs")f=await dgRelease(r.id);else{f=await mbRelease(r.id);if(f.img&&!(await imgOk(f.img)))f.img="";}
+      let f;if(r.src==="Discogs")f=await dgRelease(r.id);else if(r.src==="Deezer"){f=await dzAlbum(r.id);if(!f)throw new Error("album not available");}else{f=await mbRelease(r.id);if(f.img&&!(await imgOk(f.img)))f.img="";}
       scanStep(showList,()=>showFound(out,f,r.src,code));}catch(e){out.innerHTML=`<p class="hint err">Loading failed: ${esc(e.message)}</p>`;}});};showList();};
 $("catno").addEventListener("keydown",e=>{if(e.key==="Enter")$("catGo").click();});
 
@@ -1512,11 +1557,12 @@ $("catno").addEventListener("keydown",e=>{if(e.key==="Enter")$("catGo").click();
 function openWork(w){const o=WORKS()[w],vs=versions()[workId(w)]||[],p=$("detail");if(!o)return;CUR=()=>openWork(w);
   const gid=workId(w),P=pieces(),pids=Object.keys(P).filter(id=>P[id].parents.has(gid)).sort((a,b)=>(P[a].num||999)-(P[b].num||999)||P[a].label.localeCompare(P[b].label));
   const PC=pids.length>1?`<h3 class="subH">Movements and pieces (${pids.length})</h3><ul class="list pcs">${pids.map(id=>`<li class="item tap" data-piece="${esc(id)}"><div class="meta"><b>${esc(P[id].label)}</b><small>${pieceN(id)} version${pieceN(id)!==1?"s":""} in your collection and wishlist</small></div><span class="count">${pieceN(id)}</span></li>`).join("")}</ul>`:"";
-  p.innerHTML=`<p class="cat">${esc(canonC(o.c))}</p><h2 class="wh">${esc(wLabel(w))}</h2><p class="hint">${vs.length} version${vs.length!==1?"s":""} in your collection and wishlist</p>
+  p.innerHTML=`<p class="cat">${esc(canonC(o.c))}<span id="wdC"></span></p><h2 class="wh">${esc(wLabel(w))}</h2><p class="hint">${vs.length} version${vs.length!==1?"s":""} in your collection and wishlist</p>
    <ul class="list">${verRows(vs)}</ul>${PC}
    <details class="more"><summary>⋯ Fix grouping</summary><div class="mgrp"><button type="button" class="setItem" id="wMerge"><b>Merge with another work…</b><small>Group it with other versions of the same piece</small></button>${groupMembers(w).length>1||(S.wl&&S.wl[w])?`<button type="button" class="setItem" id="wSplit"><b>Split from this group</b><small>Make it a separate work</small></button>`:""}</div></details>
    <div class="${BACK.length?"pair":"row"}">${BACK.length?`<button type="button" id="detBack">← Back</button>`:""}<button type="button" id="detClose">Close</button></div>`;
   openSheet();$("wMerge").onclick=()=>subView(()=>openMerge(w));
+  if(o.c)wdComposer(canonC(o.c)).then(c=>{const el=$("wdC");if(!c||!el)return;const life=c.b||c.d?" ("+(c.b||"?")+"–"+(c.d||"")+")":"";el.textContent=life+(c.c?" · "+c.c:"");el.title="Source: Wikidata";}).catch(()=>{});
   if($("wSplit"))$("wSplit").onclick=()=>{S.wsp=S.wsp||{};S.wsp[w]=1;if(S.wl)delete S.wl[w];save();toast("Work split from its group");render();openWork(w);};
   $("detClose").onclick=()=>closeSheet();if($("detBack"))$("detBack").onclick=goBack;
   p.querySelectorAll("[data-open]").forEach(n=>n.onclick=()=>subView(()=>openDetail(n.dataset.open)));
@@ -2088,6 +2134,10 @@ async function enrichOne(x,pass){const {title,who}=enrichQuery(x),n=tracksOf(x).
       const sc=(r.score||0)+40*ov+(close?15:-25);if(ok&&sc>bs){bs=sc;best=r;}});
     if(best)takeMb(x,best);}
   if(x.mbid&&await mbCover(x))return "cover";
+  try{const bc=codeOf(x.id);let d=bc?await dzGet("album/upc:"+bc):null;
+    if(!(d&&d.id)){const rs=await dzSearch(((who[0]||"")+" "+title).trim(),pass===1?8:15);
+      d=rs.find(r=>overlap(title,r.title)>=(pass===1?.6:.8)&&(!who.length||who.some(w=>overlap(w,(r.artist||{}).name||"")>=.5))&&dzCover(r));}
+    if(d&&dzCover(d)&&await imgOk(dzCover(d))){x.img=dzCover(d);x.dzid=d.id;return "cover";}}catch(e){}
   if(dgKey()){const p=pass===1?{release_title:title,artist:who[0]||"",format:"CD"}:{q:((who[0]||"")+" "+title).trim(),format:"CD"};
     const rs=await dgSearch(p);
     const r=rs.find(r=>overlap(title,(r.title||"").split(" - ").slice(1).join(" - ")||r.title)>=(pass===1?.6:.5)&&(r.cover_image||r.thumb));
@@ -2610,7 +2660,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.81.0";$("hVer").textContent="v"+APPV;
+const APPV="0.82.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
