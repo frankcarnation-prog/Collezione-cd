@@ -556,6 +556,7 @@ small.best{color:var(--wish);font-weight:600}
 <button type="button" class="setItem" id="impGo"><b>Import a collection</b><small>CSV (Discogs, CLZ…), Excel or a pasted list</small></button>
 <button type="button" class="setItem" id="tbInv" hidden><b>Link barcodes to albums you already have</b><small id="tbInvN"></small></button>
 <button type="button" class="setItem" id="tbGroup"><b>Group into box sets</b><small id="tbGroupN">Automatic suggestions</small></button>
+<button type="button" class="setItem" id="tbSugg"><b>Album suggestions</b><small>Albums to discover, based on your collection</small></button>
 </div></section>
 <section class="win" id="tw-val"><div class="wtitle">Value</div><div class="wbody">
 <button type="button" class="setItem" id="valGo"><b>Estimate values from Discogs</b><small id="valN">Price of each album on the Discogs marketplace</small></button><p class="hint" id="valMsg"></p>
@@ -2733,7 +2734,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.84.0";$("hVer").textContent="v"+APPV;
+const APPV="0.85.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -3151,7 +3152,7 @@ function signOutLocal(){SY={h:{},sv:{},v:2};syPut();syncUi();syPill();if(typeof 
 function syLocal(){const rev={};Object.keys(S.codes||{}).forEach(c=>{(rev[S.codes[c]]=rev[S.codes[c]]||[]).push(c);});const m={};
   const add=(x,k)=>{const o=JSON.parse(JSON.stringify(x));delete o.est;o._k=k;o._codes=(rev[x.id]||[]).sort();m["album:"+x.id]={kind:"album",id:x.id,data:o,h:fnv(canon(o))};};
   S.col.forEach(x=>add(x,"col"));S.wish.forEach(x=>add(x,"wish"));
-  const meta={works:S.works||{},wl:S.wl||{},wsp:S.wsp||{},ng:S.noGroup||[],nd:S.noDup||[]};m["meta:main"]={kind:"meta",id:"main",data:meta,h:fnv(canon(meta))};return m;}
+  const meta={works:S.works||{},wl:S.wl||{},wsp:S.wsp||{},ng:S.noGroup||[],nd:S.noDup||[],ns:S.noSugg||[]};m["meta:main"]={kind:"meta",id:"main",data:meta,h:fnv(canon(meta))};return m;}
 const SY_GROUPS=[["paid","paidSrc","paidAt"],["val","valSrc","valAt","valQ"],["fmt","vt","fd"]];
 const SY_SILENT=new Set(["covO","phO","imgOt","img","auto","enr","enrP","dgT","mbid","rgid","dgid","dzid","at","src","ean","eans"]);
 const SY_LABEL={paid:"Price paid",val:"My value",cond:"Condition",note:"Notes",fmt:"Format",g:"Genre",y:"Year",l:"Label",cat:"Catalogue no.",a:"Artist",t:"Title",perf:"Performers",copies:"Copies",tr:"Track list",discs:"Discs",box:"Box set",loc:"Location",ver:"Verified by me"};
@@ -3180,7 +3181,7 @@ function syMergeAlbum(L,R,B){const m={},conf=[],keys=new Set(Object.keys(L).conc
   if(L._k===R._k)m._k=L._k;else if(B&&L._k===B._k)m._k=R._k;else if(B&&R._k===B._k)m._k=L._k;
   else{m._k="col";conf.push({info:true,f:"_k",ks:"",os:"",msg:"Kept in your collection (it was in the collection on one device and on the wishlist on the other)."});}
   return {m,conf};}
-function syMergeMeta(L,R){return {works:Object.assign({},R.works,L.works),wl:Object.assign({},R.wl,L.wl),wsp:Object.assign({},R.wsp,L.wsp),ng:[...new Set((L.ng||[]).concat(R.ng||[]))],nd:[...new Set((L.nd||[]).concat(R.nd||[]))]};}
+function syMergeMeta(L,R){return {works:Object.assign({},R.works,L.works),wl:Object.assign({},R.wl,L.wl),wsp:Object.assign({},R.wsp,L.wsp),ng:[...new Set((L.ng||[]).concat(R.ng||[]))],nd:[...new Set((L.nd||[]).concat(R.nd||[]))],ns:[...new Set((L.ns||[]).concat(R.ns||[]))]};}
 function syConfAll(){try{return JSON.parse(localStorage.getItem(SYC_KEY)||"[]");}catch(e){return [];}}
 function syConfSet(a){try{localStorage.setItem(SYC_KEY,JSON.stringify(a.slice(0,300)));}catch(e){}}
 const SYC_KEY="album-ledger-syncconf";
@@ -3198,7 +3199,7 @@ function syApply(rows,conf){let n=0;const L=syLocal();
   rows.forEach(r=>{const key=r.kind+":"+r.id,base=SY.h[key];SY.sv[key]=r.srv_at;
     if(r.kind==="meta"){if(!r.data)return;const rh=fnv(canon(r.data)),lh=L[key].h;if(lh===rh){SY.h[key]=rh;return;}
       const lc=base===undefined||lh!==base,rc=base===undefined||rh!==base;if(lc&&!rc)return;
-      const mm=lc&&rc?syMergeMeta(L[key].data,r.data):r.data;S.works=mm.works||{};S.wl=mm.wl||{};S.wsp=mm.wsp||{};S.noGroup=mm.ng||[];S.noDup=mm.nd||[];SY.h[key]=rh;n++;return;}
+      const mm=lc&&rc?syMergeMeta(L[key].data,r.data):r.data;S.works=mm.works||{};S.wl=mm.wl||{};S.wsp=mm.wsp||{};S.noGroup=mm.ng||[];S.noDup=mm.nd||[];S.noSugg=mm.ns||[];SY.h[key]=rh;n++;return;}
     const lcl=L[key];
     if(r.deleted){if(!lcl){delete SY.h[key];return;}
       if(lcl.h===base){drop(r.id);delete SY.h[key];sybDel(key);n++;return;}
@@ -3381,6 +3382,79 @@ function homeTodo(){const c=$("todoCard");if(!c)return;const g=groupSuggestions(
   $("todoList").querySelectorAll("[data-td]").forEach(li=>li.onclick=()=>{const k=li.dataset.td;goTools(TODO_SEC[k]||"tw-cmp",k);});}
 (()=>{const c=$("todoCard");try{c.open=localStorage.getItem("todo-open")==="1";}catch(e){}c.addEventListener("toggle",()=>{try{localStorage.setItem("todo-open",c.open?"1":"0");}catch(e){}});})();
 $("tbGroup").onclick=()=>openGroupSugg();
+// ---------- Album suggestions: reference base ----------
+// A fixed editorial base (base/*.json, read-only, never mixed with the user's library) is compared with the
+// user's collection: albums already owned or on the wishlist are left out, the others are ranked by importance
+// and by closeness to the user's genres, decades and artists. Every suggestion says why it is shown. No AI.
+const BASE_URL="base/pilot_100.json",SUG_TIER={A:3,B:2,C:1},SUG_LAB={A:"Essential album",B:"Major album",C:"Genre classic"};
+let BASE=null,SUG={show:10};
+async function loadBase(){if(BASE)return BASE;let r;
+  try{r=await fetch(BASE_URL,{cache:"no-cache"});}catch(e){throw new Error("The reference base could not be loaded: no connection.");}
+  if(!r.ok)throw new Error("The reference base could not be loaded (HTTP "+r.status+").");
+  let j;try{j=await r.json();}catch(e){throw new Error("The reference base file is not valid.");}
+  if(!j||!Array.isArray(j.albums)||!j.albums.length)throw new Error("The reference base file is empty or not valid.");
+  BASE=j;return BASE;}
+const sugInter=(A,B)=>{if(!A.size)return 0;let n=0;A.forEach(w=>{if(B.has(w))n++;});return n/A.size;};
+const sugSep=s=>/[,;\/&+]|\b(and|feat|with)\b/i.test(s||"");
+// Same artist? Exact after normalisation, or one name contained in the other only when that is plausible
+// (a list of artists, or a duo/group): "Air" must not match "Air Supply".
+function sugArtist(b,bA,l){const f=sugInter(bA,l.A),r=sugInter(l.A,bA);
+  if(f===1&&r===1)return true;
+  if(f===1)return bA.size>=2||r>.5||sugSep(l.raw);
+  if(r===1&&f>=.5)return sugSep(b.artist);
+  return false;}
+function sugCompute(base){
+  const mk=(x,own)=>({own,raw:x.a,tt:tNorm(x.t),T:toks(x.t),A:toks(x.a)}),lib=S.col.map(x=>mk(x,true)).concat(S.wish.map(x=>mk(x,false)));
+  const gs={},ds={};let ng=0,nd=0;
+  S.col.forEach(x=>{const g=genreOf(x);if(g){gs[g]=(gs[g]||0)+1;ng++;}const y=parseInt(x.y,10);if(y>=1900&&y<2100){const d=Math.floor(y/10)*10;ds[d]=(ds[d]||0)+1;nd++;}});
+  const ign=new Set(S.noSugg||[]),hid={owned:0,wish:0},items=[],ignored=[];
+  base.albums.forEach(b=>{const bT=toks(b.title),bA=toks(b.artist),bt=tNorm(b.title);let have=null,by=0;
+    lib.forEach(l=>{const am=sugArtist(b,bA,l);if(!am)return;if(l.own)by++;if(have&&have.own)return;
+      if(l.tt===bt||(sugInter(bT,l.T)>=.8&&sugInter(l.T,bT)>=.8))have=l;});
+    if(have){if(have.own)hid.owned++;else hid.wish++;return;}
+    if(ign.has(b.id)){ignored.push(b);return;}
+    const g=b.app_genre,gSh=ng?(gs[g]||0)/ng:0,dec=Math.floor(b.year/10)*10,dSh=nd?(ds[dec]||0)/nd:0;
+    const score=(SUG_TIER[b.tier]||1)+4*gSh+.8*dSh+(by?2:0)+(b.entry_point&&!by?.3:0);
+    const why=[SUG_LAB[b.tier]||"Album"];
+    if(gSh>0)why.push("You own "+gs[g]+" "+g+" album"+(gs[g]!==1?"s":"")+" ("+Math.round(gSh*100)+"% of your collection)");
+    if(by)why.push("You already own "+by+" album"+(by!==1?"s":"")+" by "+b.artist);
+    if(dSh>=.15)why.push(Math.round(dSh*100)+"% of your albums date from the "+dec+"s");
+    if(b.entry_point&&!by)why.push("A good first album by this artist");
+    const aff=gSh>0||by>0;if(!aff&&ng>=5)why.push("Outside your usual genres");
+    items.push({b,score,why,aff});});
+  items.sort((a,b)=>b.score-a.score||(SUG_TIER[b.b.tier]||0)-(SUG_TIER[a.b.tier]||0)||a.b.seq-b.b.seq);
+  // Close to the user's taste first; every 5th suggestion comes from outside it (discovery)
+  let out=items;const main=items.filter(i=>i.aff),rest=items.filter(i=>!i.aff);
+  if(ng>=5&&main.length&&rest.length){out=[];let mi=0,ri=0;
+    while(mi<main.length||ri<rest.length){for(let k=0;k<4&&mi<main.length;k++)out.push(main[mi++]);if(ri<rest.length)out.push(rest[ri++]);}}
+  let gap="";const top=Object.entries(gs).sort((a,b)=>b[1]-a[1])[0];
+  if(top&&ng&&top[1]/ng>=.3&&!base.albums.some(b=>b.app_genre===top[0]))gap=top[0];
+  return {items:out,hid,ignored,gap,ng,n:S.col.length,total:base.albums.length};}
+const sugRow=i=>{const b=i.b;return `<li class="item gsug"><div class="meta"><b>${esc(b.title)}</b><small>${esc([b.artist,b.year,b.label].filter(Boolean).join(" · "))}</small><small>${esc(i.why.join(" · "))}</small>
+  <div class="pair"><button type="button" class="primary" data-sa="${esc(b.id)}">Add to wishlist</button><button type="button" data-si="${esc(b.id)}">Not interested</button></div></div></li>`;};
+async function openSuggestions(keep){const p=$("detail");CUR=()=>openSuggestions(true);if(!keep)SUG.show=10;
+  if(!BASE){p.innerHTML=`<p class="cat">Discover</p><h2 class="wh">Album suggestions</h2><p class="hint">Loading the reference base…</p>`;openSheet();}
+  try{await loadBase();}catch(e){closeSheet();report("err","Suggestions unavailable",e.message||"Unknown error.",[],"Check your connection, then try again. Your library was not changed.");return;}
+  sugRender();}
+function sugRender(){const p=$("detail"),R=sugCompute(BASE),sc=$("sheet").scrollTop,op=[...p.querySelectorAll("details")].map(d=>d.open);CUR=()=>openSuggestions(true);
+  const L=R.items.slice(0,SUG.show),more=R.items.length-L.length,ver=BASE.meta&&BASE.meta.version?" · version "+BASE.meta.version:"";
+  p.innerHTML=`<p class="cat">Discover</p><h2 class="wh">Album suggestions</h2>
+   <p class="hint">From a reference base of ${R.total} albums (editorial selection${esc(ver)}). Albums you own or already have on your wishlist are left out. This is an editorial selection, not an objective ranking.</p>
+   <p class="hint">${R.n?`Compared with ${R.n} album${R.n!==1?"s":""} in your collection · ${R.hid.owned} already owned · ${R.hid.wish} on your wishlist.`:"Your collection is empty: the most essential albums are shown first."}</p>
+   ${R.gap?`<p class="hint">The reference base does not cover ${esc(R.gap)} yet.</p>`:""}
+   <ul class="list">${L.map(sugRow).join("")||`<li class="empty">No suggestions left in this base.</li>`}</ul>
+   ${more>0?`<div class="row"><button type="button" id="sgMore">Show ${Math.min(10,more)} more (${more} left)</button></div>`:""}
+   ${R.ignored.length?`<details class="more" id="sgIgn"><summary>Not interested (${R.ignored.length})</summary><ul class="list">${R.ignored.map(b=>`<li class="item gsug"><div class="meta"><b>${esc(b.title)}</b><small>${esc([b.artist,b.year].filter(Boolean).join(" · "))}</small><div class="row"><button type="button" data-sr="${esc(b.id)}">Restore</button></div></div></li>`).join("")}</ul></details>`:""}
+   <div class="row"><button type="button" id="sgBack">Back</button></div>`;
+  openSheet();p.querySelectorAll("details").forEach((d,i)=>{if(op[i])d.open=true;});$("sheet").scrollTop=sc;
+  $("sgBack").onclick=goBack;if($("sgMore"))$("sgMore").onclick=()=>{SUG.show+=10;sugRender();};
+  const get=id=>BASE.albums.find(b=>b.id===id);
+  p.querySelectorAll("[data-sa]").forEach(btn=>btn.onclick=()=>{const b=get(btn.dataset.sa);if(!b)return;
+    addAlbum({id:"s"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),a:b.artist,t:b.title,y:String(b.year),l:b.label,g:b.app_genre,tr:[],src:"suggestion"},true,"");save();render();sugRender();});
+  p.querySelectorAll("[data-si]").forEach(btn=>btn.onclick=()=>{const id=btn.dataset.si;S.noSugg=(S.noSugg||[]).concat([id]);save();sugRender();
+    toast("Suggestion hidden. Find it under “Not interested”.","Undo",()=>{S.noSugg=(S.noSugg||[]).filter(x=>x!==id);save();if(sheetOpen)sugRender();});});
+  p.querySelectorAll("[data-sr]").forEach(btn=>btn.onclick=()=>{S.noSugg=(S.noSugg||[]).filter(x=>x!==btn.dataset.sr);save();sugRender();toast("Suggestion restored");});}
+$("tbSugg").onclick=()=>openSuggestions();
 
 // ---------- Démarrage ----------
 S.col.forEach(x=>{if(x.est&&x.est.v!==2)delete x.est;});purgeEst(); // first estimates did not check the format (LP prices for CDs): dropped, to be redone

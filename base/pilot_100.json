@@ -1,0 +1,2939 @@
+{
+  "meta": {
+    "name": "Pilot base - 100 albums",
+    "version": "0.1-pilot",
+    "created": "2026-10-30",
+    "notes": [
+      "Editorial selection compiled from the author's own knowledge; not an objective ranking.",
+      "barcode and musicbrainz_id are intentionally null: to be resolved automatically by the app.",
+      "typical_availability is an editorial guess, not checked against any shop's stock.",
+      "confidence = confidence in year/label/title details; 'medium' entries should be checked first.",
+      "Classical music is deliberately excluded from this pilot."
+    ]
+  },
+  "sites": {
+    "momox_shop": {
+      "name": "momox shop",
+      "country": "FR",
+      "role": "used",
+      "search_url_template": null,
+      "verified": false,
+      "note": "Used CD/DVD/vinyl. Search URL pattern still to be determined."
+    },
+    "fnac": {
+      "name": "Fnac",
+      "country": "FR",
+      "role": "new",
+      "search_url_template": "https://www.fnac.com/SearchResult/ResultList.aspx?Search={query}",
+      "verified": false,
+      "note": "New CD and vinyl, plus marketplace."
+    },
+    "amazon_fr": {
+      "name": "Amazon.fr",
+      "country": "FR",
+      "role": "new_and_used",
+      "search_url_template": "https://www.amazon.fr/s?k={query}&i=popular",
+      "verified": false,
+      "note": "New plus marketplace used offers."
+    }
+  },
+  "albums": [
+    {
+      "id": "the-beatles__revolver",
+      "seq": 1,
+      "tier": "A",
+      "artist": "The Beatles",
+      "title": "Revolver",
+      "year": 1966,
+      "decade": "1960s",
+      "label": "Parlophone",
+      "genre": "Rock",
+      "subgenre": "Psychedelic pop",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Studio experimentation that redefined what a pop album could be.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "The Beatles Revolver",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "the-rolling-stones__exile-on-main-st",
+      "seq": 2,
+      "tier": "A",
+      "artist": "The Rolling Stones",
+      "title": "Exile on Main St.",
+      "year": 1972,
+      "decade": "1970s",
+      "label": "Rolling Stones Records",
+      "genre": "Rock",
+      "subgenre": "Blues rock",
+      "country": "UK",
+      "entry_point": false,
+      "why_it_matters": "Sprawling double album fusing blues, country and gospel.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "The Rolling Stones Exile on Main St.",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "bob-dylan__highway-61-revisited",
+      "seq": 3,
+      "tier": "A",
+      "artist": "Bob Dylan",
+      "title": "Highway 61 Revisited",
+      "year": 1965,
+      "decade": "1960s",
+      "label": "Columbia",
+      "genre": "Rock",
+      "subgenre": "Folk rock",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Electric turn that set the template for literate rock.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Bob Dylan Highway 61 Revisited",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "the-velvet-underground-nico__the-velvet-underground-nico",
+      "seq": 4,
+      "tier": "A",
+      "artist": "The Velvet Underground & Nico",
+      "title": "The Velvet Underground & Nico",
+      "year": 1967,
+      "decade": "1960s",
+      "label": "Verve",
+      "genre": "Rock",
+      "subgenre": "Art rock / proto-punk",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Founding document of alternative and punk rock.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "The Velvet Underground & Nico The Velvet Underground & Nico",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "led-zeppelin__led-zeppelin-iv",
+      "seq": 5,
+      "tier": "A",
+      "artist": "Led Zeppelin",
+      "title": "Led Zeppelin IV",
+      "year": 1971,
+      "decade": "1970s",
+      "label": "Atlantic",
+      "genre": "Rock",
+      "subgenre": "Hard rock",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Blueprint of hard rock; includes Stairway to Heaven.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Led Zeppelin Led Zeppelin IV",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "pink-floyd__the-dark-side-of-the-moon",
+      "seq": 6,
+      "tier": "A",
+      "artist": "Pink Floyd",
+      "title": "The Dark Side of the Moon",
+      "year": 1973,
+      "decade": "1970s",
+      "label": "Harvest",
+      "genre": "Rock",
+      "subgenre": "Progressive rock",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Landmark concept album and studio showpiece.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Pink Floyd The Dark Side of the Moon",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "david-bowie__the-rise-and-fall-of-ziggy-stardust-and-the-spiders-from-mars",
+      "seq": 7,
+      "tier": "A",
+      "artist": "David Bowie",
+      "title": "The Rise and Fall of Ziggy Stardust and the Spiders from Mars",
+      "year": 1972,
+      "decade": "1970s",
+      "label": "RCA",
+      "genre": "Rock",
+      "subgenre": "Glam rock",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Defining glam rock album and persona.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "David Bowie The Rise and Fall of Ziggy Stardust and the Spiders from Mars",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "nirvana__nevermind",
+      "seq": 8,
+      "tier": "A",
+      "artist": "Nirvana",
+      "title": "Nevermind",
+      "year": 1991,
+      "decade": "1990s",
+      "label": "DGC",
+      "genre": "Rock",
+      "subgenre": "Grunge",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Brought alternative rock into the mainstream.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Nirvana Nevermind",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "radiohead__ok-computer",
+      "seq": 9,
+      "tier": "A",
+      "artist": "Radiohead",
+      "title": "OK Computer",
+      "year": 1997,
+      "decade": "1990s",
+      "label": "Parlophone",
+      "genre": "Rock",
+      "subgenre": "Alternative rock",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Defining rock album of the late 1990s.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Radiohead OK Computer",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "fleetwood-mac__rumours",
+      "seq": 10,
+      "tier": "A",
+      "artist": "Fleetwood Mac",
+      "title": "Rumours",
+      "year": 1977,
+      "decade": "1970s",
+      "label": "Warner Bros.",
+      "genre": "Rock",
+      "subgenre": "Soft rock / pop rock",
+      "country": "UK/US",
+      "entry_point": true,
+      "why_it_matters": "Peak of craftsmanship in 1970s pop-rock.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Fleetwood Mac Rumours",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "the-clash__london-calling",
+      "seq": 11,
+      "tier": "A",
+      "artist": "The Clash",
+      "title": "London Calling",
+      "year": 1979,
+      "decade": "1970s",
+      "label": "CBS",
+      "genre": "Punk",
+      "subgenre": "Punk rock / post-punk",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Punk energy opened to reggae, ska, jazz and rockabilly.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "The Clash London Calling",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "prince__purple-rain",
+      "seq": 12,
+      "tier": "A",
+      "artist": "Prince",
+      "title": "Purple Rain",
+      "year": 1984,
+      "decade": "1980s",
+      "label": "Warner Bros.",
+      "genre": "Pop",
+      "subgenre": "Funk rock / pop",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Prince at his commercial and artistic peak.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Prince Purple Rain",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Pop"
+    },
+    {
+      "id": "miles-davis__kind-of-blue",
+      "seq": 13,
+      "tier": "A",
+      "artist": "Miles Davis",
+      "title": "Kind of Blue",
+      "year": 1959,
+      "decade": "1950s",
+      "label": "Columbia",
+      "genre": "Jazz",
+      "subgenre": "Modal jazz",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Best-selling jazz album and the gateway to modal jazz.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Miles Davis Kind of Blue",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Jazz"
+    },
+    {
+      "id": "john-coltrane__a-love-supreme",
+      "seq": 14,
+      "tier": "A",
+      "artist": "John Coltrane",
+      "title": "A Love Supreme",
+      "year": 1965,
+      "decade": "1960s",
+      "label": "Impulse!",
+      "genre": "Jazz",
+      "subgenre": "Spiritual jazz",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Spiritual suite considered Coltrane's masterpiece.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "John Coltrane A Love Supreme",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Jazz"
+    },
+    {
+      "id": "the-dave-brubeck-quartet__time-out",
+      "seq": 15,
+      "tier": "A",
+      "artist": "The Dave Brubeck Quartet",
+      "title": "Time Out",
+      "year": 1959,
+      "decade": "1950s",
+      "label": "Columbia",
+      "genre": "Jazz",
+      "subgenre": "Cool jazz",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Jazz in odd time signatures; includes Take Five.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "The Dave Brubeck Quartet Time Out",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Jazz"
+    },
+    {
+      "id": "marvin-gaye__what-s-going-on",
+      "seq": 16,
+      "tier": "A",
+      "artist": "Marvin Gaye",
+      "title": "What's Going On",
+      "year": 1971,
+      "decade": "1970s",
+      "label": "Tamla",
+      "genre": "Soul",
+      "subgenre": "Progressive soul",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Socially conscious soul concept album.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Marvin Gaye What's Going On",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Soul / Funk"
+    },
+    {
+      "id": "michael-jackson__thriller",
+      "seq": 17,
+      "tier": "A",
+      "artist": "Michael Jackson",
+      "title": "Thriller",
+      "year": 1982,
+      "decade": "1980s",
+      "label": "Epic",
+      "genre": "Pop",
+      "subgenre": "Pop / R&B",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Best-selling album of all time; pop production benchmark.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Michael Jackson Thriller",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Pop"
+    },
+    {
+      "id": "nas__illmatic",
+      "seq": 18,
+      "tier": "A",
+      "artist": "Nas",
+      "title": "Illmatic",
+      "year": 1994,
+      "decade": "1990s",
+      "label": "Columbia",
+      "genre": "Hip-hop",
+      "subgenre": "East Coast hip-hop",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Reference point for lyricism in hip-hop.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Nas Illmatic",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Hip-hop"
+    },
+    {
+      "id": "daft-punk__discovery",
+      "seq": 19,
+      "tier": "A",
+      "artist": "Daft Punk",
+      "title": "Discovery",
+      "year": 2001,
+      "decade": "2000s",
+      "label": "Virgin",
+      "genre": "Electronic",
+      "subgenre": "French house",
+      "country": "France",
+      "entry_point": true,
+      "why_it_matters": "Made French house a global phenomenon.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Daft Punk Discovery",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Electronic"
+    },
+    {
+      "id": "serge-gainsbourg__histoire-de-melody-nelson",
+      "seq": 20,
+      "tier": "A",
+      "artist": "Serge Gainsbourg",
+      "title": "Histoire de Melody Nelson",
+      "year": 1971,
+      "decade": "1970s",
+      "label": "Philips",
+      "genre": "Chanson",
+      "subgenre": "Concept album / art pop",
+      "country": "France",
+      "entry_point": true,
+      "why_it_matters": "Cornerstone of French pop; hugely influential abroad.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Serge Gainsbourg Histoire de Melody Nelson",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Chanson"
+    },
+    {
+      "id": "joni-mitchell__blue",
+      "seq": 21,
+      "tier": "A",
+      "artist": "Joni Mitchell",
+      "title": "Blue",
+      "year": 1971,
+      "decade": "1970s",
+      "label": "Reprise",
+      "genre": "Folk",
+      "subgenre": "Singer-songwriter",
+      "country": "Canada",
+      "entry_point": true,
+      "why_it_matters": "Benchmark of confessional songwriting.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Joni Mitchell Blue",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Folk / World"
+    },
+    {
+      "id": "fabrizio-de-andre__creuza-de-ma",
+      "seq": 22,
+      "tier": "A",
+      "artist": "Fabrizio De André",
+      "title": "Crêuza de mä",
+      "year": 1984,
+      "decade": "1980s",
+      "label": "Ricordi",
+      "genre": "Cantautore",
+      "subgenre": "World / Mediterranean",
+      "country": "Italy",
+      "entry_point": true,
+      "why_it_matters": "Sung in Genoese; landmark of Italian music and world music.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Fabrizio De André Crêuza de mä",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Chanson"
+    },
+    {
+      "id": "neil-young__after-the-gold-rush",
+      "seq": 23,
+      "tier": "B",
+      "artist": "Neil Young",
+      "title": "After the Gold Rush",
+      "year": 1970,
+      "decade": "1970s",
+      "label": "Reprise",
+      "genre": "Rock",
+      "subgenre": "Folk rock / country rock",
+      "country": "Canada",
+      "entry_point": true,
+      "why_it_matters": "Intimate and raw singer-songwriter rock.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Neil Young After the Gold Rush",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "the-doors__the-doors",
+      "seq": 24,
+      "tier": "B",
+      "artist": "The Doors",
+      "title": "The Doors",
+      "year": 1967,
+      "decade": "1960s",
+      "label": "Elektra",
+      "genre": "Rock",
+      "subgenre": "Psychedelic rock",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Dark, theatrical psychedelic debut.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "The Doors The Doors",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "king-crimson__in-the-court-of-the-crimson-king",
+      "seq": 25,
+      "tier": "B",
+      "artist": "King Crimson",
+      "title": "In the Court of the Crimson King",
+      "year": 1969,
+      "decade": "1960s",
+      "label": "Island",
+      "genre": "Rock",
+      "subgenre": "Progressive rock",
+      "country": "UK",
+      "entry_point": false,
+      "why_it_matters": "Founding album of progressive rock.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "King Crimson In the Court of the Crimson King",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "talking-heads__remain-in-light",
+      "seq": 26,
+      "tier": "B",
+      "artist": "Talking Heads",
+      "title": "Remain in Light",
+      "year": 1980,
+      "decade": "1980s",
+      "label": "Sire",
+      "genre": "New wave",
+      "subgenre": "Art pop / afro-funk",
+      "country": "US",
+      "entry_point": false,
+      "why_it_matters": "Polyrhythmic fusion of new wave and afrobeat.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Talking Heads Remain in Light",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "the-smiths__the-queen-is-dead",
+      "seq": 27,
+      "tier": "B",
+      "artist": "The Smiths",
+      "title": "The Queen Is Dead",
+      "year": 1986,
+      "decade": "1980s",
+      "label": "Rough Trade",
+      "genre": "Indie rock",
+      "subgenre": "Jangle pop",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Reference album of British indie.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "The Smiths The Queen Is Dead",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "pixies__doolittle",
+      "seq": 28,
+      "tier": "B",
+      "artist": "Pixies",
+      "title": "Doolittle",
+      "year": 1989,
+      "decade": "1980s",
+      "label": "4AD",
+      "genre": "Alternative rock",
+      "subgenre": "Indie rock",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Loud-quiet dynamics that influenced 1990s rock.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Pixies Doolittle",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "joy-division__unknown-pleasures",
+      "seq": 29,
+      "tier": "B",
+      "artist": "Joy Division",
+      "title": "Unknown Pleasures",
+      "year": 1979,
+      "decade": "1970s",
+      "label": "Factory",
+      "genre": "Post-punk",
+      "subgenre": "Gothic rock",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Defines the post-punk sound.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Joy Division Unknown Pleasures",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "ramones__ramones",
+      "seq": 30,
+      "tier": "B",
+      "artist": "Ramones",
+      "title": "Ramones",
+      "year": 1976,
+      "decade": "1970s",
+      "label": "Sire",
+      "genre": "Punk",
+      "subgenre": "Punk rock",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Started the punk template: short, fast, direct.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Ramones Ramones",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "sonic-youth__daydream-nation",
+      "seq": 31,
+      "tier": "B",
+      "artist": "Sonic Youth",
+      "title": "Daydream Nation",
+      "year": 1988,
+      "decade": "1980s",
+      "label": "Enigma",
+      "genre": "Alternative rock",
+      "subgenre": "Noise rock",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Peak of experimental American indie.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Sonic Youth Daydream Nation",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "kate-bush__hounds-of-love",
+      "seq": 32,
+      "tier": "B",
+      "artist": "Kate Bush",
+      "title": "Hounds of Love",
+      "year": 1985,
+      "decade": "1980s",
+      "label": "EMI",
+      "genre": "Art pop",
+      "subgenre": "Art pop",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Ambitious, innovative pop with a conceptual second side.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Kate Bush Hounds of Love",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Pop"
+    },
+    {
+      "id": "black-sabbath__paranoid",
+      "seq": 33,
+      "tier": "B",
+      "artist": "Black Sabbath",
+      "title": "Paranoid",
+      "year": 1970,
+      "decade": "1970s",
+      "label": "Vertigo",
+      "genre": "Metal",
+      "subgenre": "Heavy metal",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Founding album of heavy metal.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Black Sabbath Paranoid",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Metal"
+    },
+    {
+      "id": "metallica__master-of-puppets",
+      "seq": 34,
+      "tier": "B",
+      "artist": "Metallica",
+      "title": "Master of Puppets",
+      "year": 1986,
+      "decade": "1980s",
+      "label": "Elektra",
+      "genre": "Metal",
+      "subgenre": "Thrash metal",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Peak of thrash metal.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Metallica Master of Puppets",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Metal"
+    },
+    {
+      "id": "queen__a-night-at-the-opera",
+      "seq": 35,
+      "tier": "B",
+      "artist": "Queen",
+      "title": "A Night at the Opera",
+      "year": 1975,
+      "decade": "1970s",
+      "label": "EMI",
+      "genre": "Rock",
+      "subgenre": "Progressive / hard rock",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Most ambitious Queen album; includes Bohemian Rhapsody.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Queen A Night at the Opera",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "bruce-springsteen__born-to-run",
+      "seq": 36,
+      "tier": "B",
+      "artist": "Bruce Springsteen",
+      "title": "Born to Run",
+      "year": 1975,
+      "decade": "1970s",
+      "label": "Columbia",
+      "genre": "Rock",
+      "subgenre": "Heartland rock",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Cinematic, anthemic rock that made Springsteen a star.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Bruce Springsteen Born to Run",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "bill-evans-trio__waltz-for-debby",
+      "seq": 37,
+      "tier": "B",
+      "artist": "Bill Evans Trio",
+      "title": "Waltz for Debby",
+      "year": 1962,
+      "decade": "1960s",
+      "label": "Riverside",
+      "genre": "Jazz",
+      "subgenre": "Piano trio",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Reference for the interactive piano trio.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Bill Evans Trio Waltz for Debby",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Jazz"
+    },
+    {
+      "id": "thelonious-monk__brilliant-corners",
+      "seq": 38,
+      "tier": "B",
+      "artist": "Thelonious Monk",
+      "title": "Brilliant Corners",
+      "year": 1957,
+      "decade": "1950s",
+      "label": "Riverside",
+      "genre": "Jazz",
+      "subgenre": "Hard bop",
+      "country": "US",
+      "entry_point": false,
+      "why_it_matters": "Monk's angular compositions at full strength.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Thelonious Monk Brilliant Corners",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Jazz"
+    },
+    {
+      "id": "charles-mingus__mingus-ah-um",
+      "seq": 39,
+      "tier": "B",
+      "artist": "Charles Mingus",
+      "title": "Mingus Ah Um",
+      "year": 1959,
+      "decade": "1950s",
+      "label": "Columbia",
+      "genre": "Jazz",
+      "subgenre": "Hard bop / third stream",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Compositional richness and gospel roots.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Charles Mingus Mingus Ah Um",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Jazz"
+    },
+    {
+      "id": "herbie-hancock__head-hunters",
+      "seq": 40,
+      "tier": "B",
+      "artist": "Herbie Hancock",
+      "title": "Head Hunters",
+      "year": 1973,
+      "decade": "1970s",
+      "label": "Columbia",
+      "genre": "Jazz",
+      "subgenre": "Jazz funk",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Jazz-funk blueprint; includes Chameleon.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Herbie Hancock Head Hunters",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Jazz"
+    },
+    {
+      "id": "ornette-coleman__the-shape-of-jazz-to-come",
+      "seq": 41,
+      "tier": "B",
+      "artist": "Ornette Coleman",
+      "title": "The Shape of Jazz to Come",
+      "year": 1959,
+      "decade": "1950s",
+      "label": "Atlantic",
+      "genre": "Jazz",
+      "subgenre": "Free jazz",
+      "country": "US",
+      "entry_point": false,
+      "why_it_matters": "Opened the door to free jazz.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Ornette Coleman The Shape of Jazz to Come",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Jazz"
+    },
+    {
+      "id": "art-blakey-the-jazz-messengers__moanin",
+      "seq": 42,
+      "tier": "B",
+      "artist": "Art Blakey & The Jazz Messengers",
+      "title": "Moanin'",
+      "year": 1958,
+      "decade": "1950s",
+      "label": "Blue Note",
+      "genre": "Jazz",
+      "subgenre": "Hard bop",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Hard bop with soul and gospel feel.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Art Blakey & The Jazz Messengers Moanin'",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Jazz"
+    },
+    {
+      "id": "stan-getz-joao-gilberto__getz-gilberto",
+      "seq": 43,
+      "tier": "B",
+      "artist": "Stan Getz & João Gilberto",
+      "title": "Getz/Gilberto",
+      "year": 1964,
+      "decade": "1960s",
+      "label": "Verve",
+      "genre": "Jazz",
+      "subgenre": "Bossa nova",
+      "country": "US/Brazil",
+      "entry_point": true,
+      "why_it_matters": "Brought bossa nova to the world; includes The Girl from Ipanema.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Stan Getz & João Gilberto Getz/Gilberto",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Jazz"
+    },
+    {
+      "id": "keith-jarrett__the-koln-concert",
+      "seq": 44,
+      "tier": "B",
+      "artist": "Keith Jarrett",
+      "title": "The Köln Concert",
+      "year": 1975,
+      "decade": "1970s",
+      "label": "ECM",
+      "genre": "Jazz",
+      "subgenre": "Solo piano improvisation",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Best-selling solo piano album; fully improvised.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Keith Jarrett The Köln Concert",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Jazz"
+    },
+    {
+      "id": "stevie-wonder__innervisions",
+      "seq": 45,
+      "tier": "B",
+      "artist": "Stevie Wonder",
+      "title": "Innervisions",
+      "year": 1973,
+      "decade": "1970s",
+      "label": "Tamla",
+      "genre": "Soul",
+      "subgenre": "Progressive soul / funk",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Peak of Wonder's classic period.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Stevie Wonder Innervisions",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Soul / Funk"
+    },
+    {
+      "id": "aretha-franklin__i-never-loved-a-man-the-way-i-love-you",
+      "seq": 46,
+      "tier": "B",
+      "artist": "Aretha Franklin",
+      "title": "I Never Loved a Man the Way I Love You",
+      "year": 1967,
+      "decade": "1960s",
+      "label": "Atlantic",
+      "genre": "Soul",
+      "subgenre": "Southern soul",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "The Queen of Soul's breakthrough.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Aretha Franklin I Never Loved a Man the Way I Love You",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Soul / Funk"
+    },
+    {
+      "id": "curtis-mayfield__superfly",
+      "seq": 47,
+      "tier": "B",
+      "artist": "Curtis Mayfield",
+      "title": "Superfly",
+      "year": 1972,
+      "decade": "1970s",
+      "label": "Curtom",
+      "genre": "Soul",
+      "subgenre": "Funk soul",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Soundtrack that outshone its film.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Curtis Mayfield Superfly",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Soul / Funk"
+    },
+    {
+      "id": "james-brown__live-at-the-apollo",
+      "seq": 48,
+      "tier": "B",
+      "artist": "James Brown",
+      "title": "Live at the Apollo",
+      "year": 1963,
+      "decade": "1960s",
+      "label": "King",
+      "genre": "Funk",
+      "subgenre": "Soul / live",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Raw live energy; foundation of funk.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "James Brown Live at the Apollo",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Soul / Funk"
+    },
+    {
+      "id": "sly-the-family-stone__there-s-a-riot-goin-on",
+      "seq": 49,
+      "tier": "B",
+      "artist": "Sly & the Family Stone",
+      "title": "There's a Riot Goin' On",
+      "year": 1971,
+      "decade": "1970s",
+      "label": "Epic",
+      "genre": "Funk",
+      "subgenre": "Psychedelic funk",
+      "country": "US",
+      "entry_point": false,
+      "why_it_matters": "Dark, murky funk masterpiece.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Sly & the Family Stone There's a Riot Goin' On",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Soul / Funk"
+    },
+    {
+      "id": "lauryn-hill__the-miseducation-of-lauryn-hill",
+      "seq": 50,
+      "tier": "B",
+      "artist": "Lauryn Hill",
+      "title": "The Miseducation of Lauryn Hill",
+      "year": 1998,
+      "decade": "1990s",
+      "label": "Ruffhouse / Columbia",
+      "genre": "Hip-hop",
+      "subgenre": "Neo soul",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Merged hip-hop and soul with remarkable songwriting.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Lauryn Hill The Miseducation of Lauryn Hill",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Hip-hop"
+    },
+    {
+      "id": "public-enemy__it-takes-a-nation-of-millions-to-hold-us-back",
+      "seq": 51,
+      "tier": "B",
+      "artist": "Public Enemy",
+      "title": "It Takes a Nation of Millions to Hold Us Back",
+      "year": 1988,
+      "decade": "1980s",
+      "label": "Def Jam",
+      "genre": "Hip-hop",
+      "subgenre": "Political hip-hop",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Dense production and political urgency.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Public Enemy It Takes a Nation of Millions to Hold Us Back",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Hip-hop"
+    },
+    {
+      "id": "wu-tang-clan__enter-the-wu-tang-36-chambers",
+      "seq": 52,
+      "tier": "B",
+      "artist": "Wu-Tang Clan",
+      "title": "Enter the Wu-Tang (36 Chambers)",
+      "year": 1993,
+      "decade": "1990s",
+      "label": "Loud",
+      "genre": "Hip-hop",
+      "subgenre": "Hardcore hip-hop",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Raw, collective East Coast classic.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Wu-Tang Clan Enter the Wu-Tang (36 Chambers)",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Hip-hop"
+    },
+    {
+      "id": "a-tribe-called-quest__the-low-end-theory",
+      "seq": 53,
+      "tier": "B",
+      "artist": "A Tribe Called Quest",
+      "title": "The Low End Theory",
+      "year": 1991,
+      "decade": "1990s",
+      "label": "Jive",
+      "genre": "Hip-hop",
+      "subgenre": "Jazz rap",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Fused hip-hop and jazz basslines.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "A Tribe Called Quest The Low End Theory",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Hip-hop"
+    },
+    {
+      "id": "kendrick-lamar__to-pimp-a-butterfly",
+      "seq": 54,
+      "tier": "B",
+      "artist": "Kendrick Lamar",
+      "title": "To Pimp a Butterfly",
+      "year": 2015,
+      "decade": "2010s",
+      "label": "Top Dawg / Aftermath / Interscope",
+      "genre": "Hip-hop",
+      "subgenre": "Jazz rap / conscious hip-hop",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Ambitious modern hip-hop with jazz and funk roots.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Kendrick Lamar To Pimp a Butterfly",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Hip-hop"
+    },
+    {
+      "id": "kraftwerk__trans-europe-express",
+      "seq": 55,
+      "tier": "B",
+      "artist": "Kraftwerk",
+      "title": "Trans-Europe Express",
+      "year": 1977,
+      "decade": "1970s",
+      "label": "Kling Klang / EMI",
+      "genre": "Electronic",
+      "subgenre": "Synth-pop / electro",
+      "country": "Germany",
+      "entry_point": true,
+      "why_it_matters": "Pioneering electronic pop.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Kraftwerk Trans-Europe Express",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Electronic"
+    },
+    {
+      "id": "aphex-twin__selected-ambient-works-85-92",
+      "seq": 56,
+      "tier": "B",
+      "artist": "Aphex Twin",
+      "title": "Selected Ambient Works 85-92",
+      "year": 1992,
+      "decade": "1990s",
+      "label": "Apollo / R&S",
+      "genre": "Electronic",
+      "subgenre": "Ambient techno / IDM",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Cornerstone of intelligent dance music.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Aphex Twin Selected Ambient Works 85-92",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Electronic"
+    },
+    {
+      "id": "brian-eno__ambient-1-music-for-airports",
+      "seq": 57,
+      "tier": "B",
+      "artist": "Brian Eno",
+      "title": "Ambient 1: Music for Airports",
+      "year": 1978,
+      "decade": "1970s",
+      "label": "EG / Polydor",
+      "genre": "Ambient",
+      "subgenre": "Ambient",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Defined ambient music as a genre.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Brian Eno Ambient 1: Music for Airports",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Electronic"
+    },
+    {
+      "id": "air__moon-safari",
+      "seq": 58,
+      "tier": "B",
+      "artist": "Air",
+      "title": "Moon Safari",
+      "year": 1998,
+      "decade": "1990s",
+      "label": "Source / Virgin",
+      "genre": "Electronic",
+      "subgenre": "Downtempo / French touch",
+      "country": "France",
+      "entry_point": true,
+      "why_it_matters": "Retro-futurist lounge classic.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Air Moon Safari",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Electronic"
+    },
+    {
+      "id": "bob-marley-the-wailers__exodus",
+      "seq": 59,
+      "tier": "B",
+      "artist": "Bob Marley & The Wailers",
+      "title": "Exodus",
+      "year": 1977,
+      "decade": "1970s",
+      "label": "Island",
+      "genre": "Reggae",
+      "subgenre": "Roots reggae",
+      "country": "Jamaica",
+      "entry_point": true,
+      "why_it_matters": "Marley at the peak of his international reach.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Bob Marley & The Wailers Exodus",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Reggae"
+    },
+    {
+      "id": "fela-kuti__zombie",
+      "seq": 60,
+      "tier": "B",
+      "artist": "Fela Kuti",
+      "title": "Zombie",
+      "year": 1976,
+      "decade": "1970s",
+      "label": "Coconut",
+      "genre": "Afrobeat",
+      "subgenre": "Afrobeat",
+      "country": "Nigeria",
+      "entry_point": true,
+      "why_it_matters": "Political, hypnotic afrobeat at full power.",
+      "typical_availability": "mixed",
+      "buy_new": [
+        "amazon_fr",
+        "fnac"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Fela Kuti Zombie",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Folk / World"
+    },
+    {
+      "id": "buena-vista-social-club__buena-vista-social-club",
+      "seq": 61,
+      "tier": "B",
+      "artist": "Buena Vista Social Club",
+      "title": "Buena Vista Social Club",
+      "year": 1997,
+      "decade": "1990s",
+      "label": "World Circuit",
+      "genre": "World",
+      "subgenre": "Cuban son",
+      "country": "Cuba",
+      "entry_point": true,
+      "why_it_matters": "Brought pre-revolution Cuban music back to the world.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Buena Vista Social Club Buena Vista Social Club",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Latin"
+    },
+    {
+      "id": "lucio-battisti__anima-latina",
+      "seq": 62,
+      "tier": "B",
+      "artist": "Lucio Battisti",
+      "title": "Anima latina",
+      "year": 1974,
+      "decade": "1970s",
+      "label": "Numero Uno",
+      "genre": "Pop",
+      "subgenre": "Progressive pop",
+      "country": "Italy",
+      "entry_point": true,
+      "why_it_matters": "Battisti's most daring and experimental album.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Lucio Battisti Anima latina",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Chanson"
+    },
+    {
+      "id": "franco-battiato__la-voce-del-padrone",
+      "seq": 63,
+      "tier": "B",
+      "artist": "Franco Battiato",
+      "title": "La voce del padrone",
+      "year": 1981,
+      "decade": "1980s",
+      "label": "EMI Italiana",
+      "genre": "Pop",
+      "subgenre": "New wave / art pop",
+      "country": "Italy",
+      "entry_point": true,
+      "why_it_matters": "First Italian album to sell over a million copies.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Franco Battiato La voce del padrone",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Chanson"
+    },
+    {
+      "id": "ennio-morricone__c-era-una-volta-il-west",
+      "seq": 64,
+      "tier": "B",
+      "artist": "Ennio Morricone",
+      "title": "C'era una volta il West",
+      "year": 1969,
+      "decade": "1960s",
+      "label": "RCA",
+      "genre": "Soundtrack",
+      "subgenre": "Film score",
+      "country": "Italy",
+      "entry_point": true,
+      "why_it_matters": "Iconic film score of the 20th century.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Ennio Morricone C'era una volta il West",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Soundtrack"
+    },
+    {
+      "id": "jacques-brel__les-marquises",
+      "seq": 65,
+      "tier": "B",
+      "artist": "Jacques Brel",
+      "title": "Les Marquises",
+      "year": 1977,
+      "decade": "1970s",
+      "label": "Barclay",
+      "genre": "Chanson",
+      "subgenre": "Chanson",
+      "country": "France/Belgium",
+      "entry_point": true,
+      "why_it_matters": "Brel's final studio album, a poignant farewell.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Jacques Brel Les Marquises",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Chanson"
+    },
+    {
+      "id": "georges-brassens__les-copains-d-abord",
+      "seq": 66,
+      "tier": "B",
+      "artist": "Georges Brassens",
+      "title": "Les Copains d'abord",
+      "year": 1964,
+      "decade": "1960s",
+      "label": "Philips",
+      "genre": "Chanson",
+      "subgenre": "Chanson",
+      "country": "France",
+      "entry_point": true,
+      "why_it_matters": "Essential Brassens: wit, melody and poetry.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Georges Brassens Les Copains d'abord",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Chanson"
+    },
+    {
+      "id": "leonard-cohen__songs-of-leonard-cohen",
+      "seq": 67,
+      "tier": "B",
+      "artist": "Leonard Cohen",
+      "title": "Songs of Leonard Cohen",
+      "year": 1967,
+      "decade": "1960s",
+      "label": "Columbia",
+      "genre": "Folk",
+      "subgenre": "Singer-songwriter",
+      "country": "Canada",
+      "entry_point": true,
+      "why_it_matters": "Poetic, spare debut.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Leonard Cohen Songs of Leonard Cohen",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Folk / World"
+    },
+    {
+      "id": "nick-drake__pink-moon",
+      "seq": 68,
+      "tier": "B",
+      "artist": "Nick Drake",
+      "title": "Pink Moon",
+      "year": 1972,
+      "decade": "1970s",
+      "label": "Island",
+      "genre": "Folk",
+      "subgenre": "Folk / acoustic",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Stark, intimate acoustic masterpiece.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Nick Drake Pink Moon",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Folk / World"
+    },
+    {
+      "id": "robert-johnson__the-complete-recordings",
+      "seq": 69,
+      "tier": "B",
+      "artist": "Robert Johnson",
+      "title": "The Complete Recordings",
+      "year": 1990,
+      "decade": "1990s",
+      "label": "Columbia",
+      "genre": "Blues",
+      "subgenre": "Delta blues",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "The complete 1936-37 sessions that founded modern blues.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Robert Johnson The Complete Recordings",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Blues"
+    },
+    {
+      "id": "arcade-fire__funeral",
+      "seq": 70,
+      "tier": "C",
+      "artist": "Arcade Fire",
+      "title": "Funeral",
+      "year": 2004,
+      "decade": "2000s",
+      "label": "Merge",
+      "genre": "Indie rock",
+      "subgenre": "Baroque pop / indie rock",
+      "country": "Canada",
+      "entry_point": true,
+      "why_it_matters": "Defining indie album of the 2000s.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Arcade Fire Funeral",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "slayer__reign-in-blood",
+      "seq": 71,
+      "tier": "C",
+      "artist": "Slayer",
+      "title": "Reign in Blood",
+      "year": 1986,
+      "decade": "1980s",
+      "label": "Def Jam",
+      "genre": "Metal",
+      "subgenre": "Thrash metal",
+      "country": "US",
+      "entry_point": false,
+      "why_it_matters": "Extreme metal benchmark; under 30 minutes of intensity.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Slayer Reign in Blood",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Metal"
+    },
+    {
+      "id": "weather-report__heavy-weather",
+      "seq": 72,
+      "tier": "C",
+      "artist": "Weather Report",
+      "title": "Heavy Weather",
+      "year": 1977,
+      "decade": "1970s",
+      "label": "Columbia",
+      "genre": "Jazz",
+      "subgenre": "Jazz fusion",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Peak of jazz fusion; includes Birdland.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Weather Report Heavy Weather",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Jazz"
+    },
+    {
+      "id": "nina-simone__i-put-a-spell-on-you",
+      "seq": 73,
+      "tier": "C",
+      "artist": "Nina Simone",
+      "title": "I Put a Spell on You",
+      "year": 1965,
+      "decade": "1960s",
+      "label": "Philips",
+      "genre": "Jazz",
+      "subgenre": "Vocal jazz / soul",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Powerful, personal vocal interpretations.",
+      "typical_availability": "mixed",
+      "buy_new": [
+        "amazon_fr",
+        "fnac"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Nina Simone I Put a Spell on You",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Jazz"
+    },
+    {
+      "id": "parliament__mothership-connection",
+      "seq": 74,
+      "tier": "C",
+      "artist": "Parliament",
+      "title": "Mothership Connection",
+      "year": 1975,
+      "decade": "1970s",
+      "label": "Casablanca",
+      "genre": "Funk",
+      "subgenre": "P-funk",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Cosmic funk concept album.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Parliament Mothership Connection",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Soul / Funk"
+    },
+    {
+      "id": "al-green__let-s-stay-together",
+      "seq": 75,
+      "tier": "C",
+      "artist": "Al Green",
+      "title": "Let's Stay Together",
+      "year": 1972,
+      "decade": "1970s",
+      "label": "Hi",
+      "genre": "Soul",
+      "subgenre": "Southern soul",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Smooth, sensual Memphis soul.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Al Green Let's Stay Together",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Soul / Funk"
+    },
+    {
+      "id": "d-angelo__voodoo",
+      "seq": 76,
+      "tier": "C",
+      "artist": "D'Angelo",
+      "title": "Voodoo",
+      "year": 2000,
+      "decade": "2000s",
+      "label": "Virgin",
+      "genre": "Soul",
+      "subgenre": "Neo soul",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Loose, deep-groove neo soul benchmark.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "D'Angelo Voodoo",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Soul / Funk"
+    },
+    {
+      "id": "mc-solaar__prose-combat",
+      "seq": 77,
+      "tier": "C",
+      "artist": "MC Solaar",
+      "title": "Prose combat",
+      "year": 1994,
+      "decade": "1990s",
+      "label": "Polydor",
+      "genre": "Hip-hop",
+      "subgenre": "French hip-hop",
+      "country": "France",
+      "entry_point": true,
+      "why_it_matters": "Poetic French rap that changed the genre in France.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "MC Solaar Prose combat",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Hip-hop"
+    },
+    {
+      "id": "outkast__aquemini",
+      "seq": 78,
+      "tier": "C",
+      "artist": "OutKast",
+      "title": "Aquemini",
+      "year": 1998,
+      "decade": "1990s",
+      "label": "LaFace",
+      "genre": "Hip-hop",
+      "subgenre": "Southern hip-hop",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Inventive Southern hip-hop with live instrumentation.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "OutKast Aquemini",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Hip-hop"
+    },
+    {
+      "id": "jean-michel-jarre__oxygene",
+      "seq": 79,
+      "tier": "C",
+      "artist": "Jean-Michel Jarre",
+      "title": "Oxygène",
+      "year": 1976,
+      "decade": "1970s",
+      "label": "Disques Dreyfus",
+      "genre": "Electronic",
+      "subgenre": "Synth / ambient",
+      "country": "France",
+      "entry_point": true,
+      "why_it_matters": "Synthesizer classic that reached a mass audience.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Jean-Michel Jarre Oxygène",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Electronic"
+    },
+    {
+      "id": "massive-attack__blue-lines",
+      "seq": 80,
+      "tier": "C",
+      "artist": "Massive Attack",
+      "title": "Blue Lines",
+      "year": 1991,
+      "decade": "1990s",
+      "label": "Wild Bunch / Circa",
+      "genre": "Electronic",
+      "subgenre": "Trip hop",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Foundation of the Bristol trip hop sound.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Massive Attack Blue Lines",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Electronic"
+    },
+    {
+      "id": "burial__untrue",
+      "seq": 81,
+      "tier": "C",
+      "artist": "Burial",
+      "title": "Untrue",
+      "year": 2007,
+      "decade": "2000s",
+      "label": "Hyperdub",
+      "genre": "Electronic",
+      "subgenre": "Dubstep / UK garage",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Atmospheric urban electronic landmark.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Burial Untrue",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Electronic"
+    },
+    {
+      "id": "boards-of-canada__music-has-the-right-to-children",
+      "seq": 82,
+      "tier": "C",
+      "artist": "Boards of Canada",
+      "title": "Music Has the Right to Children",
+      "year": 1998,
+      "decade": "1990s",
+      "label": "Warp",
+      "genre": "Electronic",
+      "subgenre": "IDM / ambient",
+      "country": "UK",
+      "entry_point": true,
+      "why_it_matters": "Warm, nostalgic electronic textures.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Boards of Canada Music Has the Right to Children",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Electronic"
+    },
+    {
+      "id": "bjork__homogenic",
+      "seq": 83,
+      "tier": "C",
+      "artist": "Bjork",
+      "title": "Homogenic",
+      "year": 1997,
+      "decade": "1990s",
+      "label": "One Little Indian",
+      "genre": "Electronic",
+      "subgenre": "Art pop / electronica",
+      "country": "Iceland",
+      "entry_point": true,
+      "why_it_matters": "Strings and beats fused into a singular vision.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Bjork Homogenic",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Electronic"
+    },
+    {
+      "id": "lee-scratch-perry-the-upsetters__super-ape",
+      "seq": 84,
+      "tier": "C",
+      "artist": "Lee 'Scratch' Perry & The Upsetters",
+      "title": "Super Ape",
+      "year": 1976,
+      "decade": "1970s",
+      "label": "Island / Upsetter",
+      "genre": "Reggae",
+      "subgenre": "Dub",
+      "country": "Jamaica",
+      "entry_point": false,
+      "why_it_matters": "Landmark of dub production.",
+      "typical_availability": "mixed",
+      "buy_new": [
+        "amazon_fr",
+        "fnac"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Lee 'Scratch' Perry & The Upsetters Super Ape",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Reggae"
+    },
+    {
+      "id": "burning-spear__marcus-garvey",
+      "seq": 85,
+      "tier": "C",
+      "artist": "Burning Spear",
+      "title": "Marcus Garvey",
+      "year": 1975,
+      "decade": "1970s",
+      "label": "Fox / Island",
+      "genre": "Reggae",
+      "subgenre": "Roots reggae",
+      "country": "Jamaica",
+      "entry_point": false,
+      "why_it_matters": "Deep, spiritual roots reggae.",
+      "typical_availability": "mixed",
+      "buy_new": [
+        "amazon_fr",
+        "fnac"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Burning Spear Marcus Garvey",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Reggae"
+    },
+    {
+      "id": "astor-piazzolla__tango-zero-hour",
+      "seq": 86,
+      "tier": "C",
+      "artist": "Astor Piazzolla",
+      "title": "Tango: Zero Hour",
+      "year": 1986,
+      "decade": "1980s",
+      "label": "American Clave",
+      "genre": "World",
+      "subgenre": "Nuevo tango",
+      "country": "Argentina",
+      "entry_point": true,
+      "why_it_matters": "Nuevo tango at its most concentrated.",
+      "typical_availability": "mixed",
+      "buy_new": [
+        "amazon_fr",
+        "fnac"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Astor Piazzolla Tango: Zero Hour",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Latin"
+    },
+    {
+      "id": "ali-farka-toure-ry-cooder__talking-timbuktu",
+      "seq": 87,
+      "tier": "C",
+      "artist": "Ali Farka Toure & Ry Cooder",
+      "title": "Talking Timbuktu",
+      "year": 1994,
+      "decade": "1990s",
+      "label": "World Circuit",
+      "genre": "World",
+      "subgenre": "Malian blues",
+      "country": "Mali",
+      "entry_point": true,
+      "why_it_matters": "Bridge between Malian music and the blues.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Ali Farka Toure & Ry Cooder Talking Timbuktu",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Folk / World"
+    },
+    {
+      "id": "cesaria-evora__miss-perfumado",
+      "seq": 88,
+      "tier": "C",
+      "artist": "Cesaria Evora",
+      "title": "Miss Perfumado",
+      "year": 1992,
+      "decade": "1990s",
+      "label": "Lusafrica",
+      "genre": "World",
+      "subgenre": "Morna",
+      "country": "Cape Verde",
+      "entry_point": true,
+      "why_it_matters": "The Barefoot Diva's international breakthrough.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Cesaria Evora Miss Perfumado",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Folk / World"
+    },
+    {
+      "id": "nusrat-fateh-ali-khan__shahen-shah",
+      "seq": 89,
+      "tier": "C",
+      "artist": "Nusrat Fateh Ali Khan",
+      "title": "Shahen-Shah",
+      "year": 1989,
+      "decade": "1980s",
+      "label": "Real World",
+      "genre": "World",
+      "subgenre": "Qawwali",
+      "country": "Pakistan",
+      "entry_point": true,
+      "why_it_matters": "Devotional qawwali by a legendary vocalist.",
+      "typical_availability": "mixed",
+      "buy_new": [
+        "amazon_fr",
+        "fnac"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Nusrat Fateh Ali Khan Shahen-Shah",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Folk / World"
+    },
+    {
+      "id": "os-mutantes__mutantes",
+      "seq": 90,
+      "tier": "C",
+      "artist": "Os Mutantes",
+      "title": "Mutantes",
+      "year": 1968,
+      "decade": "1960s",
+      "label": "Polydor",
+      "genre": "Rock",
+      "subgenre": "Tropicalia / psychedelic",
+      "country": "Brazil",
+      "entry_point": true,
+      "why_it_matters": "Brazilian psychedelic pop and a key Tropicalia record.",
+      "typical_availability": "mixed",
+      "buy_new": [
+        "amazon_fr",
+        "fnac"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Os Mutantes Mutantes",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "pfm__per-un-amico",
+      "seq": 91,
+      "tier": "C",
+      "artist": "PFM",
+      "title": "Per un amico",
+      "year": 1972,
+      "decade": "1970s",
+      "label": "Numero Uno",
+      "genre": "Rock",
+      "subgenre": "Italian progressive rock",
+      "country": "Italy",
+      "entry_point": true,
+      "why_it_matters": "Peak of Italian progressive rock.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "PFM Per un amico",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "lucio-dalla__dalla",
+      "seq": 92,
+      "tier": "C",
+      "artist": "Lucio Dalla",
+      "title": "Dalla",
+      "year": 1980,
+      "decade": "1980s",
+      "label": "RCA Italiana",
+      "genre": "Cantautore",
+      "subgenre": "Cantautore / pop",
+      "country": "Italy",
+      "entry_point": true,
+      "why_it_matters": "Dalla at his most mature; includes Futura.",
+      "typical_availability": "mixed",
+      "buy_new": [
+        "amazon_fr",
+        "fnac"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Lucio Dalla Dalla",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Chanson"
+    },
+    {
+      "id": "area__arbeit-macht-frei",
+      "seq": 93,
+      "tier": "C",
+      "artist": "Area",
+      "title": "Arbeit macht frei",
+      "year": 1973,
+      "decade": "1970s",
+      "label": "Cramps",
+      "genre": "Jazz",
+      "subgenre": "Progressive / jazz fusion",
+      "country": "Italy",
+      "entry_point": false,
+      "why_it_matters": "Politically charged Italian jazz-rock fusion.",
+      "typical_availability": "used_mostly",
+      "buy_new": [],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Area Arbeit macht frei",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Jazz"
+    },
+    {
+      "id": "noir-desir__tostaky-le-continent",
+      "seq": 94,
+      "tier": "C",
+      "artist": "Noir Desir",
+      "title": "Tostaky (le continent)",
+      "year": 1992,
+      "decade": "1990s",
+      "label": "Barclay",
+      "genre": "Rock",
+      "subgenre": "French rock",
+      "country": "France",
+      "entry_point": true,
+      "why_it_matters": "Landmark of French rock.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Noir Desir Tostaky (le continent)",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "phoenix__wolfgang-amadeus-phoenix",
+      "seq": 95,
+      "tier": "C",
+      "artist": "Phoenix",
+      "title": "Wolfgang Amadeus Phoenix",
+      "year": 2009,
+      "decade": "2000s",
+      "label": "Loyaute / V2",
+      "genre": "Indie pop",
+      "subgenre": "Indie pop",
+      "country": "France",
+      "entry_point": true,
+      "why_it_matters": "French indie pop that crossed to the US charts.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Phoenix Wolfgang Amadeus Phoenix",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Pop"
+    },
+    {
+      "id": "simon-garfunkel__bridge-over-troubled-water",
+      "seq": 96,
+      "tier": "C",
+      "artist": "Simon & Garfunkel",
+      "title": "Bridge over Troubled Water",
+      "year": 1970,
+      "decade": "1970s",
+      "label": "Columbia",
+      "genre": "Folk",
+      "subgenre": "Folk rock",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Folk-rock duo's farewell album.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Simon & Garfunkel Bridge over Troubled Water",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Folk / World"
+    },
+    {
+      "id": "tom-waits__rain-dogs",
+      "seq": 97,
+      "tier": "C",
+      "artist": "Tom Waits",
+      "title": "Rain Dogs",
+      "year": 1985,
+      "decade": "1980s",
+      "label": "Island",
+      "genre": "Rock",
+      "subgenre": "Experimental rock / folk",
+      "country": "US",
+      "entry_point": false,
+      "why_it_matters": "Junkyard orchestration and street poetry.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Tom Waits Rain Dogs",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Rock"
+    },
+    {
+      "id": "muddy-waters__folk-singer",
+      "seq": 98,
+      "tier": "C",
+      "artist": "Muddy Waters",
+      "title": "Folk Singer",
+      "year": 1964,
+      "decade": "1960s",
+      "label": "Chess",
+      "genre": "Blues",
+      "subgenre": "Acoustic blues",
+      "country": "US",
+      "entry_point": false,
+      "why_it_matters": "Muddy Waters returns to acoustic blues.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Muddy Waters Folk Singer",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Blues"
+    },
+    {
+      "id": "johnny-cash__at-folsom-prison",
+      "seq": 99,
+      "tier": "C",
+      "artist": "Johnny Cash",
+      "title": "At Folsom Prison",
+      "year": 1968,
+      "decade": "1960s",
+      "label": "Columbia",
+      "genre": "Country",
+      "subgenre": "Outlaw country / live",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Live prison concert that revived Cash's career.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Johnny Cash At Folsom Prison",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "high",
+      "app_genre": "Folk / World"
+    },
+    {
+      "id": "ray-charles__modern-sounds-in-country-and-western-music",
+      "seq": 100,
+      "tier": "C",
+      "artist": "Ray Charles",
+      "title": "Modern Sounds in Country and Western Music",
+      "year": 1962,
+      "decade": "1960s",
+      "label": "ABC-Paramount",
+      "genre": "Soul",
+      "subgenre": "Country soul",
+      "country": "US",
+      "entry_point": true,
+      "why_it_matters": "Soul reinterpretation of country standards that crossed genre lines.",
+      "typical_availability": "in_print",
+      "buy_new": [
+        "fnac",
+        "amazon_fr"
+      ],
+      "buy_used": [
+        "momox_shop",
+        "amazon_fr"
+      ],
+      "search_query": "Ray Charles Modern Sounds in Country and Western Music",
+      "barcode": null,
+      "musicbrainz_id": null,
+      "confidence": "medium",
+      "app_genre": "Soul / Funk"
+    }
+  ]
+}
