@@ -1649,12 +1649,22 @@ function colValue(){let t=0,n=0,pd=0,w=0,np=0;S.col.forEach(x=>{const k=x.copies
   return ` · Value ≈ ${money(t)} <span class="cert c${c}" title="${esc(tip)}" aria-label="${esc(tip)}"></span>${n<S.col.length?" ("+n+" priced)":""}${pd?" · paid "+money(pd)+" ("+np+" album"+(np!==1?"s":"")+")":""}`;}
 const dgAttr=x=>{const id=(x.est&&x.est.dg)||x.dgid;return `<a class="dgattr" href="https://www.discogs.com/${id?"release/"+id:""}" target="_blank" rel="noopener">Data provided by Discogs</a>`;};
 const canEst=x=>!!(x.dgid||x.mbid||codesOf(x.id).length||(x.est&&x.est.dg));
-function estLine(x){const e=x.est;
+function estLine(x){if(isWish(x.id))return estLineWish(x);const e=x.est;
   if(e&&e.miss)return `Discogs: ${e.fmt?"no "+esc(wantFmt(x)||"")+" edition":"edition not found"} (checked ${new Date(e.at).toLocaleDateString()}).`;
   if(estFresh(x)){const t=new Date(e.at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
     return e.p>0?`Discogs estimate: <span class="estp">${fmtPrice(e.p)}</span> — ${e.k==="sugg"?"suggested price for "+esc(e.c):"lowest of "+e.n+" for sale"} (at ${t}, ${Q_LAB[e.q]||Q_LAB.likely}).${e.k!=="sugg"&&e.n<3?` <span class="lowc">Few copies for sale: check that the Discogs edition is yours.</span>`:""} ${dgAttr(x)}${x.val===e.p?"":` <button type="button" class="small" id="useEst">Use as my value</button><br><small class="disc1">Indicative asking price, not guaranteed; keeping it is your choice and it will not update.</small>`}`
       :`Discogs: no copy for sale right now (at ${t}). ${dgAttr(x)}`;}
   return canEst(x)?`<button type="button" class="small" id="refEst">Get the current Discogs price</button>`:"";}
+// Wishlist: what the album costs right now on Discogs, with a direct link to the offers (used copies mostly; any condition).
+// Same 6-hour rule as everywhere else: after 6 h only the edition is kept, the price is asked again.
+function estLineWish(x){const e=x.est,id=(e&&e.dg)||x.dgid,btn=t=>`<button type="button" class="small" id="refEst">${t}</button>`;
+  if(!dgKey())return `<small>To see current prices on Discogs, <button type="button" class="linklike" data-gokey="1">add your Discogs token</button> in Settings.</small>`;
+  const lnk=id?`<a href="https://www.discogs.com/sell/release/${id}" target="_blank" rel="noopener">See the offers on Discogs</a>`:"";
+  if(e&&e.miss)return `Discogs: ${e.fmt?"no "+esc(wantFmt(x)||"CD")+" edition":"no matching edition found"} (checked ${new Date(e.at).toLocaleDateString()}). ${btn("Try again")}`;
+  if(estFresh(x)){const t=new Date(e.at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+    return e.p>0?`<b>Cheapest on Discogs: <span class="estp">${fmtPrice(e.p)}</span></b> — ${e.k==="sugg"?"suggested price for "+esc(e.c):e.n+" for sale, any condition, shipping not included"} (at ${t}, ${Q_LAB[e.q]||Q_LAB.likely}${e.q==="guess"?": check that it is the edition you want":""}). ${lnk} · ${dgAttr(x)}`
+      :`Discogs: no copy for sale right now (at ${t}). ${lnk} · ${dgAttr(x)}`;}
+  return btn(id?"Get the current Discogs price":"Find the price on Discogs")+(id?` ${lnk}`:"");}
 // where a price comes from, typed by the user
 const SRCS=[["Marketplaces",["Discogs","eBay","Amazon","momox","Rakuten","Vinted","Leboncoin","CDandLP","MusicStack","Bandcamp","Mercari","Yahoo! Auctions Japan"]],
   ["Shops",["Record shop (in person)","Fnac","Cultura","jpc","Presto Music","Europadisc","Juno Records","HHV","Rough Trade","CDJapan"]],
@@ -1665,7 +1675,7 @@ function srcSel(k,v){const custom=v&&!SRC_ALL.includes(v)?v:"";
 function condValHtml(x,own){const each=(x.copies||1)>1?" (each)":"",d=k=>x[k+"At"]?`<small class="mdate">${new Date(x[k+"At"]).toLocaleDateString()}</small>`:"";
   const row=(k,lab,ph)=>`<div class="money"><span class="mlab">${lab}${each}</span><span class="valIn"><input id="${k}" type="text" inputmode="decimal" autocomplete="off" value="${x[k]?priceIn(x[k]):""}" placeholder="${ph}"><b>${CURS}</b></span>${srcSel(k,x[k+"Src"])}${d(k)}</div>`;
   return `<div class="condRow"><label><span>${own?"Condition":"Minimum condition"}</span><select id="cond" aria-label="${own?"Condition":"Minimum condition"}"><option value="">Not set</option>${CONDS.map(([k,l])=>`<option value="${k}"${x.cond===k?" selected":""}>${l} (${k})</option>`).join("")}</select></label></div>
-  ${own?row("paid","Paid","0,00")+row("val","Value",estFresh(x)&&x.est.p>0?priceIn(x.est.p):"0,00")+`<p class="hint estl" id="estl">${estLine(x)}</p>${valueLinks(x)}`:""}`;}
+  ${own?row("paid","Paid","0,00")+row("val","Value",estFresh(x)&&x.est.p>0?priceIn(x.est.p):"0,00")+`<p class="hint estl" id="estl">${estLine(x)}</p>${valueLinks(x)}`:`<p class="hint estl" id="estl">${estLine(x)}</p>`}`;}
 function bindCond(x){const c=$("cond");if(c)c.onchange=()=>{if(c.value)x.cond=c.value;else delete x.cond;save();render();toast(c.value?"Condition: "+c.options[c.selectedIndex].text:"Condition cleared");};
   [["val","Value"],["paid","Price paid"]].forEach(([k,lab])=>{const v=$(k);if(!v)return;
     v.onchange=()=>{const n=parseFloat(v.value.replace(/\s/g,"").replace(",","."));if(isNaN(n)||n<=0){delete x[k];delete x[k+"At"];v.value="";}else{x[k]=Math.round(n*100)/100;x[k+"At"]=Date.now();v.value=priceIn(x[k]);}
@@ -1696,7 +1706,7 @@ function storeLinks(x,id){const L=(navigator.language||"en").toLowerCase(),c=L.s
   const amz={fr:"fr",de:"de",it:"it",es:"es",nl:"nl",ja:"co.jp"}[c]||(L==="en-gb"?"co.uk":"com"),eb={fr:"fr",de:"de",it:"it",es:"es",nl:"nl"}[c]||(L==="en-gb"?"co.uk":"com"),mx={fr:"fr",de:"de"}[c];
   const a=(h,t)=>`<a href="${h}" target="_blank" rel="noopener">${t}</a>`;
   return offersHtml(x)+`<div class="prices"><span>Search the shops:</span><div class="weblinks">`+(mx?a("https://www.google.com/search?q="+E("site:momox-shop."+mx+" "+qt),"momox"):"")+
-    a("https://www.amazon."+amz+"/s?k="+E(qe),"Amazon")+a("https://www.ebay."+eb+"/sch/i.html?_nkw="+E(qt),"eBay")+
+    a("https://www.amazon."+amz+"/s?k="+E(qe),"Amazon")+a("https://www.ebay."+eb+"/sch/i.html?_nkw="+E(qt)+"&LH_ItemCondition=1000&LH_BIN=1&_sop=15","eBay new")+a("https://www.ebay."+eb+"/sch/i.html?_nkw="+E(qt)+"&LH_ItemCondition=3000&LH_BIN=1&_sop=15","eBay used")+
     a(x.dgid?"https://www.discogs.com/sell/release/"+x.dgid:"https://www.discogs.com/search/?q="+E(qt)+"&type=release","Discogs")+`</div></div>`+valueLinks(x,id);}
 // Prices actually paid (eBay sold listings; Popsike for vinyl auctions): a check by hand, nothing is read automatically
 function valueLinks(x,id){const L=(navigator.language||"en").toLowerCase(),c=L.slice(0,2),E=encodeURIComponent;
@@ -2734,7 +2744,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.85.0";$("hVer").textContent="v"+APPV;
+const APPV="0.86.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
@@ -2968,6 +2978,9 @@ const Q_LAB={sure:"barcode match",likely:"edition not verified",guess:"edition g
 async function estimateOne(x,mode){const want=wantFmt(x),code=codesOf(x.id)[0];
   if(mode==="safe"&&!code)return "skip"; // no barcode: no way to be sure, no request made
   let id=await dgIdFor(x),q="likely";
+  if(!id&&isWish(x.id)&&mode!=="safe"){ // wishlist, no edition linked: reuse the one found earlier, else look for a likely one by artist + title (kept apart from the entry's own edition, flagged "guessed")
+    if(x.est&&x.est.dg){id=x.est.dg;q=x.est.q||"guess";}
+    else if(dgKey()){const {title,who}=enrichQuery(x),w2=want||"CD",rs=await dgSearch({release_title:title,artist:who[0]||"",format:w2},true),r=rs.find(r=>fmtOk(w2,r.format||[])&&overlap(title,r.title||"")>=.8);if(r){id=r.id;q="guess";}}}
   if(!id&&mode!=="safe"){x.est={miss:1,v:2,at:Date.now()};return "miss";}
   const bcOf=r=>(r.identifiers||[]).filter(i=>/barcode/i.test(i.type)).map(i=>String(i.value||"").replace(/\D/g,"")).filter(Boolean),
     hasCode=r=>bcOf(r).some(v=>v===code||v.endsWith(code)||code.endsWith(v)),fm=r=>(r.formats||[]).map(f=>[f.name,...(f.descriptions||[])].join(" "));
