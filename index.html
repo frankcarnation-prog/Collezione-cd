@@ -494,6 +494,16 @@ small.best{color:var(--wish);font-weight:600}
 .epop textarea{min-height:110px;resize:vertical}
 .epop .tall{min-height:260px}
 .epop img{max-width:100%;max-height:40vh;display:block;margin:8px auto;border-radius:6px}
+/* v0.87 phone layout: more room for the collection itself */
+.recent>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px}.recent>summary::-webkit-details-marker{display:none}
+.recent>summary h2{margin:4px 0}.recent .arr{color:var(--muted);transition:transform .15s}.recent[open] .arr{transform:rotate(90deg)}.recent[open]>summary h2{margin-bottom:8px}
+#stoInfo.warn{color:#b3261e;font-weight:600}
+@media (max-width:520px){
+  header h1{font-size:1.5rem;white-space:nowrap}header h1 .beta,header h1 .ver{font-size:.68rem}
+  .detail .covBox .acts button{min-height:38px;padding:6px 10px;font-size:.85rem}
+  .detail .sleeve.nocov{height:44px}
+  .detail .ph{width:48px;height:48px}.detail .phf{width:56px}.detail .phf .ph{width:48px}
+}
 </style>
 </head>
 <body>
@@ -504,7 +514,7 @@ small.best{color:var(--wish);font-weight:600}
 
 
 <details class="win todoWin" id="todoCard" hidden><summary class="wtitle"><span>To do</span><span class="tdN" id="todoTot"></span><span class="arr" aria-hidden="true">▸</span></summary><div class="wbody"><ul class="list" id="todoList"></ul></div></details>
-<section class="recent" id="recent" hidden><h2>Recently added</h2><div class="rrow" id="recentRow"></div></section>
+<details class="recent" id="recent" hidden><summary><h2>Recently added</h2><span class="arr" aria-hidden="true">▸</span></summary><div class="rrow" id="recentRow"></div></details>
 
 <div class="scanov" id="scanOv" hidden role="dialog" aria-modal="true" aria-label="Scan"><section class="panel" id="scanPanel">
   <div class="scanhead"><button type="button" id="scanBack" class="scanbk" aria-label="Back" hidden>‹ Back</button><h2>Scan an album</h2><button type="button" id="scanX" aria-label="Close">✕</button></div>
@@ -607,7 +617,8 @@ small.best{color:var(--wish);font-weight:600}
 </section>
 <section class="card"><h3>Backup</h3>
 <p>Your collection is stored on this device. Download a backup regularly; your own cover photos are included. “Restore a file” also accepts a collection import file, which is merged with your existing data.</p>
-<label class="chk2"><input type="checkbox" id="bkKeys" checked> Include API keys and tokens (stored in plain text in the file: keep it private)</label>
+<label class="chk2"><input type="checkbox" id="bkKeys"> Include API keys and tokens (stored in plain text in the file: keep it private)</label>
+<p class="hint" id="stoInfo"></p>
 <div class="row"><button id="dlB" type="button">Download backup</button><label class="filebtn">Restore a file<input id="upB" type="file" accept="application/json,.json"></label></div>
 </section>
 <section class="card"><h3>Export</h3>
@@ -2078,10 +2089,10 @@ function editTracks(id){const x=byId(id),p=$("detail");if(!x)return;const W=WORK
 $("nagGo").onclick=()=>$("dlB").click();
 if($("enrOpen"))$("enrOpen").onclick=()=>{closeSettings();try{localStorage.removeItem("enr-hide");}catch(e){}$("enr").hidden=false;enrUi();$("enr").scrollIntoView({behavior:"smooth"});};
 const BK_KEYS=["ai-cfg","anthropic-key","discogs-token","auto-codes"];
-$("dlB").onclick=async()=>{try{S.chg=0;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}nag();const cv=Object.assign({},await covAll(),COV),withPh=Object.keys(cv).length>0,sets={};if($("bkKeys").checked)BK_KEYS.forEach(k=>{try{const v=localStorage.getItem(k);if(v!==null)sets[k]=v;}catch(e){}});const withSet=Object.keys(sets).length>0,out=Object.assign({},S,withPh?{covers:cv}:{},withSet?{settings:sets}:{}),big=withPh||withSet;const blob=new Blob([JSON.stringify(out,null,big?0:1)],{type:"application/json"});const a=document.createElement("a"),fn="album-ledger-"+new Date().toISOString().slice(0,10)+".json";
+$("dlB").onclick=async()=>{try{S.chg=0;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}nag();const cv=Object.assign({},await covAll(),COV),withPh=Object.keys(cv).length>0,sets={};const keysIn=$("bkKeys").checked;BK_KEYS.forEach(k=>{if(!keysIn&&k!=="auto-codes")return;try{const v=localStorage.getItem(k);if(v!==null)sets[k]=v;}catch(e){}});const withSet=Object.keys(sets).length>0,out=Object.assign({},S,withPh?{covers:cv}:{},withSet?{settings:sets}:{}),big=withPh||withSet;const blob=new Blob([JSON.stringify(out,null,big?0:1)],{type:"application/json"});const a=document.createElement("a"),fn="album-ledger-"+new Date().toISOString().slice(0,10)+".json";
   a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();a.remove();const mb=blob.size/1048576,size=mb>=0.1?mb.toFixed(1)+" MB":Math.max(1,Math.round(blob.size/1024))+" KB";
   $("bMsg").textContent="Backup downloaded ("+size+").";
-  report("ok","Backup downloaded","The file “"+fn+"” was sent to your browser’s download location.",[S.col.length+" album"+(S.col.length!==1?"s":"")+" and "+S.wish.length+" wishlist item"+(S.wish.length!==1?"s":""),withPh?Object.keys(cv).length+" cover image"+(Object.keys(cv).length!==1?"s":"")+" and photos":"No cover images or photos",withSet?"API keys and settings (stored in plain text)":"No API keys or settings","Size: "+size],"Keep the file somewhere safe. To restore it, use “Restore a file” and select the .json file as is — do not unzip or rename it.");
+  report("ok","Backup downloaded","The file “"+fn+"” was sent to your browser’s download location.",[S.col.length+" album"+(S.col.length!==1?"s":"")+" and "+S.wish.length+" wishlist item"+(S.wish.length!==1?"s":""),withPh?Object.keys(cv).length+" cover image"+(Object.keys(cv).length!==1?"s":"")+" and photos":"No cover images or photos",withSet?(keysIn?"API keys and settings (stored in plain text)":"Settings only (no API keys)"):"No API keys or settings","Size: "+size],"Keep the file somewhere safe. To restore it, use “Restore a file” and select the .json file as is — do not unzip or rename it.");
   }catch(err){report("err","Backup failed","The backup file could not be created.",[(err&&err.message)||String(err)],"Check that your browser allows downloads for this site, then try again.");}};
 $("upB").onchange=async e=>{const inp=e.target,f=inp.files[0];if(!f)return;const done=()=>{inp.value="";};
   const fail=(why,list,hint)=>{$("bMsg").textContent="Restore failed: "+why;report("err","Restore failed",why,[("File: "+f.name+" ("+(f.size/1024<1024?Math.max(1,Math.round(f.size/1024))+" KB":(f.size/1048576).toFixed(1)+" MB")+")")].concat(list||[]),hint||"Your current collection was not changed.");done();};
@@ -2744,15 +2755,24 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.86.0";$("hVer").textContent="v"+APPV;
-function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();}
+const APPV="0.87.0";$("hVer").textContent="v"+APPV;
+function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();stoUi();}
+// Storage: the library lives in the browser. Ask the browser to keep it (no automatic clean-up) and show how much room it takes.
+const STO_WARN=3.5*1048576;
+function stoBytes(){try{return (localStorage.getItem(KEY)||"").length*2;}catch(e){return 0;}}
+async function stoUi(){const el=$("stoInfo");if(!el)return;const b=stoBytes(),sz=b>=1048576?(b/1048576).toFixed(1)+" MB":Math.max(1,Math.round(b/1024))+" KB";let kept="";
+  try{if(navigator.storage&&navigator.storage.persisted)kept=(await navigator.storage.persisted())?" · Protected from automatic clean-up by the browser":" · Not protected from automatic clean-up: keep regular backups";}catch(e){}
+  el.textContent="Library on this device: "+sz+kept+".";if(b>STO_WARN){el.textContent+=" The library is getting large for browser storage: download a backup now.";el.classList.add("warn");}else el.classList.remove("warn");}
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted().then(p=>{if(!p)return navigator.storage.persist();}).catch(()=>{});}catch(e){}
 function closeSettings(fromPop){const s=$("settings");if(s.hidden)return;s.hidden=true;if(!sheetOpen)document.body.classList.remove("locked");if(!fromPop)history.back();}
 $("setBtn").onclick=openSettings;$("setX").onclick=()=>closeSettings();
 // ---------- À compléter ----------
 const TODOS=[["code","No barcode",x=>!codesOf(x.id).length],["cover","Missing cover",x=>!hasCover(x)],["genre","Missing genre",x=>!genreOf(x)],["year","Missing year",x=>!x.y],["label","Missing label",x=>!x.l],
   ["tracks","Missing tracks",x=>!tracksOf(x).length],["format","Missing format",x=>!x.fmt],["auto","Automatic covers to review",x=>!!x.auto&&x.enr!=="manual"&&hasCover(x)]];
 let TODOF="";
-function todoUi(){const all=[...S.col,...S.wish],n=all.filter(x=>!hasCover(x)||!genreOf(x)||(x.auto&&x.enr!=="manual"&&hasCover(x))).length;$("todoN").hidden=!n;$("todoN").textContent=n>99?"99+":n;}
+function todoUi(){const all=[...S.col,...S.wish];let g=0;try{g=groupSuggestions().length;}catch(e){}
+  const n=all.filter(x=>x.auto&&x.enr!=="manual"&&hasCover(x)).length+g,b=$("todoN"); // missing information stays listed in Tools and in “To do”: the badge only counts decisions to make
+  b.hidden=!n;b.textContent=n>99?"99+":n;b.title=n?n+" item"+(n!==1?"s":"")+" to review (automatic matches, box-set suggestions)":"";}
 function openTodo(){closeSettings();closeSheet();goTab("tools");return;const p=$("detail"),all=[...S.col,...S.wish];
   p.innerHTML=`<p class="cat">Incomplete</p><h2 class="wh">Missing information</h2><p class="hint">Select a line to list the albums concerned, then complete them one by one from their entry.</p>
    <ul class="list">${TODOS.map(([k,lab,f])=>{const n=all.filter(f).length;return `<li class="item tap${n?"":" done"}" data-todo="${k}"><div class="meta"><b>${lab}</b><small>${n?n+" album"+(n!==1?"s":""):"Up to date ✓"}</small></div>${n?`<span class="count">${n}</span>`:""}</li>`;}).join("")}</ul>
@@ -3294,7 +3314,10 @@ function syncUi(){const o=$("syOut"),i=$("syIn");if(!o)return;const on=!!SY.tok;
   if(on){$("syWho").textContent=SY.email||"";$("syLast").textContent=SY.err?SY.err:SY.last?"Last sync: "+fmtWhen(SY.last):(SY.init?"Not synced yet":"Sign-in done: choose how to combine your data");$("syGo").textContent=SY.init?"Sync now":"Continue";}
   const nc=syConfAll().length,nd=(()=>{try{return dupGroups().length;}catch(e){return 0;}})();$("syRev").hidden=!nc;$("syRevN").textContent=nc+" value"+(nc!==1?"s":"")+" set differently on two devices";$("syDup").hidden=!nd;$("syDupN").textContent=nd+" album"+(nd!==1?"s":"")+" that appear more than once";}
 $("syCode").onclick=async()=>{const em=$("syEmail").value.trim();if(!/^\S+@\S+\.\S+$/.test(em)){toast("Enter a valid e-mail address");return;}
-  $("syCode").disabled=true;try{await sbSendCode(em);SY.pend=em;syMsg("Link sent to "+em+". Open the e-mail on this device and tap the link.");}catch(e){syMsg(e.code==="net"?"Offline: try again when connected":(e.message||"Could not send the code"));}$("syCode").disabled=false;};
+  $("syCode").disabled=true;try{await sbSendCode(em);SY.pend=em;syMsg("Link sent to "+em+". Open the e-mail on this device and tap the link.");}catch(e){const lim=e.code===429||/rate limit/i.test(e.message||"");
+    syMsg(e.code==="net"?"Offline: try again when connected":lim?"The sign-in e-mail could not be sent: the hourly sending limit of the e-mail service has been reached.":(e.message||"Could not send the code"));
+    if(lim)report("err","Sign-in e-mail not sent","The e-mail service used for sign-in links has reached its hourly sending limit, so no link was sent to "+em+".",["Server reply: "+(e.message||"rate limit")],"Try again in about an hour. Your albums are safe on this device. To remove this limit, the app owner must connect a dedicated e-mail service (custom SMTP) in Supabase.");}
+  $("syCode").disabled=false;};
 $("syGo").onclick=()=>SY.init?syncNow(false):syFirst().catch(e=>syMsg(e.message));
 $("syOutBtn").onclick=async()=>{try{await sbReq("/auth/v1/logout",{method:"POST"},true);}catch(e){}signOutLocal();syMsg("Signed out. Your albums stay on this device.");};
 /* header pill: tells at a glance whether this device has changes the others have not seen */
@@ -3395,6 +3418,7 @@ function homeTodo(){const c=$("todoCard");if(!c)return;const g=groupSuggestions(
   $("todoList").querySelectorAll("[data-td]").forEach(li=>li.onclick=()=>{const k=li.dataset.td;goTools(TODO_SEC[k]||"tw-cmp",k);});}
 (()=>{const c=$("todoCard");try{c.open=localStorage.getItem("todo-open")==="1";}catch(e){}c.addEventListener("toggle",()=>{try{localStorage.setItem("todo-open",c.open?"1":"0");}catch(e){}});})();
 $("tbGroup").onclick=()=>openGroupSugg();
+(()=>{const c=$("recent");try{c.open=localStorage.getItem("recent-open")==="1";}catch(e){}c.addEventListener("toggle",()=>{try{localStorage.setItem("recent-open",c.open?"1":"0");}catch(e){}});})();
 // ---------- Album suggestions: reference base ----------
 // A fixed editorial base (base/*.json, read-only, never mixed with the user's library) is compared with the
 // user's collection: albums already owned or on the wishlist are left out, the others are ranked by importance

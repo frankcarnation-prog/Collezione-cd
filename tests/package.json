@@ -1,0 +1,12 @@
+{
+  "name": "album-ledger-tests",
+  "private": true,
+  "description": "Automated checks for Album Ledger: loads the real index.html in a simulated browser",
+  "scripts": {
+    "test": "node run.js"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "6.2.7",
+    "jsdom": "30.1.3"
+  }
+}
