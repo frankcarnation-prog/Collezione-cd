@@ -499,6 +499,13 @@ small.best{color:var(--wish);font-weight:600}
 .welcome{list-style:none;padding:12px 2px 24px}.welcome h2{margin:6px 0 6px;font-size:1.35rem}.welcome>p{margin:0 0 14px;color:var(--muted);line-height:1.45}
 .welcome .setItem{margin:0 0 10px}.welcome .setItem small{color:var(--muted);font-size:.85rem;line-height:1.35}.welcome .wlMain{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}.welcome .wlMain b{color:var(--accent)}
 .rfmt{margin:6px 0 10px;flex-wrap:wrap}
+.stLink{background:none;border:0;box-shadow:none;padding:0;min-height:0;color:var(--accent);font:inherit;text-decoration:underline;cursor:pointer}
+.stHero{background:var(--accent);color:#fff;border-radius:12px;padding:18px 16px;text-align:center;margin:8px 0 12px}.stHero b{display:block;font-size:2.6rem;line-height:1.1}.stHero span{display:block;font-size:1.05rem}.stHero small{display:block;margin-top:6px;opacity:.92}
+.stCard{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 12px}.stCard h3{margin:0 0 6px;font-size:1rem}.stCard .hint{margin:0 0 8px}
+.stBars{list-style:none;margin:0;padding:0}.stBars li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;margin:0 0 8px}.stK{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.stV{font-variant-numeric:tabular-nums;font-weight:700}
+.stB{grid-column:1/-1;display:block;height:6px;border-radius:3px;background:var(--line);overflow:hidden}.stB i{display:block;height:100%;background:var(--accent);border-radius:3px}.stB.big{height:10px;margin:4px 0 6px}
+.stMile{margin:0;font-size:.95rem}.stMile b{font-size:1.4rem}
+.stMoney{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0}.stMoney dt{color:var(--muted)}.stMoney dd{margin:0;text-align:right;font-weight:700}.stMoney dd small{display:block;font-weight:400;color:var(--muted);font-size:.78rem}
 .recent>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px}.recent>summary::-webkit-details-marker{display:none}
 .recent>summary h2{margin:4px 0}.recent .arr{color:var(--muted);transition:transform .15s}.recent[open] .arr{transform:rotate(90deg)}.recent[open]>summary h2{margin-bottom:8px}
 #stoInfo.warn{color:#b3261e;font-weight:600}
@@ -565,6 +572,9 @@ small.best{color:var(--wish);font-weight:600}
 <ul class="list cmpl" id="cmpList"></ul>
 <button type="button" class="primary" id="cmpGo">Complete everything</button><p class="hint" id="cmpMsg"></p>
 <p class="hint" id="cmpSrc"></p>
+</div></section>
+<section class="win" id="tw-stat"><div class="wtitle">Statistics</div><div class="wbody">
+<button type="button" class="setItem" id="stGo"><b>My collection in figures</b><small>Formats, genres, composers, performers, periods, money spent and value</small></button>
 </div></section>
 <section class="win" id="tw-alb"><div class="wtitle">Add and organise</div><div class="wbody">
 <button type="button" class="setItem" id="impGo"><b>Import a collection</b><small>CSV (Discogs, CLZ…), Excel or a pasted list</small></button>
@@ -940,7 +950,8 @@ const verRows=vs=>vs.map(e=>`<li class="item tap" data-open="${e.x.id}"><img cla
 // Display title for a group: prefer one with a catalogue number, then a reasonably long one (not a bare "Symphony No. 5")
 function repScore(o){const t=(o&&o.t)||"";return (catKey(t)?1000:0)+Math.min(t.length,80)-(t.length>80?t.length-80:0);}
 function renderStats(){const cds=S.col.reduce((n,x)=>n+discsOf(x).length,0);
-  $("stats").innerHTML=S.col.length+" album"+(S.col.length!==1?"s":"")+(cds>S.col.length?" ("+cds+" CDs)":"")+" · "+S.wish.length+" on wishlist"+colValue();
+  $("stats").innerHTML=S.col.length+" album"+(S.col.length!==1?"s":"")+(cds>S.col.length?" ("+cds+" CDs)":"")+" · "+S.wish.length+" on wishlist"+colValue()+(S.col.length?` · <button type="button" class="stLink" id="stOpen">Statistics ›</button>`:"");
+  if($("stOpen"))$("stOpen").onclick=openStats;
   $("demoTag").hidden=!S.demo;}
 
 // ---------- Listes ----------
@@ -1054,6 +1065,58 @@ function render(){$("list").classList.remove("toolsMode");$("more").hidden=true;
     return hd+`<li class="item tap${SEL?(SEL.includes(x.id)?" picked":" pickable"):""}" data-open="${x.id}">${SEL?`<span class="chk" aria-hidden="true">${SEL.includes(x.id)?SEL.indexOf(x.id)+1:""}</span>`:""}${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${fmtLabel(x)?" · "+esc(fmtLabel(x)):""}${x.cond?" · "+esc(x.cond):""}${genreOf(x)&&genreOf(x)!=="Classical"?" · "+esc(genreOf(x)):""}${x.box?" · Box set "+discsOf(x).length+" CDs":" · "+tracksOf(x).length+" tracks"}</small>${/^(value|paid)l?$/.test(getSort())&&k!=="wish"&&moneyOf(x,getSort().replace(/l$/,""))?`<small class="best">${getSort().startsWith("paid")?"Paid ":"Value "}${fmtPrice(moneyOf(x,getSort().replace(/l$/,"")))}${getSort().startsWith("value")&&!(x.val>0)?" (Discogs estimate)":""}</small>`:""}${k==="wish"&&bestOffer(x)?`<small class="best">From ${fmtPrice(bestOffer(x).p)} · ${esc(shopName(bestOffer(x).u))}</small>`:""}${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
     (k==="own"?(q?`<span class="chip own">Owned</span>`:""):`<button class="small" data-buy="${x.id}" type="button">Purchased</button><button class="small" data-del="${x.id}" type="button" aria-label="Remove from wishlist">✕</button>`)+`<span class="cert c${cc}" title="Edition: ${CERT[cc][0]}" aria-label="Edition: ${CERT[cc][0]}"></span></li>`}).join("")
     :`<li class="empty">${q?"No matching album.":(tab==="col"?"Your collection is empty. Use SCAN to add your first album.":"Your wishlist is empty.")}</li>`;}
+// ---------- Statistics ----------
+// Musical period of a composer (by surname). Editorial table of well-known composers; others are "Other or unknown".
+const ERAS=["Medieval and Renaissance","Baroque","Classical era","Romantic","20th century","Contemporary"];
+const ERA_OF=(()=>{const m={},add=(i,s)=>s.split(" ").forEach(k=>m[k]=i);
+  add(0,"machaut dufay josquin prez ockeghem palestrina lassus lasso byrd tallis victoria gesualdo dowland sweelinck janequin morales tye gibbons");
+  add(1,"monteverdi purcell lully corelli vivaldi bach handel haendel telemann rameau couperin scarlatti albinoni pergolesi charpentier buxtehude pachelbel marais tartini zelenka biber schutz frescobaldi froberger leclair geminiani locatelli torelli caldara hasse quantz");
+  add(2,"haydn mozart gluck boccherini salieri clementi cimarosa stamitz hummel beethoven dussek paisiello cherubini");
+  add(3,"schubert weber rossini donizetti bellini berlioz mendelssohn chopin schumann liszt wagner verdi brahms bruckner gounod offenbach franck smetana borodin mussorgsky moussorgsky tchaikovsky tchaikowsky dvorak grieg rimsky-korsakov saint-saens bizet faure massenet chabrier delibes lalo chausson elgar mahler wolf puccini leoncavallo mascagni glinka balakirev paganini field alkan strauss sibelius rachmaninoff rachmaninov scriabin skryabin glazunov bortkiewicz medtner granados albeniz nielsen reger humperdinck bruch wieniawski vieuxtemps sarasate moszkowski widor vierne guilmant lyapunov arensky liadov lyadov taneyev cui ponchielli boito catalani gade svendsen sinding parry stanford");
+  add(4,"debussy ravel satie stravinsky prokofiev shostakovich bartok schoenberg berg webern poulenc milhaud honegger hindemith britten copland gershwin barber janacek martinu respighi villa-lobos messiaen dutilleux ives williams holst walton szymanowski kodaly enescu falla rodrigo ibert roussel durufle langlais korngold khachaturian kabalevsky weinberg bernstein tippett lutoslawski lutosławski orff weill rota piazzolla jolivet tournemire alain dupre koechlin schmitt");
+  add(5,"ligeti boulez stockhausen xenakis berio glass reich part adams gorecki penderecki kurtag dusapin saariaho schnittke gubaidulina takemitsu nono riley nyman einaudi richter tavener silvestrov rihm lachenmann sciarrino dalbavie escaich");
+  return n=>{const t=norm(n).replace(/[(),.]/g," ").trim().split(/\s+/);const k=t[t.length-1];return k in m?m[k]:-1;};})();
+function compsOf(x,W){const c=new Set();tracksOf(x).forEach(t=>{const o=typeof t!=="string"&&t.w&&W[t.w];if(o&&o.c)c.add(canonC(o.c));});return [...c];}
+const MILESTONES=[10,25,50,100,250,500,1000,2000,5000,10000];
+function statsData(){const W=WORKS(),col=S.col,cnt=(o,k)=>{if(k)o[k]=(o[k]||0)+1;},F={},G={},A={},C={},P={},E={},D={};
+  let paid=0,nPaid=0,val=0,nVal=0,est=0,both=0,bothPaid=0,bothVal=0;
+  const mainA=a=>(String(a||"").split(/\s*(?:,|;|\+|&|\/|\bfeat\.?|\bfeaturing\b|\bwith\b)\s*/i).filter(Boolean)[0]||"").trim();
+  col.forEach(x=>{cnt(F,fmtLabel(x)||"No format");cnt(G,genreOf(x)||"Unclassified");
+    const cl=isClassical(x,W);
+    if(cl){const cs=compsOf(x,W);cs.forEach(c=>cnt(C,c));const eras=new Set(cs.map(ERA_OF));if(!cs.length)eras.add(-1);eras.forEach(e=>cnt(E,e<0?"Other or unknown":ERAS[e]));perfNames(x).forEach(p=>cnt(P,p));}
+    else if(mainA(x.a))cnt(A,mainA(x.a));
+    const y=+x.y;if(y>1900&&y<=new Date().getFullYear())cnt(D,Math.floor(y/10)*10+"s");
+    const p=x.paid>0?+x.paid:0,v=valOf(x);if(p){paid+=p;nPaid++;}if(v){val+=v;nVal++;if(!(x.val>0))est++;}if(p&&v){both++;bothPaid+=p;bothVal+=v;}});
+  const top=(o,n)=>Object.entries(o).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],"fr")).slice(0,n);
+  const n=col.length,next=MILESTONES.find(m=>m>n)||0,prev=[...MILESTONES].reverse().find(m=>m<=n)||0;
+  return {n,wish:S.wish.length,discs:col.reduce((s,x)=>s+discsOf(x).length,0),fmts:top(F,8),genres:top(G,8),artists:top(A,10),composers:top(C,10),performers:top(P,10),
+    nArt:Object.keys(A).length,nComp:Object.keys(C).length,nPerf:Object.keys(P).length,nCl:col.filter(x=>isClassical(x,W)).length,
+    eras:ERAS.concat(["Other or unknown"]).filter(k=>E[k]).map(k=>[k,E[k]]),decades:Object.entries(D).sort((a,b)=>parseInt(a[0])-parseInt(b[0])),
+    paid,nPaid,val,nVal,est,both,diff:bothVal-bothPaid,next,prev};}
+function openStats(){closeSettings&&closeSettings();const d=statsData(),p=$("detail");
+  const bars=(rows,tot)=>{const mx=Math.max(1,...rows.map(r=>r[1]));return `<ul class="stBars">${rows.map(([k,v])=>`<li><span class="stK">${esc(k)}</span><span class="stV">${v}</span><span class="stB"><i style="width:${Math.max(2,Math.round(v/mx*100))}%"></i></span></li>`).join("")}</ul>`;};
+  const card=(t,body,hint)=>body?`<section class="stCard"><h3>${t}</h3>${hint?`<p class="hint">${hint}</p>`:""}${body}</section>`:"";
+  const pct=d.next?Math.round((d.n-d.prev)/(d.next-d.prev)*100):100;
+  p.innerHTML=`<p class="cat">Statistics</p><h2 class="wh">My collection in figures</h2>
+   <div class="stHero"><b>${d.n}</b><span>album${d.n!==1?"s":""}${d.discs>d.n?` · ${d.discs} discs`:""}</span><small>${[d.nArt?d.nArt+" artist"+(d.nArt!==1?"s":""):"",d.nComp?d.nComp+" composer"+(d.nComp!==1?"s":""):"",d.nPerf?d.nPerf+" performer"+(d.nPerf!==1?"s":""):"",d.wish?d.wish+" on wishlist":""].filter(Boolean).join(" · ")}</small></div>
+   ${d.next?`<section class="stCard"><h3>Next milestone</h3><p class="stMile"><b>${d.n}</b> / ${d.next} albums</p><span class="stB big"><i style="width:${pct}%"></i></span><p class="hint">${d.next-d.n} more to reach ${d.next}.</p></section>`:""}
+   ${card("Formats",bars(d.fmts))}
+   ${card("Genres",bars(d.genres))}
+   ${card("Top composers",d.composers.length?bars(d.composers):"","Classical albums ("+d.nCl+"), counted once per album.")}
+   ${card("Top performers",d.performers.length?bars(d.performers):"","Soloists, conductors and ensembles of classical albums.")}
+   ${card("Musical periods",d.eras.length?bars(d.eras):"","Classical albums, by the period of their composers.")}
+   ${card("Top artists",d.artists.length?bars(d.artists):"","Other genres, by main artist.")}
+   ${card("Edition year",d.decades.length?bars(d.decades):"","Year of the edition you own, not of the music.")}
+   ${d.nPaid||d.nVal?`<section class="stCard"><h3>Money</h3><dl class="stMoney">
+     ${d.nPaid?`<dt>Total paid</dt><dd>${fmtPrice(d.paid)}<small>${d.nPaid} album${d.nPaid!==1?"s":""} with a price paid</small></dd>`:""}
+     ${d.nVal?`<dt>Value</dt><dd>${fmtPrice(d.val)}<small>${d.nVal} album${d.nVal!==1?"s":""} with a value${d.est?` (${d.est} from recent Discogs estimates)`:""}</small></dd>`:""}
+     ${d.both?`<dt>Value minus price paid</dt><dd>${d.diff>=0?"+":"−"}${fmtPrice(Math.abs(d.diff))}<small>on the ${d.both} album${d.both!==1?"s":""} that have both</small></dd>`:""}
+   </dl></section>`:`<section class="stCard"><h3>Money</h3><p class="hint">No prices yet. Fill in “Paid” in an album, import a purchase receipt, or estimate values from Discogs (Tools → Value).</p></section>`}
+   <div class="row"><button type="button" class="primary" id="stShare">Share</button><button type="button" id="stBack">Close</button></div>`;
+  openSheet();$("stBack").onclick=closeSheet;
+  $("stShare").onclick=async()=>{const t=`My collection on Album Ledger: ${d.n} albums`+(d.fmts.length?" ("+d.fmts.slice(0,3).map(([k,v])=>v+" "+k).join(", ")+")":"")+(d.composers.length?". Most collected composer: "+d.composers[0][0]:"")+(d.artists.length?". Most collected artist: "+d.artists[0][0]:"")+".";
+    try{if(navigator.share){await navigator.share({title:"Album Ledger",text:t});return;}await navigator.clipboard.writeText(t);toast("Summary copied: paste it anywhere");}catch(e){if(e&&e.name!=="AbortError")toast("Could not share: "+(e.message||e));}};}
+$("stGo").onclick=openStats;
 // ---------- Welcome (empty library): the three ways to start ----------
 function renderWelcome(){$("stick").hidden=true;$("fmtRow").hidden=true;$("gHint").hidden=true;$("more").hidden=true;
   $("list").innerHTML=`<li class="welcome"><h2>Welcome to Album Ledger</h2>
@@ -2799,7 +2862,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.89.0";$("hVer").textContent="v"+APPV;
+const APPV="0.90.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();stoUi();}
 // Storage: the library lives in the browser. Ask the browser to keep it (no automatic clean-up) and show how much room it takes.
 const STO_WARN=3.5*1048576;

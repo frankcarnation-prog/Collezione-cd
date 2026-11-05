@@ -19,6 +19,7 @@ They also run automatically on GitHub after every push (Actions → tests).
 | `suggestions.test.js` | Matching with the library, ranking, reasons, the Suggestions screen |
 | `wishlist-price.test.js` | Discogs price and link on the wishlist (Discogs mocked), 6-hour rule, eBay links |
 | `welcome.test.js` | Welcome screen on an empty library, one-line “To complete” on the home screen, format filter and “None of these” in search results |
+| `stats.test.js` | Statistics: formats, genres, composers and performers kept apart, musical periods, money, milestone |
 | `sync-email.test.js` | Clear message when the sign-in e-mail cannot be sent |
 
 Add a test with every new feature or bug fix.
