@@ -496,6 +496,9 @@ small.best{color:var(--wish);font-weight:600}
 .epop .tall{min-height:260px}
 .epop img{max-width:100%;max-height:40vh;display:block;margin:8px auto;border-radius:6px}
 /* v0.87 phone layout: more room for the collection itself */
+.welcome{list-style:none;padding:12px 2px 24px}.welcome h2{margin:6px 0 6px;font-size:1.35rem}.welcome>p{margin:0 0 14px;color:var(--muted);line-height:1.45}
+.welcome .setItem{margin:0 0 10px}.welcome .setItem small{color:var(--muted);font-size:.85rem;line-height:1.35}.welcome .wlMain{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}.welcome .wlMain b{color:var(--accent)}
+.rfmt{margin:6px 0 10px;flex-wrap:wrap}
 .recent>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px}.recent>summary::-webkit-details-marker{display:none}
 .recent>summary h2{margin:4px 0}.recent .arr{color:var(--muted);transition:transform .15s}.recent[open] .arr{transform:rotate(90deg)}.recent[open]>summary h2{margin-bottom:8px}
 #stoInfo.warn{color:#b3261e;font-weight:600}
@@ -514,7 +517,7 @@ small.best{color:var(--wish);font-weight:600}
 <button class="scan" id="scanBtn" type="button" hidden><span class="bars" aria-hidden="true"><i style="width:3px"></i><i style="width:1px"></i><i style="width:2px"></i><i style="width:1px"></i><i style="width:3px"></i><i style="width:1px"></i></span>SCAN</button>
 
 
-<details class="win todoWin" id="todoCard" hidden><summary class="wtitle"><span>To do</span><span class="tdN" id="todoTot"></span><span class="arr" aria-hidden="true">▸</span></summary><div class="wbody"><ul class="list" id="todoList"></ul></div></details>
+<details class="win todoWin" id="todoCard" hidden><summary class="wtitle"><span>To complete</span><span class="tdN" id="todoTot"></span><span class="arr" aria-hidden="true">›</span></summary><div class="wbody"><ul class="list" id="todoList"></ul></div></details>
 <details class="recent" id="recent" hidden><summary><h2>Recently added</h2><span class="arr" aria-hidden="true">▸</span></summary><div class="rrow" id="recentRow"></div></details>
 
 <div class="scanov" id="scanOv" hidden role="dialog" aria-modal="true" aria-label="Scan"><section class="panel" id="scanPanel">
@@ -1022,7 +1025,7 @@ function fmtRowUi(q){const row=$("fmtRow"),arr=tab==="wish"?S.wish:S.col,fc={};a
   if(vts.length>1)$("vtSeg").innerHTML=[["Vinyl","All vinyl"]].concat(vts.map(v=>["Vinyl|"+v,v])).map(([k,l])=>`<button type="button" data-fv="${esc(k)}" aria-pressed="${fv===k}">${esc(l)}</button>`).join("");
   row.querySelectorAll("[data-fv]").forEach(b=>b.onclick=()=>{setFV(b.dataset.fv);render();});}
 function render(){$("list").classList.remove("toolsMode");$("more").hidden=true;$("more").innerHTML="";genreSelUi();todoUi();const view=tab+"|"+$("q").value;if(view!==lastView){LIMIT=60;lastView=view;}renderRecent();if(SEL&&tab!=="col"&&tab!=="wish")selEnd();selUi();
-  const q=norm($("q").value.trim()),ul=$("list");
+  const q=norm($("q").value.trim()),ul=$("list");$("stick").hidden=false;
   if(TB.parentNode!==$("tbHolder"))$("tbHolder").appendChild(TB);
   ["Col","Wish","Comp","Tools"].forEach(k=>$("tab"+k).setAttribute("aria-selected",!q&&(tab===k.toLowerCase()||(k==="Comp"&&(tab==="perf"||tab==="art")))));
   homeTodo();
@@ -1031,6 +1034,7 @@ function render(){$("list").classList.remove("toolsMode");$("more").hidden=true;
   if(!q&&(tab==="comp"||tab==="perf"||tab==="art")){$("fmtRow").hidden=true;if(tab==="comp")renderComposers();else if(tab==="perf")renderPerformers();else renderArtists();
     $("list").insertAdjacentHTML("afterbegin",`<li class="subseg"><div class="seg"><button type="button" data-cl="art" aria-pressed="${tab==="art"}">Artists</button><button type="button" data-cl="comp" aria-pressed="${tab==="comp"}">Composers</button><button type="button" data-cl="perf" aria-pressed="${tab==="perf"}">Performers</button></div></li>`);
     $("list").querySelectorAll("[data-cl]").forEach(bt=>bt.onclick=()=>{classic=bt.dataset.cl;try{localStorage.setItem("classic",classic);}catch(e){}tab=classic;render();});return;}
+  if(!q&&tab==="col"&&!S.col.length&&!S.wish.length){renderWelcome();return;}
   $("sortBar").hidden=false;$("sortSel").hidden=$("selBtn").hidden=!!q;fmtRowUi(q);
   let rows=q?S.col.filter(x=>matches(x,q)).map(x=>[x,"own"]).concat(S.wish.filter(x=>matches(x,q)).map(x=>[x,"wish"])):(tab==="col"?S.col.map(x=>[x,"own"]):S.wish.map(x=>[x,"wish"]));
   const fv=getFV();if(!q&&fv)rows=rows.filter(([x])=>(k=>k===fv||k.startsWith(fv+"|"))(fmtKey(x)));const gf=getGF();if(!q&&gf)rows=rows.filter(([x])=>gf.startsWith("fmt:")?(k=>k===gf.slice(4)||k.startsWith(gf.slice(4)+"|"))(fmtKey(x)):(genreOf(x)||"?")===gf);$("gHint").hidden=!(!q&&gf==="?"&&(tab==="col"||tab==="wish"));
@@ -1050,6 +1054,15 @@ function render(){$("list").classList.remove("toolsMode");$("more").hidden=true;
     return hd+`<li class="item tap${SEL?(SEL.includes(x.id)?" picked":" pickable"):""}" data-open="${x.id}">${SEL?`<span class="chk" aria-hidden="true">${SEL.includes(x.id)?SEL.indexOf(x.id)+1:""}</span>`:""}${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${fmtLabel(x)?" · "+esc(fmtLabel(x)):""}${x.cond?" · "+esc(x.cond):""}${genreOf(x)&&genreOf(x)!=="Classical"?" · "+esc(genreOf(x)):""}${x.box?" · Box set "+discsOf(x).length+" CDs":" · "+tracksOf(x).length+" tracks"}</small>${/^(value|paid)l?$/.test(getSort())&&k!=="wish"&&moneyOf(x,getSort().replace(/l$/,""))?`<small class="best">${getSort().startsWith("paid")?"Paid ":"Value "}${fmtPrice(moneyOf(x,getSort().replace(/l$/,"")))}${getSort().startsWith("value")&&!(x.val>0)?" (Discogs estimate)":""}</small>`:""}${k==="wish"&&bestOffer(x)?`<small class="best">From ${fmtPrice(bestOffer(x).p)} · ${esc(shopName(bestOffer(x).u))}</small>`:""}${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
     (k==="own"?(q?`<span class="chip own">Owned</span>`:""):`<button class="small" data-buy="${x.id}" type="button">Purchased</button><button class="small" data-del="${x.id}" type="button" aria-label="Remove from wishlist">✕</button>`)+`<span class="cert c${cc}" title="Edition: ${CERT[cc][0]}" aria-label="Edition: ${CERT[cc][0]}"></span></li>`}).join("")
     :`<li class="empty">${q?"No matching album.":(tab==="col"?"Your collection is empty. Use SCAN to add your first album.":"Your wishlist is empty.")}</li>`;}
+// ---------- Welcome (empty library): the three ways to start ----------
+function renderWelcome(){$("stick").hidden=true;$("fmtRow").hidden=true;$("gHint").hidden=true;$("more").hidden=true;
+  $("list").innerHTML=`<li class="welcome"><h2>Welcome to Album Ledger</h2>
+   <p>Catalogue your CDs, vinyl and cassettes in one place. Classical music is fully supported: composers, performers and works are kept apart.</p>
+   <button type="button" class="setItem wlMain" data-wl="scan"><b>Scan a barcode</b><small>Point the camera at the back of an album. No barcode? Search by catalog number or title.</small></button>
+   <button type="button" class="setItem" data-wl="imp"><b>Import an existing list</b><small>CSV or Excel file: Discogs, CLZ or your own spreadsheet. Free, no limit.</small></button>
+   <button type="button" class="setItem" data-wl="sync"><b>Already use Album Ledger on another device?</b><small>Sign in to bring your collection here.</small></button>
+   <p class="hint">Your collection is stored on this device. No account is required.</p></li>`;
+  $("list").querySelectorAll("[data-wl]").forEach(b=>b.onclick=()=>{const k=b.dataset.wl;if(k==="scan")openScan();else if(k==="imp")$("impGo").click();else goTools("tw-sync");});}
 // ---------- Format (CD, Vinyl…) ----------
 const FMTS=["CD","Vinyl","Cassette","Other"],VTS=["LP","10\"","7\"","EP"];
 const FD_ABBR={re:"Reissue",comp:"Compilation",ltd:"Limited edition",rm:"Remastered",promo:"Promo",mono:"Mono",st:"Stereo"};
@@ -1578,18 +1591,21 @@ $("catGo").onclick=async()=>{stopCam();const q=$("catno").value.trim(),out=$("ea
   const res=[],errs=[],seen=new Set(),catq=q.replace(/"/g,"");
   const addMb=rs=>(rs||[]).forEach(r=>{if(seen.has(r.id))return;seen.add(r.id);res.push({src:"MusicBrainz",id:r.id,t:r.title,code:(r.barcode||"").replace(/\D/g,""),
     sub:[credit(r["artist-credit"]),((r["label-info"]||[]).find(l=>l.label)||{label:{}}).label.name,((r["label-info"]||[]).find(l=>l["catalog-number"])||{})["catalog-number"],(r.date||"").slice(0,4),r.country,(r.media||[]).map(m=>m.format).filter(Boolean)[0]].filter(Boolean).join(" · "),
-    img:"https://coverartarchive.org/release/"+r.id+"/front-250"});});
+    fr:(r.media||[]).map(m=>m.format).filter(Boolean).join(", "),img:"https://coverartarchive.org/release/"+r.id+"/front-250"});});
   const asin=SHARE_ASIN;SHARE_ASIN="";if(asin){try{addMb((await mbGet("release/?query="+encodeURIComponent("asin:"+asin)+"&limit=10")).releases);}catch(e){errs.push("MusicBrainz: "+e.message);}}
   const exact=res.length>0; // the store's product id matched an edition: no need for a text search
   if(!exact)try{addMb((await mbGet("release/?query="+encodeURIComponent('catno:"'+catq+'"')+"&limit=10")).releases);
     if(!res.length&&/\s|-/.test(catq))addMb((await mbGet("release/?query="+encodeURIComponent('catno:"'+catq.replace(/[\s-]+/g,"")+'"')+"&limit=10")).releases);
     if(!res.length&&/[a-z]{3}/i.test(q))addMb((await mbGet("release/?query="+encodeURIComponent(luc(q)||q)+"&limit=10")).releases);}catch(e){errs.push("MusicBrainz: "+e.message);}
   if(dgKey()&&!exact){try{let rs=await dgSearch({catno:q});if(!rs.length)rs=await dgSearch({q});rs.forEach(r=>res.push({src:"Discogs",id:r.id,t:r.title,code:(r.barcode||[]).map(x=>x.replace(/\D/g,"")).find(x=>x.length===13||x.length===12)||"",
-    sub:[(r.label||[])[0],r.catno,r.year,(r.format||[]).join(", ")].filter(Boolean).join(" · "),img:r.thumb||""}));}catch(e){errs.push("Discogs: "+e.message);}}
+    sub:[(r.label||[])[0],r.catno,r.year,(r.format||[]).join(", ")].filter(Boolean).join(" · "),fr:(r.format||[]).join(", "),img:r.thumb||""}));}catch(e){errs.push("Discogs: "+e.message);}}
   if(!exact&&/[a-z]{3}/i.test(q)){try{(await dzSearch(q,8)).forEach(r=>res.push({src:"Deezer",id:r.id,t:r.title,code:"",sub:[(r.artist||{}).name,r.nb_tracks?r.nb_tracks+" tracks":"",r.record_type&&r.record_type!=="album"?r.record_type:""].filter(Boolean).join(" · "),img:r.cover_medium||""}));}catch(e){errs.push(e.message);}}
   const errH=errs.length?`<p class="hint err">${esc(errs.join(" · "))}</p>`:"";
   if(!res.length){out.innerHTML=`<div class="verdict wish"><strong>No results</strong><span>Nothing found on MusicBrainz, Deezer${dgKey()?" or Discogs":""} for “${esc(q)}”.</span></div>${errH}${web}`;return;}
-  const showList=()=>{out.innerHTML=`<p class="hint">${res.length} result${res.length!==1?"s":""}. Select the correct one:</p>${errH}`+res.map((r,i)=>`<button type="button" class="pick" data-i="${i}">${r.img?`<img src="${esc(r.img)}" alt="" onerror="this.style.visibility='hidden'">`:""}<span><b>${esc(r.t)}</b><br><small>${esc(r.sub)}</small><br><small class="srcbadge">${r.src}</small></span></button>`).join("")+web;
+  let ff="";const showList=()=>{const vis=res.map((r,i)=>[r,i]).filter(([r])=>!ff||resFmt(r)===ff);
+  out.innerHTML=`<p class="hint">${res.length} result${res.length!==1?"s":""}. Select the correct one:</p>${errH}`+fmtChips(res,ff)+vis.map(([r,i])=>`<button type="button" class="pick" data-i="${i}">${r.img?`<img src="${esc(r.img)}" alt="" onerror="this.style.visibility='hidden'">`:""}<span><b>${esc(r.t)}</b><br><small>${esc(r.sub)}</small><br><small class="srcbadge">${r.src}</small></span></button>`).join("")+`<button type="button" class="linkbtn" id="resNone">None of these: refine the search</button>`+web;
+  out.querySelectorAll("[data-rf]").forEach(b=>b.onclick=()=>{ff=b.dataset.rf;showList();});
+  $("resNone").onclick=()=>{out.innerHTML="";$("scanMore").open=true;const i=$("catno");setTimeout(()=>{i.focus();i.select();},0);};
   out.querySelectorAll(".pick").forEach(btn=>btn.onclick=async()=>{const r=res[+btn.dataset.i];out.innerHTML=`<p class="hint">Loading…</p>`;
     try{const code=r.code&&(r.code.length===13||r.code.length===12)?r.code:"";const id=code&&S.codes[code];if(id&&byId(id)){addShop(byId(id));openDetail(id);out.innerHTML="";return;}
       let f;if(r.src==="Discogs")f=await dgRelease(r.id);else if(r.src==="Deezer"){f=await dzAlbum(r.id);if(!f)throw new Error("album not available");}else{f=await mbRelease(r.id);if(f.img&&!(await imgOk(f.img)))f.img="";}
@@ -2375,6 +2391,11 @@ function openCompare(x,f0,src,after){const id=x.id,p=$("detail"),sel={},ed={old:
     save();render();leave(true);};
   draw();openSheet();backUi();$("sheet").scrollTop=0;}
 
+// Format of a search result (edition), to filter long lists: CD, Vinyl, Cassette, Digital, Other
+const RFMTS=["CD","Vinyl","Cassette","Digital","Other"];
+function resFmt(r){if(r.src==="Deezer")return "Digital";const s=r.fr||"";if(!s)return "Other";if(/file|mp3|flac|digital|download|stream/i.test(s))return "Digital";return fmtParse(s).fmt||"Other";}
+function fmtChips(res,cur){const c={};res.forEach(r=>{const f=resFmt(r);c[f]=(c[f]||0)+1;});const ks=RFMTS.filter(f=>c[f]);if(ks.length<2)return "";
+  return `<div class="seg rfmt" role="group" aria-label="Filter by format">`+[["","All",res.length]].concat(ks.map(f=>[f,f,c[f]])).map(([k,l,n])=>`<button type="button" data-rf="${k}" aria-pressed="${cur===k}">${l} <small>${n}</small></button>`).join("")+`</div>`;}
 // ---------- Choisir la bonne édition (MusicBrainz + Discogs) ----------
 function openPicker(id){const x=byId(id),p=$("detail");if(!x)return;const {title,who}=enrichQuery(x);
   p.innerHTML=`<p class="cat">Choose the right edition</p><h2 class="wh">${esc(x.t)}</h2>
@@ -2386,14 +2407,16 @@ function openPicker(id){const x=byId(id),p=$("detail");if(!x)return;const {title
     if(isLink(q)){m.textContent="Loading link…";try{const L=await fetchLink(q);m.textContent="";openCompare(x,L.f,L.src);}catch(e){m.textContent=e.message;}return;}
     try{const s=await mbGet("release/?query="+encodeURIComponent(q.length<4?q:(luc(q)||q))+"&limit=15");(s.releases||[]).forEach(r=>res.push({src:"MusicBrainz",id:r.id,t:r.title,
       sub:[credit(r["artist-credit"]),((r["label-info"]||[]).find(l=>l.label)||{label:{}}).label.name,(r.date||"").slice(0,4),r.country,(r.media||[]).map(m=>m.format).filter(Boolean)[0],r["track-count"]?r["track-count"]+" tracks":""].filter(Boolean).join(" · "),
-      img:"https://coverartarchive.org/release/"+r.id+"/front-250"}));}catch(e){m.textContent=e.message;}
-    if(dgKey()){try{(await dgSearch({q,format:"CD"},true)).forEach(r=>res.push({src:"Discogs",id:r.id,t:r.title,sub:[(r.label||[])[0],r.catno,r.year,r.country,(r.format||[]).slice(0,2).join(", ")].filter(Boolean).join(" · "),img:r.thumb||r.cover_image||""}));}catch(e){}}
+      fr:(r.media||[]).map(m=>m.format).filter(Boolean).join(", "),img:"https://coverartarchive.org/release/"+r.id+"/front-250"}));}catch(e){m.textContent=e.message;}
+    if(dgKey()){try{const wf=wantFmt(x);(await dgSearch(wf&&wf!=="Other"?{q,format:wf}:{q},true)).forEach(r=>res.push({src:"Discogs",id:r.id,t:r.title,sub:[(r.label||[])[0],r.catno,r.year,r.country,(r.format||[]).slice(0,2).join(", ")].filter(Boolean).join(" · "),fr:(r.format||[]).join(", "),img:r.thumb||r.cover_image||""}));}catch(e){}}
     m.innerHTML=(res.length?res.length+" editions found. Select the correct one:":"No results. Try fewer words or a surname only.")+`<br><small>${srcLine()}</small>`;
-    out.innerHTML=res.map((r,i)=>`<button type="button" class="pick" data-i="${i}">${r.img?`<img src="${esc(r.img)}" alt="" onerror="this.style.visibility='hidden'">`:""}<span><b>${esc(r.t)}</b><br><small>${esc(r.sub)}</small><br><small class="src">${r.src}</small></span></button>`).join("");
+    const own=x.fmt&&RFMTS.includes(x.fmt)&&res.some(r=>resFmt(r)===x.fmt)?x.fmt:"";let ff=own;
+    const draw=()=>{out.innerHTML=fmtChips(res,ff)+res.map((r,i)=>[r,i]).filter(([r])=>!ff||resFmt(r)===ff).map(([r,i])=>`<button type="button" class="pick" data-i="${i}">${r.img?`<img src="${esc(r.img)}" alt="" onerror="this.style.visibility='hidden'">`:""}<span><b>${esc(r.t)}</b><br><small>${esc(r.sub)}</small><br><small class="src">${r.src}</small></span></button>`).join("")+(res.length?`<button type="button" class="linkbtn" id="pkNone">None of these: refine the search</button>`:"");
+    out.querySelectorAll("[data-rf]").forEach(b=>b.onclick=()=>{ff=b.dataset.rf;draw();});if($("pkNone"))$("pkNone").onclick=()=>{const i=$("pkQ");i.scrollIntoView({block:"center"});i.focus();i.select();};
     out.querySelectorAll(".pick").forEach(b=>b.onclick=async()=>{const r=res[+b.dataset.i];m.textContent="Loading…";
       try{const f=r.src==="Discogs"?await dgRelease(r.id):await mbRelease(r.id);if(r.src==="MusicBrainz"&&!(await imgOk(f.img)))f.img=r.img&&await imgOk(r.img)?r.img:"";
         m.textContent="";openCompare(x,f,r.src);
-      }catch(e){m.textContent=e.message||"Loading failed.";}});};
+      }catch(e){m.textContent=e.message||"Loading failed.";}});};draw();};
   $("pkGo").onclick=run;$("pkQ").addEventListener("keydown",e=>{if(e.key==="Enter")run();});run();}
 
 
@@ -2776,7 +2799,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.88.0";$("hVer").textContent="v"+APPV;
+const APPV="0.89.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();stoUi();}
 // Storage: the library lives in the browser. Ask the browser to keep it (no automatic clean-up) and show how much room it takes.
 const STO_WARN=3.5*1048576;
@@ -3432,12 +3455,11 @@ function renderTools(){$("list").classList.add("toolsMode");$("list").innerHTML=
 // "À faire" sur la page Collection : repliable, chaque ligne mène à l'outil concerné
 const TODO_SEC={cover:"tw-cmp",auto:"tw-cover",year:"tw-cmp",label:"tw-cmp",genre:"tw-cmp",format:"tw-cmp",group:"tw-alb",code:"tw-cmp"};
 function goTools(sec,k){goTab("tools");setTimeout(()=>{const el=$(sec);if(!el)return;const dd=el.closest("details");if(dd)dd.open=true;el.scrollIntoView({behavior:"smooth",block:"start"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash");},80);}
-function homeTodo(){const c=$("todoCard");if(!c)return;const g=groupSuggestions().length;
-  const rows=todoCounts().filter(([k,,n])=>n).map(([k,lab,n])=>({k,lab,n}));if(g)rows.push({k:"group",lab:"To group into box sets",n:g});
-  const tot=rows.reduce((s,r)=>s+r.n,0);c.hidden=!rows.length||tab!=="col";$("todoTot").textContent=rows.length?rows.length+" item"+(rows.length!==1?"s":""):"";
-  $("todoList").innerHTML=rows.map(r=>`<li class="item tap" data-td="${r.k}"><div class="meta"><b>${r.lab}</b><small>${r.k==="group"?r.n+" suggestion"+(r.n!==1?"s":""):r.n+" album"+(r.n!==1?"s":"")}</small></div><span class="count">${r.n}</span><span class="go" aria-hidden="true">›</span></li>`).join("");
-  $("todoList").querySelectorAll("[data-td]").forEach(li=>li.onclick=()=>{const k=li.dataset.td;goTools(TODO_SEC[k]||"tw-cmp",k);});}
-(()=>{const c=$("todoCard");try{c.open=localStorage.getItem("todo-open")==="1";}catch(e){}c.addEventListener("toggle",()=>{try{localStorage.setItem("todo-open",c.open?"1":"0");}catch(e){}});})();
+// Home: one line only. The detailed list lives in Tools → Complete my library (no duplicate list).
+function homeTodo(){const c=$("todoCard");if(!c)return;let n=0,g=0;try{n=cmpList("gaps").length;}catch(e){}try{g=groupSuggestions().length;}catch(e){}
+  c.hidden=!(n||g)||tab!=="col";c.open=false;
+  $("todoTot").textContent=[n?n+" album"+(n!==1?"s":"")+" missing information":"",g?g+" box-set suggestion"+(g!==1?"s":""):""].filter(Boolean).join(" · ");}
+$("todoCard").addEventListener("click",e=>{if(e.target.closest("summary")){e.preventDefault();goTools("tw-cmp");}});
 $("tbGroup").onclick=()=>openGroupSugg();
 (()=>{const c=$("recent");try{c.open=localStorage.getItem("recent-open")==="1";}catch(e){}c.addEventListener("toggle",()=>{try{localStorage.setItem("recent-open",c.open?"1":"0");}catch(e){}});})();
 // ---------- Album suggestions: reference base ----------
