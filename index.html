@@ -499,6 +499,7 @@ small.best{color:var(--wish);font-weight:600}
 .welcome{list-style:none;padding:12px 2px 24px}.welcome h2{margin:6px 0 6px;font-size:1.35rem}.welcome>p{margin:0 0 14px;color:var(--muted);line-height:1.45}
 .welcome .setItem{margin:0 0 10px}.welcome .setItem small{color:var(--muted);font-size:.85rem;line-height:1.35}.welcome .wlMain{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}.welcome .wlMain b{color:var(--accent)}
 .rfmt{margin:6px 0 10px;flex-wrap:wrap}
+.ocrBox{margin:12px 0 4px}.ocrBox button{width:100%}.ocrBox .hint{margin:6px 0 0}
 .stLink{background:none;border:0;box-shadow:none;padding:0;min-height:0;color:var(--accent);font:inherit;text-decoration:underline;cursor:pointer}
 .stHero{background:var(--accent);color:#fff;border-radius:12px;padding:18px 16px;text-align:center;margin:8px 0 12px}.stHero b{display:block;font-size:2.6rem;line-height:1.1}.stHero span{display:block;font-size:1.05rem}.stHero small{display:block;margin-top:6px;opacity:.92}
 .stCard{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 12px}.stCard h3{margin:0 0 6px;font-size:1rem}.stCard .hint{margin:0 0 8px}
@@ -649,7 +650,7 @@ small.best{color:var(--wish);font-weight:600}
 <label for="apiKey">API key</label>
 <input id="apiKey" type="text" autocomplete="off" spellcheck="false" placeholder="Claude, Gemini, OpenAI, Mistral key…">
 <p class="hint" id="aiInfo"></p>
-<p class="hint">Stored on this device only. Free option: Gemini (aistudio.google.com). Without a key, reading goes through the Claude app.</p>
+<p class="hint">Stored on this device only. Free option: Gemini (aistudio.google.com). Without a key, the text of the cover can be read on this device, or the photos sent through the Claude app.</p>
 <details class="alt"><summary>Advanced: provider and model</summary>
 <label for="aiProv">Provider</label><select id="aiProv"></select>
 <label for="aiModel">Model</label><input id="aiModel" type="text" autocomplete="off" spellcheck="false">
@@ -2031,6 +2032,7 @@ function openReader(target){readTarget=typeof target==="string"?target:null;shot
    <div class="row"><input id="keyIn" type="password" autocomplete="off" spellcheck="false" placeholder="Claude, Gemini, OpenAI key…" value="${esc(key)}"><button type="button" id="keyShow" class="small">Show</button></div>
    <p class="hint" id="keyInfo"></p><p class="hint">Stored on this device only. Free option: Gemini (aistudio.google.com).</p></div>
   <button class="primary" id="readGo" type="button">Read the photos</button>
+  <section class="ocrBox"><button type="button" id="ocrGo"><b>No key? Read the text on this device</b></button><p class="hint">Free and private: the text printed on the photos (barcode, catalog number, title) is read on your phone, then searched on MusicBrainz${dgKey()?" and Discogs":""}. Less precise than AI for track lists. The first use downloads the reading tool (a few MB).</p></section>
   <details class="alt"><summary>No key: go through the Claude app</summary>
    <p class="hint">Send both photos to the Claude app with this message, then paste its reply here.</p>
    <div class="row"><button type="button" class="primary" id="sharePics">Send to Claude (photos + message)</button></div>
@@ -2044,6 +2046,7 @@ function openReader(target){readTarget=typeof target==="string"?target:null;shot
   p.querySelectorAll("[data-shot]").forEach(btn=>btn.onclick=async()=>{const s=btn.dataset.shot,r=await shoot(s);if(!r)return;
     shots[s]=r.full;if(s==="recto")coverShot=r.small;btn.querySelector("img")?.remove();const im=document.createElement("img");im.src=r.full;im.alt="";btn.prepend(im);});
   $("readGo").onclick=()=>{setKey($("keyIn").value);readWithApi();};
+  $("ocrGo").onclick=()=>readOnDevice();
   $("copyPrompt").onclick=()=>{const done=()=>$("readMsg").textContent="Message copied. Paste it into Claude with both photos.";
     const p2=navigator.clipboard?.writeText(READ_PROMPT);if(p2)p2.then(done,()=>{$("pasteIn").value=READ_PROMPT;$("pasteIn").select();$("readMsg").textContent="Copy the selected message manually, then clear the field.";});};
   $("sharePics").onclick=async()=>{const m=$("readMsg"),imgs=["recto","verso"].filter(s=>shots[s]);
@@ -2056,6 +2059,39 @@ function openReader(target){readTarget=typeof target==="string"?target:null;shot
     else{files.forEach(f=>{const a=document.createElement("a");a.href=URL.createObjectURL(f);a.download="cover-"+f.name;a.click();});
       m.textContent="Photos saved to Downloads and message copied. Send them in the Claude app.";}};
   $("pasteGo").onclick=()=>{try{showRead(parseRead($("pasteIn").value));}catch(err){$("readMsg").textContent=err.message;}};}
+// ---------- Reading the cover on the device (OCR, no AI key) ----------
+// The text found on the photos becomes a search: barcode first, then catalog number, then the words of the front.
+function ocrQuery(front,back){const all=(back||"")+"\n"+(front||""),out={code:"",catno:"",words:""};
+  // barcode: digit groups printed with spaces ("3 254567 355586"); try every run of consecutive groups
+  all.split(/\n/).some(l=>{const g=l.match(/\d+/g)||[];for(let i=0;i<g.length;i++){let d="";for(let j=i;j<g.length&&d.length<13;j++){d+=g[j];if((d.length===12||d.length===13)&&validEan(d)){out.code=d;return true;}}}return false;});
+  const isTime=t=>/^\d{1,2}[:'.]\d{2}$/.test(t),cands=[];
+  [back||"",front||""].forEach((txt,src)=>(txt.match(/\b(?:[A-Z]{1,6}[ -]?\d{3,}(?:[\/-]\d{1,3})?|\d{3}[ .]\d{3,4}(?:-\d)?)\b/g)||[]).forEach(c=>{const d=c.replace(/\D/g,"");
+    if(isTime(c)||d.length>=12||/^(19|20)\d\d$/.test(d)||/^(BWV|OP|KV|HOB|D|RV|HWV|TWV|K)[ -]?\d/i.test(c))return;cands.push({c:c.trim(),score:(/[A-Z]/.test(c)?2:0)+(src===0?1:0)});}));
+  cands.sort((a,b)=>b.score-a.score);out.catno=(cands[0]||{}).c||"";
+  const lines=String(front||"").split(/\n+/).map(l=>l.replace(/[^\p{L}\p{N}' &.-]+/gu," ").replace(/\s+/g," ").trim())
+    .filter(l=>l.length>=3&&l.length<=40&&(l.match(/\p{L}/gu)||[]).length/l.length>.7&&/\p{L}{3}/u.test(l));
+  out.words=lines.slice(0,3).join(" ").slice(0,70).trim();return out;}
+let _tess=null;
+function loadTess(){if(window.Tesseract)return Promise.resolve(window.Tesseract);if(_tess)return _tess;
+  _tess=new Promise((ok,ko)=>{const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";sc.onload=()=>window.Tesseract?ok(window.Tesseract):ko(new Error("reading tool not available"));
+    sc.onerror=()=>{_tess=null;ko(new Error("the reading tool could not be downloaded"));};document.head.appendChild(sc);});return _tess;}
+async function readOnDevice(){const m=$("readMsg"),imgs=["recto","verso"].filter(s=>shots[s]);
+  if(!imgs.length){m.textContent="Take at least one photo (the back is the most useful: barcode and catalog number).";return;}
+  if(!navigator.onLine){m.textContent="No Internet connection: the reading tool and the search need one.";return;}
+  const b=$("ocrGo");b.disabled=true;
+  try{m.textContent="Loading the reading tool…";const T=await loadTess();const txt={};
+    for(const s of imgs){m.textContent="Reading the "+(s==="recto"?"front":"back")+"… (10 to 40 seconds)";const r=await T.recognize(shots[s],"eng");txt[s]=(r&&r.data&&r.data.text)||"";}
+    const q=ocrQuery(txt.recto,txt.verso);
+    if(!q.code&&!q.catno&&!q.words){m.textContent="No readable text found. Take the photo closer, straight on and well lit, or type the catalog number in Scan.";return;}
+    m.textContent="Text read: "+[q.code?"barcode "+fmtEan(q.code):"",q.catno?"catalog no. "+q.catno:"",q.words?"“"+q.words+"”":""].filter(Boolean).join(" · ")+". Searching…";
+    await ocrSearch(q);
+  }catch(e){m.textContent="Reading failed: "+(e.message||e)+". You can still type the catalog number in Scan.";}
+  finally{if($("ocrGo"))$("ocrGo").disabled=false;}}
+async function ocrSearch(q){closeSheet();openScan();$("eanResult").innerHTML="";
+  if(q.code){$("ean").value=q.code;await check();return;}
+  $("scanMore").open=true;const has=()=>!!$("eanResult").querySelector(".pick");
+  if(q.catno){$("catno").value=q.catno;await $("catGo").onclick();if(has())return;}
+  if(q.words){$("catno").value=q.words;await $("catGo").onclick();}}
 async function readWithApi(){const m=$("readMsg");const imgs=["recto","verso"].filter(s=>shots[s]);
   if(!getKey()){m.textContent="Paste your API key first, or use the no-key option.";$("keyIn").focus();return;}
   if(!imgs.length){m.textContent="Take at least one photo.";return;}
@@ -2862,7 +2898,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.90.0";$("hVer").textContent="v"+APPV;
+const APPV="0.91.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();stoUi();}
 // Storage: the library lives in the browser. Ask the browser to keep it (no automatic clean-up) and show how much room it takes.
 const STO_WARN=3.5*1048576;

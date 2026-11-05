@@ -13,6 +13,7 @@ They also run automatically on GitHub after every push (Actions → tests).
 
 | File | What it checks |
 |---|---|
+| `ocr.test.js` | Cover reading on the device without an AI key: barcode, catalog number and words found in the text, then searched |
 | `smoke.test.js` | Start-up with 320 albums, no errors, version numbers agree (app and service worker), search, Tools badge, home screen |
 | `backup.test.js` | Backup content; API keys left out unless ticked; storage line in Settings |
 | `import.test.js` | CSV import: columns, duplicates, formats; backup files refused with a hint |
