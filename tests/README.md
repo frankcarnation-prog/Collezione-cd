@@ -19,6 +19,7 @@ They also run automatically on GitHub after every push (Actions → tests).
 | `import.test.js` | CSV import: columns, duplicates, formats; backup files refused with a hint |
 | `suggestions.test.js` | Matching with the library, ranking, reasons, the Suggestions screen |
 | `wishlist-price.test.js` | Discogs price and link on the wishlist (Discogs mocked), 6-hour rule, eBay links |
+| `titles.test.js` | Bilingual Discogs titles reduced to one language, other titles untouched |
 | `welcome.test.js` | Welcome screen on an empty library, one-line “To complete” on the home screen, format filter and “None of these” in search results |
 | `stats.test.js` | Statistics: formats, genres, composers and performers kept apart, musical periods, money, milestone |
 | `sync-email.test.js` | Clear message when the sign-in e-mail cannot be sent |

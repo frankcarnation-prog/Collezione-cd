@@ -1623,6 +1623,8 @@ async function dgSearch(p,all){const j=await dgGet("database/search",{...p,type:
 const dgName=a=>(a.anv||a.name||"").replace(/\s\(\d+\)$/,"").replace(/\*+$/,"").trim();
 const dgCredit=as=>(as||[]).map(a=>dgName(a)+(a.join&&a.join!==","?" "+a.join+" ":a.join===","?", ":"")).join("").replace(/\s+/g," ").trim();
 const dgDur=s=>{const m=String(s||"").match(/^(?:(\d+):)?(\d+):(\d{2})$/);return m?(+(m[1]||0))*3600+(+m[2])*60+(+m[3]):0;};
+// Bilingual titles ("Suite symphonique Op. 35 - Symphonic Suite Op. 35"): keep the first language only, when both halves name the same work
+function tidyTitle(t){t=String(t||"").trim();const p=t.split(/\s+[-–\/]\s+/);if(p.length!==2||p[0].length<8)return t;const k=catKey(p[0]);return k&&k===catKey(p[1])?p[0].trim():t;}
 async function dgRelease(id){const d=await dgGet("releases/"+id);
   const newWorks={},perfs=new Set(),discs={};let work=null,disc=1,bonusSec=false;
   (d.extraartists||[]).forEach(x=>{if(/Piano|Violin|Cello|Conductor|Orchestra|Soloist|Performer|Vocals|Soprano|Tenor|Organ|Ensemble|Quartet/i.test(x.role||""))perfs.add(dgName(x));});
@@ -1639,7 +1641,7 @@ async function dgRelease(id){const d=await dgGet("releases/"+id);
     const it={n:t.title,d:dgDur(t.duration)};if(work)it.w=work;if(bonusSec)it.b=1;push(t.position,it);});
   const ks=Object.keys(discs).sort((a,b)=>a-b),lab=(d.labels||[])[0]||{};
   const img=((d.images||[]).find(i=>i.type==="primary")||(d.images||[])[0]||{});
-  const a={id:"dg"+d.id,a:dgCredit(d.artists)||"Unknown artist",t:d.title,l:lab.name?lab.name.replace(/\s\(\d+\)$/,""):"",cat:lab.catno&&lab.catno!=="none"?lab.catno:"",
+  const a={id:"dg"+d.id,a:dgCredit(d.artists)||"Unknown artist",t:tidyTitle(d.title),l:lab.name?lab.name.replace(/\s\(\d+\)$/,""):"",cat:lab.catno&&lab.catno!=="none"?lab.catno:"",
     y:d.year?String(d.year):"",img:img.uri150||img.uri||"",dgid:d.id,g:mapGenre(d.genres,d.styles),newWorks};
   a.eans=(d.identifiers||[]).filter(i=>/barcode/i.test(i.type)).map(i=>String(i.value||"").replace(/\D/g,"")).filter(v=>/^\d{8}$|^\d{12,13}$/.test(v));
   fmtApply(a,fmtParse((d.formats||[]).map(f=>(f.qty>1?f.qty+"x":"")+f.name+(f.descriptions&&f.descriptions.length?", "+f.descriptions.join(", "):"")).join(", ")));
@@ -2898,7 +2900,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.91.0";$("hVer").textContent="v"+APPV;
+const APPV="0.92.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();stoUi();}
 // Storage: the library lives in the browser. Ask the browser to keep it (no automatic clean-up) and show how much room it takes.
 const STO_WARN=3.5*1048576;
