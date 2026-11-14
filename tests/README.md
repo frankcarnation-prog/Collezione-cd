@@ -23,5 +23,6 @@ They also run automatically on GitHub after every push (Actions → tests).
 | `welcome.test.js` | Welcome screen on an empty library, one-line “To complete” on the home screen, format filter and “None of these” in search results |
 | `stats.test.js` | Statistics: formats, genres, composers and performers kept apart, musical periods, money, milestone |
 | `sync-email.test.js` | Clear message when the sign-in e-mail cannot be sent |
+| `polish.test.js` | Counts that agree (collection only), track counts, Recently added on Collection only, classical albums not repeated under Artists |
 
 Add a test with every new feature or bug fix.
