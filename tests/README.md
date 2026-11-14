@@ -24,5 +24,6 @@ They also run automatically on GitHub after every push (Actions → tests).
 | `stats.test.js` | Statistics: formats, genres, composers and performers kept apart, musical periods, money, milestone |
 | `sync-email.test.js` | Clear message when the sign-in e-mail cannot be sent |
 | `polish.test.js` | Counts that agree (collection only), track counts, Recently added on Collection only, classical albums not repeated under Artists |
+| `home-compact.test.js` | Quiet “not sure” marker, none on the wishlist; one-row search bar with count only when filtered; currency chosen in Settings |
 
 Add a test with every new feature or bug fix.

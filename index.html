@@ -389,6 +389,14 @@ button.wide,.wbody>button:not(.setItem):not(.small),.enr #enrGo,.enr .primary{wi
 .sortbar #genreSel{grid-column:1;grid-row:2}
 .sortbar #sortSel{grid-column:2;grid-row:2}
 .sortbar #ncChip{grid-column:1/-1;grid-row:3;justify-self:start}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sortbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
+.sortbar #genreSel{grid-column:1;grid-row:1}
+.sortbar #sortSel{grid-column:2;grid-row:1}
+.sortbar #selBtn{grid-column:3;grid-row:1}
+.sortbar #sortCount{grid-column:1/-1;grid-row:2;min-height:0}
+.sortbar #sortCount[hidden]{display:none}
+.sortbar>select{min-height:40px}
 .sortbar select{width:100%;max-width:none;min-width:0;text-overflow:ellipsis}
 .rvl .item{align-items:flex-start}.rvl .meta{width:100%}
 .todoWin{padding:0;overflow:hidden}.todoWin>summary{list-style:none;cursor:pointer;margin:1px 1px 0;border-radius:5px 5px 0 0}.todoWin>summary::-webkit-details-marker{display:none}
@@ -441,6 +449,7 @@ body.scanning{overflow:hidden}
 .weblinks{display:flex;flex-wrap:wrap;gap:8px}.weblinks a{font-size:.9rem}
 .estl{margin:4px 0 6px}
 .cert{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.25) inset}.cert.c2{background:#2e9d4a}.cert.c1{background:#e0a000}.cert.c0{background:#c8372d}
+.cert.c0.quiet{background:transparent;box-shadow:0 0 0 1.5px rgba(0,0,0,.28) inset}
 .list .item{position:relative}.list .item>.cert{position:absolute;top:8px;right:8px}
 .grpH{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 4px 4px;font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink);list-style:none}.grpH small{flex-basis:100%;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)}
 .certL{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.85rem;color:var(--muted);margin:4px 0 8px}.certL b{color:var(--ink)}.lowc{color:var(--wish);font-weight:600}.disclaim{font-size:.82rem;color:var(--muted);border-left:3px solid var(--wish);padding:6px 10px;margin:8px 0;background:var(--wish-bg)}
@@ -547,9 +556,9 @@ small.best{color:var(--wish);font-weight:600}
 </section></div>
 
 <div class="stick" id="stick">
-  <label for="q">Search</label>
+  <label for="q" class="vh">Search</label>
   <input id="q" type="search" placeholder="Artist, album, composer or performer" autocomplete="off">
-  <div class="sortbar" id="sortBar"><span id="sortCount"></span><button type="button" class="small" id="ncChip" hidden></button><button type="button" class="small" id="selBtn">Select</button><label for="sortSel">Sort</label><select id="genreSel" aria-label="Filter by genre"></select><select id="sortSel" aria-label="Sort order"><option value="recent">Date added (newest)</option><option value="artist">Artist (A–Z)</option><option value="title">Title (A–Z)</option><option value="year">Year (newest)</option><option value="value">Value (highest)</option><option value="valuel">Value (lowest)</option><option value="paid">Price paid (highest)</option><option value="paidl">Price paid (lowest)</option><option value="cert">Edition certainty (least sure first)</option><option value="certd">Edition certainty (most sure first)</option></select></div>
+  <div class="sortbar" id="sortBar"><span id="sortCount"></span><button type="button" class="small" id="ncChip" hidden></button><button type="button" class="small" id="selBtn">Select</button><label for="sortSel">Sort</label><select id="genreSel" aria-label="Filter by genre"></select><select id="sortSel" aria-label="Sort order"><option value="recent">Newest first</option><option value="artist">Artist A–Z</option><option value="title">Title A–Z</option><option value="year">Year, newest</option><option value="value">Value, highest</option><option value="valuel">Value, lowest</option><option value="paid">Paid, highest</option><option value="paidl">Paid, lowest</option><option value="cert">Least sure first</option><option value="certd">Most sure first</option></select></div>
 </div>
 
 
@@ -627,6 +636,10 @@ small.best{color:var(--wish);font-weight:600}
 <section class="settings" id="settings" hidden role="dialog" aria-modal="true" aria-label="Settings">
 <div class="setHead"><h2>Settings</h2><button type="button" id="setX" class="x" aria-label="Close">✕</button></div>
 <div class="setBody">
+<section class="card"><h3>Currency</h3>
+<label for="curSel" class="vh">Currency</label><select id="curSel"></select>
+<p class="hint" id="curMsg">Only the symbol changes: amounts already entered are not converted. Discogs prices are requested in this currency.</p>
+</section>
 <section class="card"><h3>Barcodes</h3>
 <label class="chk2"><input type="checkbox" id="autoCodes"> Keep automatically found barcodes (marked “likely”)</label>
 </section>
@@ -1059,12 +1072,12 @@ function render(){$("list").classList.remove("toolsMode");$("more").hidden=true;
       paid:(a,b)=>moneyOf(b,"paid")-moneyOf(a,"paid")||artKey(a).localeCompare(artKey(b),"fr"),cert:(a,b)=>certOf(a)-certOf(b)||artKey(a).localeCompare(artKey(b),"fr"),certd:(a,b)=>certOf(b)-certOf(a)||artKey(a).localeCompare(artKey(b),"fr"),year:(a,b)=>(+b.y||0)-(+a.y||0)||artKey(a).localeCompare(artKey(b),"fr")}[by];
     rows.sort((r1,r2)=>cmp(r1[0],r2[0]));$("sortCount").textContent=rows.length+" album"+(rows.length!==1?"s":"");}
   const CODE={};for(const k in S.codes)if(!CODE[S.codes[k]])CODE[S.codes[k]]=k;
-  const total=rows.length;if(q)$("sortCount").textContent=total+" result"+(total!==1?"s":"");window.VISIDS=rows.map(r=>r[0].id);rows=rows.slice(0,LIMIT);
+  const total=rows.length;if(q)$("sortCount").textContent=total+" result"+(total!==1?"s":"");$("sortCount").hidden=!(q||fv||gf||(tdf&&tab==="col"));window.VISIDS=rows.map(r=>r[0].id);rows=rows.slice(0,LIMIT);
   $("more").hidden=total<=LIMIT;$("more").innerHTML=total>LIMIT?`<button type="button" id="moreBtn">Show more (${total-LIMIT} more)</button>`:"";
   const byC=!q&&(getSort()==="cert"||getSort()==="certd"),CN=[0,0,0];if(byC)window.VISIDS.forEach(id=>{const y=byId(id);if(y)CN[certOf(y)]++;});let lastC=-1;
   ul.innerHTML=rows.length?rows.map(([x,k])=>{const c=CODE[x.id],cu=coverUrl(x),cc=certOf(x),hd=byC&&cc!==lastC?`<li class="grpH"><span class="cert c${cc}"></span>${CERT[cc][0]} (${CN[cc]})<small>${CERT[cc][1]}</small></li>`:"";lastC=cc;
     return hd+`<li class="item tap${SEL?(SEL.includes(x.id)?" picked":" pickable"):""}" data-open="${x.id}">${SEL?`<span class="chk" aria-hidden="true">${SEL.includes(x.id)?SEL.indexOf(x.id)+1:""}</span>`:""}${cu?`<img class="cover" src="${cu}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'disc'}))">`:`<span class="disc" aria-hidden="true"></span>`}<div class="meta"><b>${esc(x.t)}${x.copies>1?` <span class="copies">×${x.copies}</span>`:""}</b><small>${esc(x.a)}${x.y?" · "+x.y:""}${fmtLabel(x)?" · "+esc(fmtLabel(x)):""}${x.cond?" · "+esc(x.cond):""}${genreOf(x)&&genreOf(x)!=="Classical"?" · "+esc(genreOf(x)):""}${x.box?" · Box set "+discsOf(x).length+" CDs":tracksOf(x).length?" · "+tracksOf(x).length+" track"+(tracksOf(x).length!==1?"s":""):""}</small>${/^(value|paid)l?$/.test(getSort())&&k!=="wish"&&moneyOf(x,getSort().replace(/l$/,""))?`<small class="best">${getSort().startsWith("paid")?"Paid ":"Value "}${fmtPrice(moneyOf(x,getSort().replace(/l$/,"")))}${getSort().startsWith("value")&&!(x.val>0)?" (Discogs estimate)":""}</small>`:""}${k==="wish"&&bestOffer(x)?`<small class="best">From ${fmtPrice(bestOffer(x).p)} · ${esc(shopName(bestOffer(x).u))}</small>`:""}${c?`<span class="code">${fmtEan(c)}</span>`:""}</div>`+
-    (k==="own"?(q?`<span class="chip own">Owned</span>`:""):`<button class="small" data-buy="${x.id}" type="button">Purchased</button><button class="small" data-del="${x.id}" type="button" aria-label="Remove from wishlist">✕</button>`)+`<span class="cert c${cc}" title="Edition: ${CERT[cc][0]}" aria-label="Edition: ${CERT[cc][0]}"></span></li>`}).join("")
+    (k==="own"?(q?`<span class="chip own">Owned</span>`:""):`<button class="small" data-buy="${x.id}" type="button">Purchased</button><button class="small" data-del="${x.id}" type="button" aria-label="Remove from wishlist">✕</button>`)+(k==="own"?`<span class="cert c${cc}${cc?"":" quiet"}" title="Edition: ${CERT[cc][0]}" aria-label="Edition: ${CERT[cc][0]}"></span>`:"")+`</li>`}).join("")
     :`<li class="empty">${q?"No matching album.":(tab==="col"?"Your collection is empty. Use SCAN to add your first album.":"Your wishlist is empty.")}</li>`;}
 // ---------- Statistics ----------
 // Musical period of a composer (by surname). Editorial table of well-known composers; others are "Other or unknown".
@@ -1803,7 +1816,10 @@ function bindCond(x){const c=$("cond");if(c)c.onchange=()=>{if(c.value)x.cond=c.
   const r=$("refEst");if(r)r.onclick=async()=>{if(!navigator.onLine){toast("No Internet connection.");return;}r.disabled=true;r.textContent="Asking Discogs…";
     try{const k=await estimateOne(x);save();if(byId(x.id)&&CUR)openDetail(x.id);if(k==="miss"||k==="fmt")toast("No matching edition on Discogs");}catch(e){r.disabled=false;r.textContent="Get the current Discogs price";toast(e.message);}};}
 let SHARE_LINK=""; // shop page the current search came from: saved on the wish it leads to
-const CURS=(()=>{const L=(navigator.language||"").toLowerCase();return /-gb$/.test(L)?"£":/-(us|ca|au)$/.test(L)||L==="en"?"$":/^ja/.test(L)?"¥":/-ch$/.test(L)?"CHF":"€";})();
+const CUR_AUTO=(()=>{const L=(navigator.language||"").toLowerCase();return /-gb$/.test(L)?"£":/-(us|ca|au)$/.test(L)||L==="en"?"$":/^ja/.test(L)?"¥":/-ch$/.test(L)?"CHF":"€";})();
+const CUR_LIST=["€","$","£","CHF","¥"];
+const curPick=()=>{try{const v=localStorage.getItem("currency");return CUR_LIST.includes(v)?v:"";}catch(e){return "";}};
+let CURS=curPick()||CUR_AUTO;
 const fmtPrice=v=>Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+" "+CURS;
 function shopName(u){try{const h=new URL(u).hostname.replace(/^www\./,""),m=h.match(/momox|amazon|ebay|discogs|fnac|cultura|rakuten|vinted|leboncoin|jpc|presto|hmv|bol|cdon/i);
   return m?({momox:"momox",amazon:"Amazon",ebay:"eBay",discogs:"Discogs",fnac:"Fnac",cultura:"Cultura",rakuten:"Rakuten",vinted:"Vinted",leboncoin:"leboncoin",jpc:"jpc",presto:"Presto",hmv:"HMV",bol:"bol",cdon:"CDON"})[m[0].toLowerCase()]:(h.split(".").slice(-2)[0]||h);}catch(e){return "Shop";}}
@@ -2228,8 +2244,8 @@ function editTracks(id){const x=byId(id),p=$("detail");if(!x)return;const W=WORK
 // ---------- Sauvegarde ----------
 $("nagGo").onclick=()=>$("dlB").click();
 if($("enrOpen"))$("enrOpen").onclick=()=>{closeSettings();try{localStorage.removeItem("enr-hide");}catch(e){}$("enr").hidden=false;enrUi();$("enr").scrollIntoView({behavior:"smooth"});};
-const BK_KEYS=["ai-cfg","anthropic-key","discogs-token","auto-codes"];
-$("dlB").onclick=async()=>{try{S.chg=0;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}nag();const cv=Object.assign({},await covAll(),COV),withPh=Object.keys(cv).length>0,sets={};const keysIn=$("bkKeys").checked;BK_KEYS.forEach(k=>{if(!keysIn&&k!=="auto-codes")return;try{const v=localStorage.getItem(k);if(v!==null)sets[k]=v;}catch(e){}});const withSet=Object.keys(sets).length>0,out=Object.assign({},S,withPh?{covers:cv}:{},withSet?{settings:sets}:{}),big=withPh||withSet;const blob=new Blob([JSON.stringify(out,null,big?0:1)],{type:"application/json"});const a=document.createElement("a"),fn="album-ledger-"+new Date().toISOString().slice(0,10)+".json";
+const BK_KEYS=["ai-cfg","anthropic-key","discogs-token","auto-codes","currency"];
+$("dlB").onclick=async()=>{try{S.chg=0;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}nag();const cv=Object.assign({},await covAll(),COV),withPh=Object.keys(cv).length>0,sets={};const keysIn=$("bkKeys").checked;BK_KEYS.forEach(k=>{if(!keysIn&&k!=="auto-codes"&&k!=="currency")return;try{const v=localStorage.getItem(k);if(v!==null)sets[k]=v;}catch(e){}});const withSet=Object.keys(sets).length>0,out=Object.assign({},S,withPh?{covers:cv}:{},withSet?{settings:sets}:{}),big=withPh||withSet;const blob=new Blob([JSON.stringify(out,null,big?0:1)],{type:"application/json"});const a=document.createElement("a"),fn="album-ledger-"+new Date().toISOString().slice(0,10)+".json";
   a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();a.remove();const mb=blob.size/1048576,size=mb>=0.1?mb.toFixed(1)+" MB":Math.max(1,Math.round(blob.size/1024))+" KB";
   $("bMsg").textContent="Backup downloaded ("+size+").";
   report("ok","Backup downloaded","The file “"+fn+"” was sent to your browser’s download location.",[S.col.length+" album"+(S.col.length!==1?"s":"")+" and "+S.wish.length+" wishlist item"+(S.wish.length!==1?"s":""),withPh?Object.keys(cv).length+" cover image"+(Object.keys(cv).length!==1?"s":"")+" and photos":"No cover images or photos",withSet?(keysIn?"API keys and settings (stored in plain text)":"Settings only (no API keys)"):"No API keys or settings","Size: "+size],"Keep the file somewhere safe. To restore it, use “Restore a file” and select the .json file as is — do not unzip or rename it.");
@@ -2244,7 +2260,7 @@ $("upB").onchange=async e=>{const inp=e.target,f=inp.files[0];if(!f)return;const
       report(r.added?"ok":"info","Import "+(r.added?"complete":"finished: nothing new"),r.added+" album"+(r.added!==1?"s":"")+" added to your collection.",["Added: "+r.added,"Skipped (already present): "+(r.skipped||0),"Total albums now: "+S.col.length],"Imports are merged with your existing data; nothing was replaced.");done();return;}
     if(!o||typeof o!=="object"||!Array.isArray(o.col)||!Array.isArray(o.wish))return fail("The file is valid JSON but not an Album Ledger backup.",[!o||typeof o!=="object"?"Content type: "+(Array.isArray(o)?"list":typeof o):"Missing the "+(!Array.isArray(o.col)?"“col” (collection)":"“wish” (wishlist)")+" section"],"Use a file created by “Download backup”, or a collection import file.");
     const had=S.col.length,cv=o.covers&&typeof o.covers==="object"?o.covers:null,st=o.settings&&typeof o.settings==="object"?o.settings:null;delete o.covers;delete o.settings;adopt(o);let nset=0;
-    if(st){BK_KEYS.forEach(k=>{if(typeof st[k]==="string"){nset++;try{localStorage.setItem(k,st[k]);}catch(e){}}});$("dgKey").value=dgKey();dgInfoUi();dgCheck();syncAiUi();$("autoCodes").checked=autoCodes();}
+    if(st){BK_KEYS.forEach(k=>{if(typeof st[k]==="string"){nset++;try{localStorage.setItem(k,st[k]);}catch(e){}}});$("dgKey").value=dgKey();dgInfoUi();dgCheck();syncAiUi();$("autoCodes").checked=autoCodes();CURS=curPick()||CUR_AUTO;curUi();}
     if(cv){await covClear();await covPutMany(cv);Object.assign(COV,cv);}
     $("sync").textContent="";save();render();const warn=$("sync").textContent;
     const ncv=cv?Object.keys(cv).length:0;$("bMsg").textContent="Backup restored.";
@@ -2902,7 +2918,7 @@ function dgFillStart(){if(DGF.run){DGF.run=false;return;}if(!dgKey()){report("in
   pickAlbums({op:"dgfill",cat:"Discogs",title:"Complete from Discogs",list:t,go:"Start",intro:"Fetches each album’s track list, genre and missing details from Discogs using the release ID from your import (about 1 second each; keep the app open). Titles, covers and notes you entered are kept. Unchecked albums are skipped."},l=>dgFill(l));}
 $("fmtGo").onclick=fmtBulk;$("impGo").onclick=()=>{subView(()=>openImport());};$("impDg").onclick=dgFillStart;
 
-const APPV="0.93.0";$("hVer").textContent="v"+APPV;
+const APPV="0.94.0";$("hVer").textContent="v"+APPV;
 function openSettings(){const s=$("settings");if(!s.hidden)return;s.hidden=false;document.body.classList.add("locked");history.pushState({set:1},"");$("appV").textContent=APPV;trashUi();stoUi();}
 // Storage: the library lives in the browser. Ask the browser to keep it (no automatic clean-up) and show how much room it takes.
 const STO_WARN=3.5*1048576;
@@ -3031,6 +3047,10 @@ async function invHandle(c){const out=$("eanResult"),id=S.codes[c];
     $("invQ").oninput=()=>{const q=norm($("invQ").value.trim());if(q.length<2)return;const list=[...S.col,...S.wish].filter(x=>matches(x,q)).slice(0,8);const v=$("invQ").value;out.innerHTML=draw(list);$("invQ").value=v;$("invQ").focus();bind();};};
   bind();}
 $("invStop").onclick=()=>{stopInventory();closeScan();};$("tbInv").onclick=startInventory;document.querySelectorAll("#scanMode [data-sm]").forEach(b=>b.onclick=()=>{if(b.dataset.sm==="inv")startInventory();else{stopInventory();stopCam();$("eanResult").innerHTML="";$("ean").value="";startCam();}});
+function curUi(){const p=curPick(),N={"€":"Euro (€)","$":"US dollar ($)","£":"Pound sterling (£)","CHF":"Swiss franc (CHF)","¥":"Yen (¥)"};
+  $("curSel").innerHTML=`<option value="">Automatic (phone language): ${CUR_AUTO}</option>`+CUR_LIST.map(c=>`<option value="${c}">${N[c]}</option>`).join("");$("curSel").value=p;}
+curUi();$("curSel").onchange=e=>{const v=e.target.value;try{if(v)localStorage.setItem("currency",v);else localStorage.removeItem("currency");}catch(err){}
+  CURS=curPick()||CUR_AUTO;render();renderStats();toast("Currency: "+CURS+" — amounts are not converted");};
 $("autoCodes").checked=autoCodes();$("autoCodes").onchange=e=>{try{localStorage.setItem("auto-codes",e.target.checked?"1":"0");}catch(err){}};
 
 
